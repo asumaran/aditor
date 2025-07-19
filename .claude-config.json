@@ -1,0 +1,4 @@
+{
+  "read-only-paths": ["./src/components/ui/"],
+  "reference-only": ["./src/components/ui/"]
+}

@@ -1,6 +1,10 @@
 import { useState, useCallback } from 'react';
 import type { Block, Option } from '@/types';
-import { createTextBlock, createShortAnswerBlock, createMultipleChoiceBlock } from '@/lib/blockFactory';
+import {
+  createTextBlock,
+  createShortAnswerBlock,
+  createMultipleChoiceBlock,
+} from '@/lib/blockFactory';
 
 interface UseBlocksReturn {
   blocks: readonly Block[];
@@ -60,18 +64,21 @@ export const useBlocks = (
     );
   }, []);
 
-  const updateBlockOptions = useCallback((id: Block['id'], options: readonly Option[]) => {
-    setBlocks((prevBlocks) =>
-      prevBlocks.map((block) => {
-        if (block.id !== id || block.type !== 'multiple_choice') return block;
-        
-        return {
-          ...block,
-          properties: { ...block.properties, options },
-        };
-      }),
-    );
-  }, []);
+  const updateBlockOptions = useCallback(
+    (id: Block['id'], options: readonly Option[]) => {
+      setBlocks((prevBlocks) =>
+        prevBlocks.map((block) => {
+          if (block.id !== id || block.type !== 'multiple_choice') return block;
+
+          return {
+            ...block,
+            properties: { ...block.properties, options },
+          };
+        }),
+      );
+    },
+    [],
+  );
 
   const removeBlock = useCallback((id: Block['id']) => {
     setBlocks((prevBlocks) => prevBlocks.filter((block) => block.id !== id));

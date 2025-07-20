@@ -18,7 +18,10 @@ export interface MultipleChoiceBlockProperties {
   options: readonly Option[];
 }
 
-export type BlockProperties = TextBlockProperties | ShortAnswerBlockProperties | MultipleChoiceBlockProperties;
+export type BlockProperties =
+  | TextBlockProperties
+  | ShortAnswerBlockProperties
+  | MultipleChoiceBlockProperties;
 
 export interface TextBlock {
   readonly id: number;

@@ -1,4 +1,10 @@
-import type { Block, BlockType, TextBlock, ShortAnswerBlock, MultipleChoiceBlock } from '@/types';
+import type {
+  Block,
+  BlockType,
+  TextBlock,
+  ShortAnswerBlock,
+  MultipleChoiceBlock,
+} from '@/types';
 import { generateId } from './utils';
 import { createDefaultOptions } from './optionUtils';
 

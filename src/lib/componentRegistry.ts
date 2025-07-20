@@ -1,5 +1,9 @@
 import { type FC } from 'react';
-import { TextBlock, ShortAnswerBlock, MultipleChoiceBlock } from '@/components/blocks';
+import {
+  TextBlock,
+  ShortAnswerBlock,
+  MultipleChoiceBlock,
+} from '@/components/blocks';
 import type { BlockType, BlockComponentProps, Option } from '@/types';
 
 export interface BlockComponentBaseProps extends BlockComponentProps {

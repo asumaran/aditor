@@ -19,7 +19,13 @@ interface OptionItemProps {
   shouldFocus?: boolean;
 }
 
-const OptionItem: FC<OptionItemProps> = ({ option, onChange, onEnterPress, onRemove, shouldFocus }) => {
+const OptionItem: FC<OptionItemProps> = ({
+  option,
+  onChange,
+  onEnterPress,
+  onRemove,
+  shouldFocus,
+}) => {
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -42,22 +48,22 @@ const OptionItem: FC<OptionItemProps> = ({ option, onChange, onEnterPress, onRem
   };
 
   return (
-    <div className="flex items-center space-x-2">
+    <div className='flex items-center space-x-2'>
       <input
-        type="radio"
-        name="multiple-choice-preview"
-        className="h-4 w-4 text-blue-600"
+        type='radio'
+        name='multiple-choice-preview'
+        className='h-4 w-4 text-blue-600'
         disabled
       />
       <input
         ref={inputRef}
-        type="text"
+        type='text'
         value={option.text}
         onChange={(e) => onChange(option.id, e.target.value)}
         onKeyDown={handleKeyDown}
         onBlur={handleBlur}
-        className="flex-1 p-1 border-none outline-none focus:bg-gray-50 rounded"
-        placeholder="Option text"
+        className='flex-1 p-1 border-none outline-none focus:bg-gray-50 rounded'
+        placeholder='Option text'
       />
     </div>
   );
@@ -87,17 +93,23 @@ export const MultipleChoiceBlock: FC<MultipleChoiceBlockProps> = ({
     onOptionsChange([...options, newOption]);
   }, [options, onOptionsChange]);
 
-  const updateOption = useCallback((optionId: number, text: string) => {
-    onOptionsChange(
-      options.map(option =>
-        option.id === optionId ? { ...option, text } : option
-      )
-    );
-  }, [options, onOptionsChange]);
+  const updateOption = useCallback(
+    (optionId: number, text: string) => {
+      onOptionsChange(
+        options.map((option) =>
+          option.id === optionId ? { ...option, text } : option,
+        ),
+      );
+    },
+    [options, onOptionsChange],
+  );
 
-  const removeOption = useCallback((optionId: number) => {
-    onOptionsChange(options.filter(option => option.id !== optionId));
-  }, [options, onOptionsChange]);
+  const removeOption = useCallback(
+    (optionId: number) => {
+      onOptionsChange(options.filter((option) => option.id !== optionId));
+    },
+    [options, onOptionsChange],
+  );
 
   const handleEnterPress = useCallback(() => {
     addOption();
@@ -115,12 +127,12 @@ export const MultipleChoiceBlock: FC<MultipleChoiceBlockProps> = ({
         onBlur={handleBlur}
         className={cn(
           'min-h-[1.5rem] p-1 rounded focus:outline-none focus:ring-1 focus:ring-blue-500',
-          !currentValue && 'text-gray-400'
+          !currentValue && 'text-gray-400',
         )}
-        data-placeholder="Question label"
+        data-placeholder='Question label'
       />
-      
-      <div className="space-y-2">
+
+      <div className='space-y-2'>
         {options.map((option, index) => (
           <OptionItem
             key={option.id}
@@ -131,11 +143,11 @@ export const MultipleChoiceBlock: FC<MultipleChoiceBlockProps> = ({
             shouldFocus={index === options.length - 1 && option.text === ''}
           />
         ))}
-        
+
         <button
-          type="button"
+          type='button'
           onClick={addOption}
-          className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+          className='text-blue-600 hover:text-blue-800 text-sm font-medium'
         >
           Add option
         </button>

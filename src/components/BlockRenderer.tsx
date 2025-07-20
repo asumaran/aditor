@@ -47,13 +47,14 @@ export const BlockRenderer: FC<BlockRendererProps> = ({
     className,
   };
 
-  const specificProps = block.type === 'multiple_choice' 
-    ? {
-        ...commonProps,
-        options: block.properties.options,
-        onOptionsChange: handleOptionsChange,
-      }
-    : commonProps;
+  const specificProps =
+    block.type === 'multiple_choice'
+      ? {
+          ...commonProps,
+          options: block.properties.options,
+          onOptionsChange: handleOptionsChange,
+        }
+      : commonProps;
 
   return (
     <ErrorBoundary

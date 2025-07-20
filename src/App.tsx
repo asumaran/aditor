@@ -10,8 +10,14 @@ const INITIAL_BLOCKS: readonly Block[] = [
 ] as const;
 
 const App: FC = () => {
-  const { blocks, addTextBlock, addShortAnswerBlock, addMultipleChoiceBlock, updateBlock, updateBlockOptions } =
-    useBlocks(INITIAL_BLOCKS);
+  const {
+    blocks,
+    addTextBlock,
+    addShortAnswerBlock,
+    addMultipleChoiceBlock,
+    updateBlock,
+    updateBlockOptions,
+  } = useBlocks(INITIAL_BLOCKS);
 
   const handleBlockChange = (id: Block['id'], value: string) => {
     updateBlock(id, value);
@@ -50,7 +56,7 @@ const App: FC = () => {
         </div>
       </div>
       <hr />
-      <div className='my-10 text-sm text-gray-500'>
+      <div className='my-10 text-[12px] text-gray-500'>
         <pre>{JSON.stringify(blocks, null, 2)}</pre>
       </div>
     </main>

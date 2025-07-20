@@ -15,10 +15,11 @@ interface OptionItemProps {
   option: Option;
   onChange: (optionId: number, text: string) => void;
   onEnterPress: () => void;
+  onRemove: (optionId: number) => void;
   shouldFocus?: boolean;
 }
 
-const OptionItem: FC<OptionItemProps> = ({ option, onChange, onEnterPress, shouldFocus }) => {
+const OptionItem: FC<OptionItemProps> = ({ option, onChange, onEnterPress, onRemove, shouldFocus }) => {
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -31,6 +32,12 @@ const OptionItem: FC<OptionItemProps> = ({ option, onChange, onEnterPress, shoul
     if (e.key === 'Enter') {
       e.preventDefault();
       onEnterPress();
+    }
+  };
+
+  const handleBlur = () => {
+    if (option.text.trim() === '') {
+      onRemove(option.id);
     }
   };
 
@@ -48,6 +55,7 @@ const OptionItem: FC<OptionItemProps> = ({ option, onChange, onEnterPress, shoul
         value={option.text}
         onChange={(e) => onChange(option.id, e.target.value)}
         onKeyDown={handleKeyDown}
+        onBlur={handleBlur}
         className="flex-1 p-1 border-none outline-none focus:bg-gray-50 rounded"
         placeholder="Option text"
       />
@@ -87,6 +95,10 @@ export const MultipleChoiceBlock: FC<MultipleChoiceBlockProps> = ({
     );
   }, [options, onOptionsChange]);
 
+  const removeOption = useCallback((optionId: number) => {
+    onOptionsChange(options.filter(option => option.id !== optionId));
+  }, [options, onOptionsChange]);
+
   const handleEnterPress = useCallback(() => {
     addOption();
   }, [addOption]);
@@ -115,6 +127,7 @@ export const MultipleChoiceBlock: FC<MultipleChoiceBlockProps> = ({
             option={option}
             onChange={updateOption}
             onEnterPress={handleEnterPress}
+            onRemove={removeOption}
             shouldFocus={index === options.length - 1 && option.text === ''}
           />
         ))}

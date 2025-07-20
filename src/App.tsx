@@ -14,7 +14,7 @@ const INITIAL_BLOCKS: readonly Block[] = [
 ] as const;
 
 const TextBlock: FC<BlockComponentProps> = ({ children }) => {
-  return <p>{children}</p>;
+  return <div contentEditable={true}>{children}</div>;
 };
 
 const COMPONENT_REGISTRY = {
@@ -38,15 +38,25 @@ const App: FC = () => {
 
   return (
     <main className='max-w-screen-xl mx-auto bg-white p-10 m-10 rounded shadow-sm'>
-      <section className='space-y-4' aria-label='Content blocks'>
-        {blocks.map((block) => {
-          const Component = COMPONENT_REGISTRY[block.type];
-          return <Component key={block.id}>{block.properties.title}</Component>;
-        })}
-      </section>
+      <h1>Form Editor</h1>
+      <hr />
+      <div className='mb-10'>
+        <section className='space-y-3' aria-label='Content blocks'>
+          {blocks.map((block) => {
+            const Component = COMPONENT_REGISTRY[block.type];
+            return (
+              <Component key={block.id}>{block.properties.title}</Component>
+            );
+          })}
+        </section>
 
-      <div className='mt-6'>
-        <Button onClick={addTextBlock}>Add new component</Button>
+        <div className='mt-6'>
+          <Button onClick={addTextBlock}>Add new component</Button>
+        </div>
+      </div>
+      <hr />
+      <div className='my-10 text-sm text-gray-500'>
+        <pre>{JSON.stringify(blocks, null, 2)}</pre>
       </div>
     </main>
   );

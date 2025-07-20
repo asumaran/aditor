@@ -1,12 +1,14 @@
 import { useState, useCallback } from 'react';
-import type { Block } from '@/types';
-import { createTextBlock, createShortAnswerBlock } from '@/lib/blockFactory';
+import type { Block, Option } from '@/types';
+import { createTextBlock, createShortAnswerBlock, createMultipleChoiceBlock } from '@/lib/blockFactory';
 
 interface UseBlocksReturn {
   blocks: readonly Block[];
   addTextBlock: () => void;
   addShortAnswerBlock: () => void;
+  addMultipleChoiceBlock: () => void;
   updateBlock: (id: Block['id'], value: string) => void;
+  updateBlockOptions: (id: Block['id'], options: readonly Option[]) => void;
   removeBlock: (id: Block['id']) => void;
 }
 
@@ -22,6 +24,11 @@ export const useBlocks = (
 
   const addShortAnswerBlock = useCallback(() => {
     const newBlock = createShortAnswerBlock('Question');
+    setBlocks((prevBlocks) => [...prevBlocks, newBlock]);
+  }, []);
+
+  const addMultipleChoiceBlock = useCallback(() => {
+    const newBlock = createMultipleChoiceBlock('Question');
     setBlocks((prevBlocks) => [...prevBlocks, newBlock]);
   }, []);
 
@@ -41,9 +48,27 @@ export const useBlocks = (
               ...block,
               properties: { ...block.properties, label: value },
             };
+          case 'multiple_choice':
+            return {
+              ...block,
+              properties: { ...block.properties, label: value },
+            };
           default:
             return block;
         }
+      }),
+    );
+  }, []);
+
+  const updateBlockOptions = useCallback((id: Block['id'], options: readonly Option[]) => {
+    setBlocks((prevBlocks) =>
+      prevBlocks.map((block) => {
+        if (block.id !== id || block.type !== 'multiple_choice') return block;
+        
+        return {
+          ...block,
+          properties: { ...block.properties, options },
+        };
       }),
     );
   }, []);
@@ -56,7 +81,9 @@ export const useBlocks = (
     blocks,
     addTextBlock,
     addShortAnswerBlock,
+    addMultipleChoiceBlock,
     updateBlock,
+    updateBlockOptions,
     removeBlock,
   };
 };

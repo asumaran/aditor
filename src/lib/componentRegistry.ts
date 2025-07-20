@@ -1,22 +1,28 @@
 import { type FC } from 'react';
-import { TextBlock, ShortAnswerBlock } from '@/components/blocks';
-import type { BlockType, BlockComponentProps } from '@/types';
+import { TextBlock, ShortAnswerBlock, MultipleChoiceBlock } from '@/components/blocks';
+import type { BlockType, BlockComponentProps, Option } from '@/types';
 
 export interface BlockComponentBaseProps extends BlockComponentProps {
   value: string;
   onChange: (value: string) => void;
 }
 
-type ComponentRegistry = Record<BlockType, FC<BlockComponentBaseProps>>;
+export interface MultipleChoiceComponentProps extends BlockComponentBaseProps {
+  options: readonly Option[];
+  onOptionsChange: (options: readonly Option[]) => void;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type ComponentRegistry = Record<BlockType, FC<any>>;
 
 export const COMPONENT_REGISTRY: ComponentRegistry = {
   text: TextBlock,
   short_answer: ShortAnswerBlock,
+  multiple_choice: MultipleChoiceBlock,
 } as const;
 
-export const getBlockComponent = (
-  type: BlockType,
-): FC<BlockComponentBaseProps> => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const getBlockComponent = (type: BlockType): FC<any> => {
   const Component = COMPONENT_REGISTRY[type];
 
   if (!Component) {

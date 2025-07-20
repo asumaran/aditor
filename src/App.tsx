@@ -3,18 +3,22 @@ import { Button } from '@/components/ui/button';
 import { BlockRenderer } from '@/components';
 import { useBlocks } from '@/hooks';
 import { createTextBlock } from '@/lib/blockFactory';
-import type { Block } from '@/types';
+import type { Block, Option } from '@/types';
 
 const INITIAL_BLOCKS: readonly Block[] = [
   createTextBlock('Welcome to the editor!'),
 ] as const;
 
 const App: FC = () => {
-  const { blocks, addTextBlock, addShortAnswerBlock, updateBlock } =
+  const { blocks, addTextBlock, addShortAnswerBlock, addMultipleChoiceBlock, updateBlock, updateBlockOptions } =
     useBlocks(INITIAL_BLOCKS);
 
   const handleBlockChange = (id: Block['id'], value: string) => {
     updateBlock(id, value);
+  };
+
+  const handleOptionsChange = (id: Block['id'], options: readonly Option[]) => {
+    updateBlockOptions(id, options);
   };
 
   return (
@@ -27,6 +31,7 @@ const App: FC = () => {
               key={block.id}
               block={block}
               onChange={handleBlockChange}
+              onOptionsChange={handleOptionsChange}
               className='w-full'
             />
           ))}
@@ -38,6 +43,9 @@ const App: FC = () => {
           </Button>
           <Button onClick={addShortAnswerBlock} variant='outline'>
             Add Short Answer
+          </Button>
+          <Button onClick={addMultipleChoiceBlock} variant='outline'>
+            Add Multiple Choice
           </Button>
         </div>
       </div>

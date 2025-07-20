@@ -1,7 +1,9 @@
-import type { Block, BlockType } from '@/types';
+import type { Block, BlockType, TextBlock, ShortAnswerBlock } from '@/types';
 import { generateId } from './utils';
 
-export const createTextBlock = (title: string = 'New text block'): Block => ({
+export const createTextBlock = (
+  title: string = 'New text block',
+): TextBlock => ({
   id: generateId(),
   type: 'text' as const,
   properties: {
@@ -9,10 +11,22 @@ export const createTextBlock = (title: string = 'New text block'): Block => ({
   },
 });
 
-export const createBlock = (type: BlockType, title: string = 'New block'): Block => {
+export const createShortAnswerBlock = (
+  label: string = 'Question',
+): ShortAnswerBlock => ({
+  id: generateId(),
+  type: 'short_answer' as const,
+  properties: {
+    label,
+  },
+});
+
+export const createBlock = (type: BlockType, content: string = ''): Block => {
   switch (type) {
     case 'text':
-      return createTextBlock(title);
+      return createTextBlock(content || 'New text block');
+    case 'short_answer':
+      return createShortAnswerBlock(content || 'Question');
     default:
       throw new Error(`Unknown block type: ${type}`);
   }

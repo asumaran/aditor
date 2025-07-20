@@ -1,14 +1,28 @@
-export type BlockType = 'text';
+export type BlockType = 'text' | 'short_answer';
 
-export interface BlockProperties {
+export interface TextBlockProperties {
   title: string;
 }
 
-export interface Block {
-  readonly id: number;
-  readonly type: BlockType;
-  readonly properties: BlockProperties;
+export interface ShortAnswerBlockProperties {
+  label: string;
 }
+
+export type BlockProperties = TextBlockProperties | ShortAnswerBlockProperties;
+
+export interface TextBlock {
+  readonly id: number;
+  readonly type: 'text';
+  readonly properties: TextBlockProperties;
+}
+
+export interface ShortAnswerBlock {
+  readonly id: number;
+  readonly type: 'short_answer';
+  readonly properties: ShortAnswerBlockProperties;
+}
+
+export type Block = TextBlock | ShortAnswerBlock;
 
 export interface BlockComponentProps {
   children?: React.ReactNode;

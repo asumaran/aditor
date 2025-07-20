@@ -10,10 +10,11 @@ const INITIAL_BLOCKS: readonly Block[] = [
 ] as const;
 
 const App: FC = () => {
-  const { blocks, addTextBlock, updateBlock } = useBlocks(INITIAL_BLOCKS);
+  const { blocks, addTextBlock, addShortAnswerBlock, updateBlock } =
+    useBlocks(INITIAL_BLOCKS);
 
   const handleBlockChange = (id: Block['id'], value: string) => {
-    updateBlock(id, { title: value });
+    updateBlock(id, value);
   };
 
   return (
@@ -31,9 +32,12 @@ const App: FC = () => {
           ))}
         </section>
 
-        <div className='mt-6'>
+        <div className='mt-6 space-x-2'>
           <Button onClick={addTextBlock} variant='default'>
             Add Text Block
+          </Button>
+          <Button onClick={addShortAnswerBlock} variant='outline'>
+            Add Short Answer
           </Button>
         </div>
       </div>

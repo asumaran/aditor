@@ -10,11 +10,11 @@ interface TextBlockProps extends BlockComponentProps {
   className?: string;
 }
 
-export const TextBlock: FC<TextBlockProps> = ({ 
-  value, 
-  onChange, 
-  placeholder = 'Enter text...', 
-  className 
+export const TextBlock: FC<TextBlockProps> = ({
+  value,
+  onChange,
+  placeholder = 'Enter text...',
+  className,
 }) => {
   const {
     elementRef,
@@ -37,7 +37,7 @@ export const TextBlock: FC<TextBlockProps> = ({
       className={cn(
         'min-h-[1.5rem] p-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
         !currentValue && 'text-gray-400',
-        className
+        className,
       )}
       data-placeholder={placeholder}
     />

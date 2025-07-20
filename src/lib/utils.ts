@@ -9,17 +9,6 @@ export const generateId = (): number => {
   return Date.now() + Math.floor(Math.random() * 1000);
 };
 
-export const debounce = <T extends (...args: never[]) => void>(
-  func: T,
-  delay: number,
-): T => {
-  let timeoutId: NodeJS.Timeout;
-  return ((...args: Parameters<T>) => {
-    clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => func(...args), delay);
-  }) as T;
-};
-
 export const formatError = (error: unknown): string => {
   if (error instanceof Error) {
     return error.message;

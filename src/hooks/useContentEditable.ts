@@ -1,25 +1,17 @@
-import { useRef, useEffect, useCallback, useMemo, useState } from 'react';
-import { debounce } from '@/lib/utils';
+import { useRef, useEffect, useCallback, useState } from 'react';
 
 interface UseContentEditableProps {
   value: string;
   onChange: (value: string) => void;
-  debounceMs?: number;
 }
 
 export const useContentEditable = ({
   value,
   onChange,
-  debounceMs = 300,
 }: UseContentEditableProps) => {
   const elementRef = useRef<HTMLDivElement>(null);
   const isComposingRef = useRef(false);
   const [currentValue, setCurrentValue] = useState(value);
-
-  const debouncedOnChange = useMemo(
-    () => debounce(onChange, debounceMs),
-    [onChange, debounceMs],
-  );
 
   const moveCursorToEnd = useCallback(() => {
     const element = elementRef.current;
@@ -41,9 +33,9 @@ export const useContentEditable = ({
       const target = event.target as HTMLDivElement;
       const newValue = target.innerText.replace(/^\n+|\n+$/g, '').trim();
       setCurrentValue(newValue);
-      debouncedOnChange(newValue);
+      onChange(newValue);
     },
-    [debouncedOnChange],
+    [onChange],
   );
 
   const handleCompositionStart = useCallback(() => {
@@ -56,9 +48,9 @@ export const useContentEditable = ({
       const target = event.target as HTMLDivElement;
       const newValue = target.innerText.replace(/^\n+|\n+$/g, '').trim();
       setCurrentValue(newValue);
-      debouncedOnChange(newValue);
+      onChange(newValue);
     },
-    [debouncedOnChange],
+    [onChange],
   );
 
   const handleBlur = useCallback(
@@ -70,10 +62,10 @@ export const useContentEditable = ({
       if (!newValue) {
         target.innerHTML = '';
         setCurrentValue('');
-        debouncedOnChange('');
+        onChange('');
       }
     },
-    [debouncedOnChange],
+    [onChange],
   );
 
   useEffect(() => {

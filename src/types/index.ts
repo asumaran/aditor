@@ -5,9 +5,11 @@ export type {
   TextBlockProperties,
   ShortAnswerBlockProperties,
   MultipleChoiceBlockProperties,
+  MultiselectBlockProperties,
   Block,
   TextBlock,
   ShortAnswerBlock,
   MultipleChoiceBlock,
+  MultiselectBlock,
   BlockComponentProps,
 } from './blocks';

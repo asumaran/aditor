@@ -15,6 +15,7 @@ const App: FC = () => {
     addTextBlock,
     addShortAnswerBlock,
     addMultipleChoiceBlock,
+    addMultiselectBlock,
     updateBlock,
     updateBlockOptions,
   } = useBlocks(INITIAL_BLOCKS);
@@ -52,6 +53,9 @@ const App: FC = () => {
           </Button>
           <Button onClick={addMultipleChoiceBlock} variant='outline'>
             Add Multiple Choice
+          </Button>
+          <Button onClick={addMultiselectBlock} variant='outline'>
+            Add Multiselect
           </Button>
         </div>
       </div>

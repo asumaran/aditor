@@ -4,6 +4,7 @@ import type {
   TextBlock,
   ShortAnswerBlock,
   MultipleChoiceBlock,
+  MultiselectBlock,
 } from '@/types';
 import { generateId } from './utils';
 import { createDefaultOptions } from './optionUtils';
@@ -39,6 +40,16 @@ export const createMultipleChoiceBlock = (
   },
 });
 
+export const createMultiselectBlock = (
+  label: string = 'Select label',
+): MultiselectBlock => ({
+  id: generateId(),
+  type: 'multiselect' as const,
+  properties: {
+    label,
+  },
+});
+
 export const createBlock = (type: BlockType, content: string = ''): Block => {
   switch (type) {
     case 'text':
@@ -47,6 +58,8 @@ export const createBlock = (type: BlockType, content: string = ''): Block => {
       return createShortAnswerBlock(content || 'Question');
     case 'multiple_choice':
       return createMultipleChoiceBlock(content || 'Question');
+    case 'multiselect':
+      return createMultiselectBlock(content || 'Select label');
     default:
       throw new Error(`Unknown block type: ${type}`);
   }

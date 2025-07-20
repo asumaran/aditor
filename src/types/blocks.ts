@@ -1,4 +1,4 @@
-export type BlockType = 'text' | 'short_answer' | 'multiple_choice';
+export type BlockType = 'text' | 'short_answer' | 'multiple_choice' | 'multiselect';
 
 export interface Option {
   readonly id: number;
@@ -18,10 +18,15 @@ export interface MultipleChoiceBlockProperties {
   options: readonly Option[];
 }
 
+export interface MultiselectBlockProperties {
+  label: string;
+}
+
 export type BlockProperties =
   | TextBlockProperties
   | ShortAnswerBlockProperties
-  | MultipleChoiceBlockProperties;
+  | MultipleChoiceBlockProperties
+  | MultiselectBlockProperties;
 
 export interface TextBlock {
   readonly id: number;
@@ -41,7 +46,13 @@ export interface MultipleChoiceBlock {
   readonly properties: MultipleChoiceBlockProperties;
 }
 
-export type Block = TextBlock | ShortAnswerBlock | MultipleChoiceBlock;
+export interface MultiselectBlock {
+  readonly id: number;
+  readonly type: 'multiselect';
+  readonly properties: MultiselectBlockProperties;
+}
+
+export type Block = TextBlock | ShortAnswerBlock | MultipleChoiceBlock | MultiselectBlock;
 
 export interface BlockComponentProps {
   children?: React.ReactNode;

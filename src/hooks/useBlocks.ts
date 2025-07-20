@@ -4,6 +4,7 @@ import {
   createTextBlock,
   createShortAnswerBlock,
   createMultipleChoiceBlock,
+  createMultiselectBlock,
 } from '@/lib/blockFactory';
 
 interface UseBlocksReturn {
@@ -11,6 +12,7 @@ interface UseBlocksReturn {
   addTextBlock: () => void;
   addShortAnswerBlock: () => void;
   addMultipleChoiceBlock: () => void;
+  addMultiselectBlock: () => void;
   updateBlock: (id: Block['id'], value: string) => void;
   updateBlockOptions: (id: Block['id'], options: readonly Option[]) => void;
   removeBlock: (id: Block['id']) => void;
@@ -36,6 +38,11 @@ export const useBlocks = (
     setBlocks((prevBlocks) => [...prevBlocks, newBlock]);
   }, []);
 
+  const addMultiselectBlock = useCallback(() => {
+    const newBlock = createMultiselectBlock('Select label');
+    setBlocks((prevBlocks) => [...prevBlocks, newBlock]);
+  }, []);
+
   const updateBlock = useCallback((id: Block['id'], value: string) => {
     setBlocks((prevBlocks) =>
       prevBlocks.map((block) => {
@@ -53,6 +60,11 @@ export const useBlocks = (
               properties: { ...block.properties, label: value },
             };
           case 'multiple_choice':
+            return {
+              ...block,
+              properties: { ...block.properties, label: value },
+            };
+          case 'multiselect':
             return {
               ...block,
               properties: { ...block.properties, label: value },
@@ -89,6 +101,7 @@ export const useBlocks = (
     addTextBlock,
     addShortAnswerBlock,
     addMultipleChoiceBlock,
+    addMultiselectBlock,
     updateBlock,
     updateBlockOptions,
     removeBlock,

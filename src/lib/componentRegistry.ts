@@ -3,6 +3,7 @@ import {
   TextBlock,
   ShortAnswerBlock,
   MultipleChoiceBlock,
+  MultiselectBlock,
 } from '@/components/blocks';
 import type { BlockType, BlockComponentProps, Option } from '@/types';
 
@@ -23,6 +24,7 @@ export const COMPONENT_REGISTRY: ComponentRegistry = {
   text: TextBlock,
   short_answer: ShortAnswerBlock,
   multiple_choice: MultipleChoiceBlock,
+  multiselect: MultiselectBlock,
 } as const;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

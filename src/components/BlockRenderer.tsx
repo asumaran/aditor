@@ -18,6 +18,8 @@ const getBlockValue = (block: Block): string => {
       return block.properties.label;
     case 'multiple_choice':
       return block.properties.label;
+    case 'multiselect':
+      return block.properties.label;
     default:
       return '';
   }

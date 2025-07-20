@@ -12,4 +12,5 @@ export interface Block {
 
 export interface BlockComponentProps {
   children?: React.ReactNode;
+  className?: string;
 }

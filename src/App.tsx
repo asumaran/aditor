@@ -1,57 +1,40 @@
-import { useState, useCallback, type FC } from 'react';
+import { type FC } from 'react';
 import { Button } from '@/components/ui/button';
-import { generateId } from '@/lib/utils';
-import type { Block, BlockType, BlockComponentProps } from '@/types';
+import { BlockRenderer } from '@/components';
+import { useBlocks } from '@/hooks';
+import { createTextBlock } from '@/lib/blockFactory';
+import type { Block } from '@/types';
 
 const INITIAL_BLOCKS: readonly Block[] = [
-  {
-    id: 1,
-    type: 'text',
-    properties: {
-      title: 'foo',
-    },
-  },
+  createTextBlock('Welcome to the editor!'),
 ] as const;
 
-const TextBlock: FC<BlockComponentProps> = ({ children }) => {
-  return <div contentEditable={true}>{children}</div>;
-};
-
-const COMPONENT_REGISTRY = {
-  text: TextBlock,
-} as const satisfies Record<BlockType, FC<BlockComponentProps>>;
-
 const App: FC = () => {
-  const [blocks, setBlocks] = useState<readonly Block[]>(INITIAL_BLOCKS);
+  const { blocks, addTextBlock, updateBlock } = useBlocks(INITIAL_BLOCKS);
 
-  const addTextBlock = useCallback(() => {
-    const newBlock: Block = {
-      id: generateId(),
-      type: 'text',
-      properties: {
-        title: 'bar',
-      },
-    };
-
-    setBlocks((prevBlocks) => [...prevBlocks, newBlock]);
-  }, []);
+  const handleBlockChange = (id: Block['id'], value: string) => {
+    updateBlock(id, { title: value });
+  };
 
   return (
     <main className='max-w-screen-xl mx-auto bg-white p-10 m-10 rounded shadow-sm'>
-      <h1>Form Editor</h1>
-      <hr />
+      <h1 className='mb-10'>Form Editor</h1>
       <div className='mb-10'>
         <section className='space-y-3' aria-label='Content blocks'>
-          {blocks.map((block) => {
-            const Component = COMPONENT_REGISTRY[block.type];
-            return (
-              <Component key={block.id}>{block.properties.title}</Component>
-            );
-          })}
+          {blocks.map((block) => (
+            <BlockRenderer
+              key={block.id}
+              block={block}
+              onChange={handleBlockChange}
+              className='w-full'
+            />
+          ))}
         </section>
 
         <div className='mt-6'>
-          <Button onClick={addTextBlock}>Add new component</Button>
+          <Button onClick={addTextBlock} variant='default'>
+            Add Text Block
+          </Button>
         </div>
       </div>
       <hr />

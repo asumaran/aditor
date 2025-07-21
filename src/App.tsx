@@ -34,7 +34,7 @@ const App: FC = () => {
   };
 
   return (
-    <main className='max-w-screen-xl mx-auto bg-white p-10 m-10 rounded shadow-sm'>
+    <main className='max-w-2xl mx-auto bg-white p-10 m-10 rounded shadow-sm'>
       <h1 className='mb-10'>Form Editor</h1>
       <div className='mb-10'>
         <section className='space-y-3' aria-label='Content blocks'>

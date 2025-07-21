@@ -1,6 +1,5 @@
 import type {
   Block,
-  BlockType,
   TextBlock,
   ShortAnswerBlock,
   MultipleChoiceBlock,
@@ -49,21 +48,6 @@ export const createMultiselectBlock = (
     label,
   },
 });
-
-export const createBlock = (type: BlockType, content: string = ''): Block => {
-  switch (type) {
-    case 'text':
-      return createTextBlock(content || 'New text block');
-    case 'short_answer':
-      return createShortAnswerBlock(content || 'Question');
-    case 'multiple_choice':
-      return createMultipleChoiceBlock(content || 'Question');
-    case 'multiselect':
-      return createMultiselectBlock(content || 'Select label');
-    default:
-      throw new Error(`Unknown block type: ${type}`);
-  }
-};
 
 export const cloneBlock = (block: Block): Block => ({
   ...block,

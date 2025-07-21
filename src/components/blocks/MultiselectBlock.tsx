@@ -45,7 +45,7 @@ export const MultiselectBlock: FC<MultiselectBlockProps> = ({
         onBlur={handleBlur}
         onClick={handleClickWithStopPropagation}
         className={cn(
-          'min-h-[1.5rem] p-1 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 w-fit cursor-text',
+          'min-h-[1.5rem] p-1 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 w-fit cursor-text font-bold',
           !currentValue && 'text-gray-400',
         )}
         data-placeholder='Select label'

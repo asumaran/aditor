@@ -5,6 +5,7 @@
 
 body {
   background-color: #efefef;
+  font-family: 'SF Pro Text',-apple-system,BlinkMacSystemFont,sans-serif;
 }
 
 @theme inline {

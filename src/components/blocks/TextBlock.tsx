@@ -1,5 +1,5 @@
 import { type FC } from 'react';
-import { useContentEditable } from '@/hooks';
+import { useContentEditable, useStopPropagation } from '@/hooks';
 import { cn } from '@/lib/utils';
 import type { BlockComponentProps } from '@/types';
 
@@ -25,6 +25,8 @@ export const TextBlock: FC<TextBlockProps> = ({
     currentValue,
   } = useContentEditable({ value, onChange });
 
+  const handleClickWithStopPropagation = useStopPropagation();
+
   return (
     <div
       ref={elementRef}
@@ -34,8 +36,9 @@ export const TextBlock: FC<TextBlockProps> = ({
       onCompositionStart={handleCompositionStart}
       onCompositionEnd={handleCompositionEnd}
       onBlur={handleBlur}
+      onClick={handleClickWithStopPropagation}
       className={cn(
-        'min-h-[1.5rem] p-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
+        'min-h-[1.5rem] p-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-text',
         !currentValue && 'text-gray-400',
         className,
       )}

@@ -1,5 +1,5 @@
 import { type FC } from 'react';
-import { useContentEditable } from '@/hooks';
+import { useContentEditable, useStopPropagation } from '@/hooks';
 import { cn } from '@/lib/utils';
 import type { BlockComponentProps } from '@/types';
 
@@ -23,6 +23,9 @@ export const ShortAnswerBlock: FC<ShortAnswerBlockProps> = ({
     currentValue,
   } = useContentEditable({ value, onChange });
 
+  const handleClickWithStopPropagation = useStopPropagation();
+  const handleInputClickWithStopPropagation = useStopPropagation();
+
   return (
     <div className={cn('space-y-2', className)}>
       <div
@@ -33,8 +36,9 @@ export const ShortAnswerBlock: FC<ShortAnswerBlockProps> = ({
         onCompositionStart={handleCompositionStart}
         onCompositionEnd={handleCompositionEnd}
         onBlur={handleBlur}
+        onClick={handleClickWithStopPropagation}
         className={cn(
-          'min-h-[1.5rem] p-1 rounded focus:outline-none focus:ring-1 focus:ring-blue-500',
+          'min-h-[1.5rem] p-1 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 w-fit cursor-text',
           !currentValue && 'text-gray-400',
         )}
         data-placeholder='Question label'
@@ -42,6 +46,7 @@ export const ShortAnswerBlock: FC<ShortAnswerBlockProps> = ({
       <input
         type='text'
         placeholder='Short answer text'
+        onClick={handleInputClickWithStopPropagation}
         className='w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent'
       />
     </div>

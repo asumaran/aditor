@@ -1,5 +1,5 @@
 import { type FC } from 'react';
-import { useContentEditable } from '@/hooks';
+import { useContentEditable, useStopPropagation } from '@/hooks';
 import { cn } from '@/lib/utils';
 import {
   Select,
@@ -30,6 +30,9 @@ export const MultiselectBlock: FC<MultiselectBlockProps> = ({
     currentValue,
   } = useContentEditable({ value, onChange });
 
+  const handleClickWithStopPropagation = useStopPropagation();
+  const handleSelectClickWithStopPropagation = useStopPropagation();
+
   return (
     <div className={cn('space-y-2', className)}>
       <div
@@ -40,20 +43,24 @@ export const MultiselectBlock: FC<MultiselectBlockProps> = ({
         onCompositionStart={handleCompositionStart}
         onCompositionEnd={handleCompositionEnd}
         onBlur={handleBlur}
+        onClick={handleClickWithStopPropagation}
         className={cn(
-          'min-h-[1.5rem] p-1 rounded focus:outline-none focus:ring-1 focus:ring-blue-500',
-          !currentValue && 'text-gray-400'
+          'min-h-[1.5rem] p-1 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 w-fit cursor-text',
+          !currentValue && 'text-gray-400',
         )}
-        data-placeholder="Select label"
+        data-placeholder='Select label'
       />
       <Select>
-        <SelectTrigger className="w-full">
-          <SelectValue placeholder="Select an option" />
+        <SelectTrigger
+          className='w-full'
+          onClick={handleSelectClickWithStopPropagation}
+        >
+          <SelectValue placeholder='Select an option' />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="option1">Option 1</SelectItem>
-          <SelectItem value="option2">Option 2</SelectItem>
-          <SelectItem value="option3">Option 3</SelectItem>
+          <SelectItem value='option1'>Option 1</SelectItem>
+          <SelectItem value='option2'>Option 2</SelectItem>
+          <SelectItem value='option3'>Option 3</SelectItem>
         </SelectContent>
       </Select>
     </div>

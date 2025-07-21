@@ -28,6 +28,11 @@ const App: FC = () => {
     updateBlockOptions(id, options);
   };
 
+  const handleBlockClick = (blockId: Block['id']) => {
+    console.log('Block clicked:', blockId);
+    // TODO: Open popover for block customization
+  };
+
   return (
     <main className='max-w-screen-xl mx-auto bg-white p-10 m-10 rounded shadow-sm'>
       <h1 className='mb-10'>Form Editor</h1>
@@ -39,6 +44,7 @@ const App: FC = () => {
               block={block}
               onChange={handleBlockChange}
               onOptionsChange={handleOptionsChange}
+              onBlockClick={handleBlockClick}
               className='w-full'
             />
           ))}

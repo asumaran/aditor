@@ -1,5 +1,6 @@
 import { type FC } from 'react';
 import { ErrorBoundary } from './ErrorBoundary';
+import { BlockWrapper } from './BlockWrapper';
 import { getBlockComponent } from '@/lib/componentRegistry';
 import type { Block, Option } from '@/types';
 
@@ -7,6 +8,7 @@ interface BlockRendererProps {
   block: Block;
   onChange: (id: Block['id'], value: string) => void;
   onOptionsChange?: (id: Block['id'], options: readonly Option[]) => void;
+  onBlockClick?: (blockId: Block['id']) => void;
   className?: string;
 }
 
@@ -29,6 +31,7 @@ export const BlockRenderer: FC<BlockRendererProps> = ({
   block,
   onChange,
   onOptionsChange,
+  onBlockClick,
   className,
 }) => {
   const Component = getBlockComponent(block.type);
@@ -43,10 +46,15 @@ export const BlockRenderer: FC<BlockRendererProps> = ({
     }
   };
 
+  const handleBlockClick = () => {
+    if (onBlockClick) {
+      onBlockClick(block.id);
+    }
+  };
+
   const commonProps = {
     value: getBlockValue(block),
     onChange: handleChange,
-    className,
   };
 
   const specificProps =
@@ -59,14 +67,16 @@ export const BlockRenderer: FC<BlockRendererProps> = ({
       : commonProps;
 
   return (
-    <ErrorBoundary
-      fallback={
-        <div className='p-2 border border-red-200 rounded bg-red-50 text-red-600 text-sm'>
-          Error rendering block: {block.type}
-        </div>
-      }
-    >
-      <Component {...specificProps} />
-    </ErrorBoundary>
+    <BlockWrapper onBlockClick={handleBlockClick} className={className}>
+      <ErrorBoundary
+        fallback={
+          <div className='p-2 border border-red-200 rounded bg-red-50 text-red-600 text-sm'>
+            Error rendering block: {block.type}
+          </div>
+        }
+      >
+        <Component {...specificProps} />
+      </ErrorBoundary>
+    </BlockWrapper>
   );
 };

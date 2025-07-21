@@ -1,4 +1,8 @@
-export type BlockType = 'text' | 'short_answer' | 'multiple_choice' | 'multiselect';
+export type BlockType =
+  | 'text'
+  | 'short_answer'
+  | 'multiple_choice'
+  | 'multiselect';
 
 export interface Option {
   readonly id: number;
@@ -52,7 +56,11 @@ export interface MultiselectBlock {
   readonly properties: MultiselectBlockProperties;
 }
 
-export type Block = TextBlock | ShortAnswerBlock | MultipleChoiceBlock | MultiselectBlock;
+export type Block =
+  | TextBlock
+  | ShortAnswerBlock
+  | MultipleChoiceBlock
+  | MultiselectBlock;
 
 export interface BlockComponentProps {
   children?: React.ReactNode;

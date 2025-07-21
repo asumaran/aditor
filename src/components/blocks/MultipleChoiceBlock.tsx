@@ -1,5 +1,5 @@
 import { type FC, useCallback, useRef, useEffect } from 'react';
-import { useContentEditable } from '@/hooks';
+import { useContentEditable, useStopPropagation } from '@/hooks';
 import { cn, generateId } from '@/lib/utils';
 import type { BlockComponentProps, Option } from '@/types';
 
@@ -47,6 +47,12 @@ const OptionItem: FC<OptionItemProps> = ({
     }
   };
 
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onChange(option.id, e.target.value);
+  };
+
+  const handleClick = useStopPropagation();
+
   return (
     <div className='flex items-center space-x-2'>
       <input
@@ -59,10 +65,11 @@ const OptionItem: FC<OptionItemProps> = ({
         ref={inputRef}
         type='text'
         value={option.text}
-        onChange={(e) => onChange(option.id, e.target.value)}
+        onChange={handleChange}
         onKeyDown={handleKeyDown}
         onBlur={handleBlur}
-        className='flex-1 p-1 border-none outline-none focus:bg-gray-50 rounded'
+        onClick={handleClick}
+        className='flex-1 p-1 border-none outline-none focus:bg-gray-50 rounded cursor-text'
         placeholder='Option text'
       />
     </div>
@@ -85,7 +92,9 @@ export const MultipleChoiceBlock: FC<MultipleChoiceBlockProps> = ({
     currentValue,
   } = useContentEditable({ value, onChange });
 
-  const addOption = useCallback(() => {
+  const handleClickWithStopPropagation = useStopPropagation();
+
+  const addOption = useStopPropagation(() => {
     const newOption: Option = {
       id: generateId(),
       text: '',
@@ -125,8 +134,9 @@ export const MultipleChoiceBlock: FC<MultipleChoiceBlockProps> = ({
         onCompositionStart={handleCompositionStart}
         onCompositionEnd={handleCompositionEnd}
         onBlur={handleBlur}
+        onClick={handleClickWithStopPropagation}
         className={cn(
-          'min-h-[1.5rem] p-1 rounded focus:outline-none focus:ring-1 focus:ring-blue-500',
+          'min-h-[1.5rem] p-1 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 w-fit cursor-text',
           !currentValue && 'text-gray-400',
         )}
         data-placeholder='Question label'

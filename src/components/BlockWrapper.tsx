@@ -35,13 +35,33 @@ export const BlockWrapper: FC<BlockWrapperProps> = ({
     ['short_answer', 'multiple_choice', 'multiselect'].includes(blockType);
 
   const handleClick = () => {
-    setIsPopoverOpen(true);
+    if (isFormBlock) {
+      setIsPopoverOpen(true);
+    }
     onBlockClick?.();
   };
 
   const handleRequiredToggle = useCallback(() => {
     onRequiredChange?.(!required);
   }, [onRequiredChange, required]);
+
+  if (!isFormBlock) {
+    return (
+      <div
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        onClick={handleClick}
+        className={cn(
+          'relative transition-all duration-200 rounded-md p-2',
+          'hover:cursor-pointer',
+          isHovered && 'shadow-[0_0_0_2px_rgb(59_130_246_/_0.5)]', // Blue shadow on hover
+          className,
+        )}
+      >
+        {children}
+      </div>
+    );
+  }
 
   return (
     <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
@@ -67,21 +87,19 @@ export const BlockWrapper: FC<BlockWrapperProps> = ({
         alignOffset={-2}
         className='w-80 p-0'
       >
-        {isFormBlock && (
-          <div className='py-2'>
-            <div
-              className='flex items-center justify-between px-4 py-2 hover:bg-accent hover:cursor-pointer'
-              onClick={handleRequiredToggle}
-            >
-              <span className='text-sm font-medium'>Required</span>
-              <Switch
-                checked={required}
-                onCheckedChange={onRequiredChange}
-                onClick={(e) => e.stopPropagation()}
-              />
-            </div>
+        <div className='py-2'>
+          <div
+            className='flex items-center justify-between px-4 py-2 hover:bg-accent hover:cursor-pointer'
+            onClick={handleRequiredToggle}
+          >
+            <span className='text-sm font-medium'>Required</span>
+            <Switch
+              checked={required}
+              onCheckedChange={onRequiredChange}
+              onClick={(e) => e.stopPropagation()}
+            />
           </div>
-        )}
+        </div>
       </PopoverContent>
     </Popover>
   );

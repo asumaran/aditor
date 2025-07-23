@@ -25,6 +25,7 @@ export const createShortAnswerBlock = (
   type: 'short_answer' as const,
   properties: {
     label,
+    required: false,
   },
 });
 
@@ -36,6 +37,7 @@ export const createMultipleChoiceBlock = (
   properties: {
     label,
     options: createDefaultOptions(),
+    required: false,
   },
 });
 
@@ -46,6 +48,7 @@ export const createMultiselectBlock = (
   type: 'multiselect' as const,
   properties: {
     label,
+    required: false,
   },
 });
 

@@ -8,6 +8,7 @@ interface MultipleChoiceBlockProps extends BlockComponentProps {
   onChange: (value: string) => void;
   options: readonly Option[];
   onOptionsChange: (options: readonly Option[]) => void;
+  required?: boolean;
   className?: string;
 }
 
@@ -81,6 +82,7 @@ export const MultipleChoiceBlock: FC<MultipleChoiceBlockProps> = ({
   onChange,
   options,
   onOptionsChange,
+  required = false,
   className,
 }) => {
   const {
@@ -94,13 +96,17 @@ export const MultipleChoiceBlock: FC<MultipleChoiceBlockProps> = ({
 
   const handleClickWithStopPropagation = useStopPropagation();
 
-  const addOption = useStopPropagation(() => {
+  const addOption = useCallback(() => {
     const newOption: Option = {
       id: generateId(),
       text: '',
     };
     onOptionsChange([...options, newOption]);
   }, [options, onOptionsChange]);
+
+  const handleAddOptionClick = useStopPropagation(() => {
+    addOption();
+  });
 
   const updateOption = useCallback(
     (optionId: number, text: string) => {
@@ -126,21 +132,28 @@ export const MultipleChoiceBlock: FC<MultipleChoiceBlockProps> = ({
 
   return (
     <div className={cn('space-y-3', className)}>
-      <div
-        ref={elementRef}
-        contentEditable
-        suppressContentEditableWarning
-        onInput={handleInput}
-        onCompositionStart={handleCompositionStart}
-        onCompositionEnd={handleCompositionEnd}
-        onBlur={handleBlur}
-        onClick={handleClickWithStopPropagation}
-        className={cn(
-          'min-h-[1.5rem] p-1 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 w-fit cursor-text font-bold',
-          !currentValue && 'text-gray-400',
+      <div className='flex items-center'>
+        <div
+          ref={elementRef}
+          contentEditable
+          suppressContentEditableWarning
+          onInput={handleInput}
+          onCompositionStart={handleCompositionStart}
+          onCompositionEnd={handleCompositionEnd}
+          onBlur={handleBlur}
+          onClick={handleClickWithStopPropagation}
+          className={cn(
+            'min-h-[1.5rem] p-1 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 w-fit cursor-text font-bold',
+            !currentValue && 'text-gray-400',
+          )}
+          data-placeholder='Question label'
+        />
+        {required && (
+          <span className='text-red-500 ml-1' aria-label='Required field'>
+            *
+          </span>
         )}
-        data-placeholder='Question label'
-      />
+      </div>
 
       <div className='space-y-2'>
         {options.map((option, index) => (
@@ -156,7 +169,7 @@ export const MultipleChoiceBlock: FC<MultipleChoiceBlockProps> = ({
 
         <button
           type='button'
-          onClick={addOption}
+          onClick={handleAddOptionClick}
           className='text-blue-600 hover:text-blue-800 text-sm font-medium'
         >
           Add option

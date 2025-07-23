@@ -15,15 +15,18 @@ export interface TextBlockProperties {
 
 export interface ShortAnswerBlockProperties {
   label: string;
+  required: boolean;
 }
 
 export interface MultipleChoiceBlockProperties {
   label: string;
   options: readonly Option[];
+  required: boolean;
 }
 
 export interface MultiselectBlockProperties {
   label: string;
+  required: boolean;
 }
 
 export type BlockProperties =

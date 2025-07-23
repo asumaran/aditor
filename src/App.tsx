@@ -18,6 +18,7 @@ const App: FC = () => {
     addMultiselectBlock,
     updateBlock,
     updateBlockOptions,
+    updateBlockRequired,
   } = useBlocks(INITIAL_BLOCKS);
 
   const handleBlockChange = (id: Block['id'], value: string) => {
@@ -26,6 +27,10 @@ const App: FC = () => {
 
   const handleOptionsChange = (id: Block['id'], options: readonly Option[]) => {
     updateBlockOptions(id, options);
+  };
+
+  const handleRequiredChange = (id: Block['id'], required: boolean) => {
+    updateBlockRequired(id, required);
   };
 
   const handleBlockClick = (blockId: Block['id']) => {
@@ -44,6 +49,7 @@ const App: FC = () => {
               block={block}
               onChange={handleBlockChange}
               onOptionsChange={handleOptionsChange}
+              onRequiredChange={handleRequiredChange}
               onBlockClick={handleBlockClick}
               className='w-full'
             />

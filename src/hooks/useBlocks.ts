@@ -15,6 +15,7 @@ interface UseBlocksReturn {
   addMultiselectBlock: () => void;
   updateBlock: (id: Block['id'], value: string) => void;
   updateBlockOptions: (id: Block['id'], options: readonly Option[]) => void;
+  updateBlockRequired: (id: Block['id'], required: boolean) => void;
   removeBlock: (id: Block['id']) => void;
 }
 
@@ -92,6 +93,37 @@ export const useBlocks = (
     [],
   );
 
+  const updateBlockRequired = useCallback(
+    (id: Block['id'], required: boolean) => {
+      setBlocks((prevBlocks) =>
+        prevBlocks.map((block) => {
+          if (block.id !== id) return block;
+
+          switch (block.type) {
+            case 'short_answer':
+              return {
+                ...block,
+                properties: { ...block.properties, required },
+              };
+            case 'multiple_choice':
+              return {
+                ...block,
+                properties: { ...block.properties, required },
+              };
+            case 'multiselect':
+              return {
+                ...block,
+                properties: { ...block.properties, required },
+              };
+            default:
+              return block;
+          }
+        }),
+      );
+    },
+    [],
+  );
+
   const removeBlock = useCallback((id: Block['id']) => {
     setBlocks((prevBlocks) => prevBlocks.filter((block) => block.id !== id));
   }, []);
@@ -104,6 +136,7 @@ export const useBlocks = (
     addMultiselectBlock,
     updateBlock,
     updateBlockOptions,
+    updateBlockRequired,
     removeBlock,
   };
 };

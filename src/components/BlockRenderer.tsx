@@ -9,6 +9,7 @@ interface BlockRendererProps {
   onChange: (id: Block['id'], value: string) => void;
   onOptionsChange?: (id: Block['id'], options: readonly Option[]) => void;
   onBlockClick?: (blockId: Block['id']) => void;
+  onRequiredChange?: (blockId: Block['id'], required: boolean) => void;
   className?: string;
 }
 
@@ -27,11 +28,25 @@ const getBlockValue = (block: Block): string => {
   }
 };
 
+const getBlockRequired = (block: Block): boolean => {
+  switch (block.type) {
+    case 'short_answer':
+      return block.properties.required;
+    case 'multiple_choice':
+      return block.properties.required;
+    case 'multiselect':
+      return block.properties.required;
+    default:
+      return false;
+  }
+};
+
 export const BlockRenderer: FC<BlockRendererProps> = ({
   block,
   onChange,
   onOptionsChange,
   onBlockClick,
+  onRequiredChange,
   className,
 }) => {
   const Component = getBlockComponent(block.type);
@@ -52,9 +67,16 @@ export const BlockRenderer: FC<BlockRendererProps> = ({
     }
   };
 
+  const handleRequiredChange = (required: boolean) => {
+    if (onRequiredChange) {
+      onRequiredChange(block.id, required);
+    }
+  };
+
   const commonProps = {
     value: getBlockValue(block),
     onChange: handleChange,
+    required: getBlockRequired(block),
   };
 
   const specificProps =
@@ -67,7 +89,13 @@ export const BlockRenderer: FC<BlockRendererProps> = ({
       : commonProps;
 
   return (
-    <BlockWrapper onBlockClick={handleBlockClick} className={className}>
+    <BlockWrapper
+      onBlockClick={handleBlockClick}
+      blockType={block.type}
+      required={getBlockRequired(block)}
+      onRequiredChange={handleRequiredChange}
+      className={className}
+    >
       <ErrorBoundary
         fallback={
           <div className='p-2 border border-red-200 rounded bg-red-50 text-red-600 text-sm'>

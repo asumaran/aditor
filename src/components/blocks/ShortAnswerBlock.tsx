@@ -6,12 +6,14 @@ import type { BlockComponentProps } from '@/types';
 interface ShortAnswerBlockProps extends BlockComponentProps {
   value: string;
   onChange: (value: string) => void;
+  required?: boolean;
   className?: string;
 }
 
 export const ShortAnswerBlock: FC<ShortAnswerBlockProps> = ({
   value,
   onChange,
+  required = false,
   className,
 }) => {
   const {
@@ -28,21 +30,28 @@ export const ShortAnswerBlock: FC<ShortAnswerBlockProps> = ({
 
   return (
     <div className={cn('space-y-2', className)}>
-      <div
-        ref={elementRef}
-        contentEditable
-        suppressContentEditableWarning
-        onInput={handleInput}
-        onCompositionStart={handleCompositionStart}
-        onCompositionEnd={handleCompositionEnd}
-        onBlur={handleBlur}
-        onClick={handleClickWithStopPropagation}
-        className={cn(
-          'min-h-[1.5rem] p-1 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 w-fit cursor-text font-bold',
-          !currentValue && 'text-gray-400',
+      <div className='flex items-center'>
+        <div
+          ref={elementRef}
+          contentEditable
+          suppressContentEditableWarning
+          onInput={handleInput}
+          onCompositionStart={handleCompositionStart}
+          onCompositionEnd={handleCompositionEnd}
+          onBlur={handleBlur}
+          onClick={handleClickWithStopPropagation}
+          className={cn(
+            'min-h-[1.5rem] p-1 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 w-fit cursor-text font-bold',
+            !currentValue && 'text-gray-400',
+          )}
+          data-placeholder='Question label'
+        />
+        {required && (
+          <span className='text-red-500 ml-1' aria-label='Required field'>
+            *
+          </span>
         )}
-        data-placeholder='Question label'
-      />
+      </div>
       <input
         type='text'
         placeholder='Short answer text'

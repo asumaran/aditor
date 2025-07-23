@@ -8,11 +8,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import type { BlockComponentProps } from '@/types';
+import type { BlockComponentProps, Option } from '@/types';
 
 interface MultiselectBlockProps extends BlockComponentProps {
   value: string;
   onChange: (value: string) => void;
+  options: readonly Option[];
   required?: boolean;
   className?: string;
 }
@@ -20,6 +21,7 @@ interface MultiselectBlockProps extends BlockComponentProps {
 export const MultiselectBlock: FC<MultiselectBlockProps> = ({
   value,
   onChange,
+  options,
   required = false,
   className,
 }) => {
@@ -67,9 +69,16 @@ export const MultiselectBlock: FC<MultiselectBlockProps> = ({
           <SelectValue placeholder='Select an option' />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value='option1'>Option 1</SelectItem>
-          <SelectItem value='option2'>Option 2</SelectItem>
-          <SelectItem value='option3'>Option 3</SelectItem>
+          {options.map((option) => (
+            <SelectItem key={option.id} value={option.id.toString()}>
+              {option.text || 'Empty option'}
+            </SelectItem>
+          ))}
+          {options.length === 0 && (
+            <SelectItem value='no-options' disabled>
+              No options available
+            </SelectItem>
+          )}
         </SelectContent>
       </Select>
     </div>

@@ -41,6 +41,17 @@ const getBlockRequired = (block: Block): boolean => {
   }
 };
 
+const getBlockOptions = (block: Block): readonly Option[] => {
+  switch (block.type) {
+    case 'multiple_choice':
+      return block.properties.options;
+    case 'multiselect':
+      return block.properties.options;
+    default:
+      return [];
+  }
+};
+
 export const BlockRenderer: FC<BlockRendererProps> = ({
   block,
   onChange,
@@ -85,14 +96,22 @@ export const BlockRenderer: FC<BlockRendererProps> = ({
           ...commonProps,
           options: block.properties.options,
           onOptionsChange: handleOptionsChange,
+          blockId: block.id,
         }
-      : commonProps;
+      : block.type === 'multiselect'
+        ? {
+            ...commonProps,
+            options: block.properties.options,
+          }
+        : commonProps;
 
   return (
     <BlockWrapper
       onBlockClick={handleBlockClick}
       blockType={block.type}
+      blockId={block.id}
       required={getBlockRequired(block)}
+      options={getBlockOptions(block)}
       onRequiredChange={handleRequiredChange}
       className={className}
     >

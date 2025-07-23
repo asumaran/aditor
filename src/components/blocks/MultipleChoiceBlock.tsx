@@ -1,5 +1,9 @@
 import { type FC, useCallback, useRef, useEffect } from 'react';
-import { useContentEditable, useStopPropagation } from '@/hooks';
+import {
+  useContentEditable,
+  useStopPropagation,
+  useBlockOptions,
+} from '@/hooks';
 import { cn, generateId } from '@/lib/utils';
 import type { BlockComponentProps, Option } from '@/types';
 
@@ -9,6 +13,7 @@ interface MultipleChoiceBlockProps extends BlockComponentProps {
   options: readonly Option[];
   onOptionsChange: (options: readonly Option[]) => void;
   required?: boolean;
+  blockId: number;
   className?: string;
 }
 
@@ -18,6 +23,7 @@ interface OptionItemProps {
   onEnterPress: () => void;
   onRemove: (optionId: number) => void;
   shouldFocus?: boolean;
+  blockId: number;
 }
 
 const OptionItem: FC<OptionItemProps> = ({
@@ -26,7 +32,9 @@ const OptionItem: FC<OptionItemProps> = ({
   onEnterPress,
   onRemove,
   shouldFocus,
+  blockId,
 }) => {
+  const blockOptions = useBlockOptions(blockId!);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -49,7 +57,9 @@ const OptionItem: FC<OptionItemProps> = ({
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onChange(option.id, e.target.value);
+    const newText = e.target.value;
+    onChange(option.id, newText);
+    blockOptions.updateOption(option.id, newText);
   };
 
   const handleClick = useStopPropagation();
@@ -83,6 +93,7 @@ export const MultipleChoiceBlock: FC<MultipleChoiceBlockProps> = ({
   options,
   onOptionsChange,
   required = false,
+  blockId,
   className,
 }) => {
   const {
@@ -164,6 +175,7 @@ export const MultipleChoiceBlock: FC<MultipleChoiceBlockProps> = ({
             onEnterPress={handleEnterPress}
             onRemove={removeOption}
             shouldFocus={index === options.length - 1 && option.text === ''}
+            blockId={blockId}
           />
         ))}
 

@@ -26,6 +26,7 @@ export interface MultipleChoiceBlockProperties {
 
 export interface MultiselectBlockProperties {
   label: string;
+  options: readonly Option[];
   required: boolean;
 }
 

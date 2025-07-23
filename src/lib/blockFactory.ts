@@ -48,6 +48,7 @@ export const createMultiselectBlock = (
   type: 'multiselect' as const,
   properties: {
     label,
+    options: createDefaultOptions(),
     required: false,
   },
 });

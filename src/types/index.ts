@@ -13,3 +13,5 @@ export type {
   MultiselectBlock,
   BlockComponentProps,
 } from './blocks';
+export type { PopoverView, PopoverState } from './popover';
+export type { EditorAction } from './editor';

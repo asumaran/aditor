@@ -7,14 +7,17 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Switch } from '@/components/ui/switch';
-import type { BlockType } from '@/types';
+import { OptionsView } from './OptionsView';
+import type { BlockType, PopoverView, Option } from '@/types';
 
 interface BlockWrapperProps {
   children: ReactNode;
   onBlockClick?: () => void;
   className?: string;
   blockType?: BlockType;
+  blockId?: number;
   required?: boolean;
+  options?: readonly Option[];
   onRequiredChange?: (required: boolean) => void;
 }
 
@@ -23,10 +26,13 @@ export const BlockWrapper: FC<BlockWrapperProps> = ({
   onBlockClick,
   className,
   blockType,
+  blockId,
   required = false,
+  options = [],
   onRequiredChange,
 }) => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+  const [currentView, setCurrentView] = useState<PopoverView>('menu');
   const { isHovered, handleMouseEnter, handleMouseLeave } =
     useBlockInteraction();
 
@@ -34,8 +40,12 @@ export const BlockWrapper: FC<BlockWrapperProps> = ({
     blockType &&
     ['short_answer', 'multiple_choice', 'multiselect'].includes(blockType);
 
+  const hasOptionsSupport =
+    blockType === 'multiple_choice' || blockType === 'multiselect';
+
   const handleClick = () => {
     if (isFormBlock) {
+      setCurrentView('menu');
       setIsPopoverOpen(true);
     }
     onBlockClick?.();
@@ -44,6 +54,21 @@ export const BlockWrapper: FC<BlockWrapperProps> = ({
   const handleRequiredToggle = useCallback(() => {
     onRequiredChange?.(!required);
   }, [onRequiredChange, required]);
+
+  const handleOptionsClick = useCallback(() => {
+    setCurrentView('options');
+  }, []);
+
+  const handleBackToMenu = useCallback(() => {
+    setCurrentView('menu');
+  }, []);
+
+  const handlePopoverOpenChange = useCallback((open: boolean) => {
+    setIsPopoverOpen(open);
+    if (!open) {
+      setCurrentView('menu');
+    }
+  }, []);
 
   if (!isFormBlock) {
     return (
@@ -64,7 +89,7 @@ export const BlockWrapper: FC<BlockWrapperProps> = ({
   }
 
   return (
-    <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
+    <Popover open={isPopoverOpen} onOpenChange={handlePopoverOpenChange}>
       <PopoverTrigger asChild>
         <div
           onMouseEnter={handleMouseEnter}
@@ -85,21 +110,38 @@ export const BlockWrapper: FC<BlockWrapperProps> = ({
         side='right'
         align='start'
         alignOffset={-2}
-        className='w-80 p-0'
+        className='p-0 max-h-[min(24rem,80vh)]'
       >
-        <div className='py-2'>
-          <div
-            className='flex items-center justify-between px-4 py-2 hover:bg-accent hover:cursor-pointer'
-            onClick={handleRequiredToggle}
-          >
-            <span className='text-sm font-medium'>Required</span>
-            <Switch
-              checked={required}
-              onCheckedChange={onRequiredChange}
-              onClick={(e) => e.stopPropagation()}
-            />
+        {currentView === 'menu' ? (
+          <div className='py-2'>
+            <div
+              className='flex items-center justify-between px-4 py-2 hover:bg-accent hover:cursor-pointer'
+              onClick={handleRequiredToggle}
+            >
+              <span className='text-sm font-medium'>Required</span>
+              <Switch
+                checked={required}
+                onCheckedChange={onRequiredChange}
+                onClick={(e) => e.stopPropagation()}
+              />
+            </div>
+            {hasOptionsSupport && (
+              <div
+                className='flex items-center justify-between px-4 py-2 hover:bg-accent hover:cursor-pointer'
+                onClick={handleOptionsClick}
+              >
+                <span className='text-sm font-medium'>Options</span>
+                <span className='text-xs text-gray-500'>{options.length}</span>
+              </div>
+            )}
           </div>
-        </div>
+        ) : (
+          <OptionsView
+            blockId={blockId!}
+            options={options}
+            onBack={handleBackToMenu}
+          />
+        )}
       </PopoverContent>
     </Popover>
   );

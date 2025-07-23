@@ -1,49 +1,76 @@
-import { type FC } from 'react';
+import { type FC, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { BlockRenderer } from '@/components';
-import { useBlocks } from '@/hooks';
-import { createTextBlock } from '@/lib/blockFactory';
+import { EditorProvider } from '@/contexts';
+import { useEditor } from '@/hooks';
+import {
+  createTextBlock,
+  createShortAnswerBlock,
+  createMultipleChoiceBlock,
+  createMultiselectBlock,
+} from '@/lib/blockFactory';
 import type { Block, Option } from '@/types';
 
 const INITIAL_BLOCKS: readonly Block[] = [
   createTextBlock('Welcome to the editor!'),
+  createMultipleChoiceBlock('Sample Multiple Choice Question'),
+  createMultiselectBlock('Sample Multiselect Question'),
 ] as const;
 
-const App: FC = () => {
-  const {
-    blocks,
-    addTextBlock,
-    addShortAnswerBlock,
-    addMultipleChoiceBlock,
-    addMultiselectBlock,
-    updateBlock,
-    updateBlockOptions,
-    updateBlockRequired,
-  } = useBlocks(INITIAL_BLOCKS);
+const EditorContent: FC = () => {
+  const { state, dispatch } = useEditor();
 
-  const handleBlockChange = (id: Block['id'], value: string) => {
-    updateBlock(id, value);
-  };
+  const handleBlockChange = useCallback(
+    (id: Block['id'], value: string) => {
+      dispatch({ type: 'UPDATE_BLOCK_CONTENT', payload: { id, value } });
+    },
+    [dispatch],
+  );
 
-  const handleOptionsChange = (id: Block['id'], options: readonly Option[]) => {
-    updateBlockOptions(id, options);
-  };
+  const handleOptionsChange = useCallback(
+    (id: Block['id'], options: readonly Option[]) => {
+      dispatch({ type: 'UPDATE_BLOCK_OPTIONS', payload: { id, options } });
+    },
+    [dispatch],
+  );
 
-  const handleRequiredChange = (id: Block['id'], required: boolean) => {
-    updateBlockRequired(id, required);
-  };
+  const handleRequiredChange = useCallback(
+    (id: Block['id'], required: boolean) => {
+      dispatch({ type: 'UPDATE_BLOCK_REQUIRED', payload: { id, required } });
+    },
+    [dispatch],
+  );
 
-  const handleBlockClick = (blockId: Block['id']) => {
+  const handleBlockClick = useCallback((blockId: Block['id']) => {
     console.log('Block clicked:', blockId);
-    // TODO: Open popover for block customization
-  };
+  }, []);
+
+  const addTextBlock = useCallback(() => {
+    const newBlock = createTextBlock('New text block');
+    dispatch({ type: 'ADD_BLOCK', payload: newBlock });
+  }, [dispatch]);
+
+  const addShortAnswerBlock = useCallback(() => {
+    const newBlock = createShortAnswerBlock('Question');
+    dispatch({ type: 'ADD_BLOCK', payload: newBlock });
+  }, [dispatch]);
+
+  const addMultipleChoiceBlock = useCallback(() => {
+    const newBlock = createMultipleChoiceBlock('Question');
+    dispatch({ type: 'ADD_BLOCK', payload: newBlock });
+  }, [dispatch]);
+
+  const addMultiselectBlock = useCallback(() => {
+    const newBlock = createMultiselectBlock('Select label');
+    dispatch({ type: 'ADD_BLOCK', payload: newBlock });
+  }, [dispatch]);
 
   return (
     <main className='max-w-2xl mx-auto bg-white p-10 m-10 rounded shadow-sm'>
       <h1 className='mb-10'>Form Editor</h1>
       <div className='mb-10'>
         <section className='space-y-3' aria-label='Content blocks'>
-          {blocks.map((block) => (
+          {state.blocks.map((block) => (
             <BlockRenderer
               key={block.id}
               block={block}
@@ -73,9 +100,17 @@ const App: FC = () => {
       </div>
       <hr />
       <div className='my-10 text-[12px] text-gray-500'>
-        <pre>{JSON.stringify(blocks, null, 2)}</pre>
+        <pre>{JSON.stringify(state.blocks, null, 2)}</pre>
       </div>
     </main>
+  );
+};
+
+const App: FC = () => {
+  return (
+    <EditorProvider initialBlocks={INITIAL_BLOCKS}>
+      <EditorContent />
+    </EditorProvider>
   );
 };
 

@@ -2,7 +2,6 @@ import { useReducer, type ReactNode } from 'react';
 import type { Block, EditorAction } from '@/types';
 import { EditorContext, type EditorState } from './EditorContextDefinition';
 
-
 const editorReducer = (
   state: EditorState,
   action: EditorAction,
@@ -185,7 +184,6 @@ const editorReducer = (
   }
 };
 
-
 interface EditorProviderProps {
   children: ReactNode;
   initialBlocks?: readonly Block[];
@@ -205,5 +203,3 @@ export const EditorProvider = ({
     </EditorContext.Provider>
   );
 };
-
-

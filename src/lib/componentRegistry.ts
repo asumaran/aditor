@@ -1,6 +1,7 @@
 import { type FC } from 'react';
 import {
   TextBlock,
+  HeadingBlock,
   ShortAnswerBlock,
   MultipleChoiceBlock,
   MultiselectBlock,
@@ -22,6 +23,7 @@ type ComponentRegistry = Record<BlockType, FC<any>>;
 
 export const COMPONENT_REGISTRY: ComponentRegistry = {
   text: TextBlock,
+  heading: HeadingBlock,
   short_answer: ShortAnswerBlock,
   multiple_choice: MultipleChoiceBlock,
   multiselect: MultiselectBlock,

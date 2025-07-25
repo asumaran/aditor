@@ -1,5 +1,6 @@
 export type BlockType =
   | 'text'
+  | 'heading'
   | 'short_answer'
   | 'multiple_choice'
   | 'multiselect';
@@ -10,6 +11,10 @@ export interface Option {
 }
 
 export interface TextBlockProperties {
+  title: string;
+}
+
+export interface HeadingBlockProperties {
   title: string;
 }
 
@@ -42,6 +47,12 @@ export interface TextBlock {
   readonly properties: TextBlockProperties;
 }
 
+export interface HeadingBlock {
+  readonly id: number;
+  readonly type: 'heading';
+  readonly properties: HeadingBlockProperties;
+}
+
 export interface ShortAnswerBlock {
   readonly id: number;
   readonly type: 'short_answer';
@@ -62,6 +73,7 @@ export interface MultiselectBlock {
 
 export type Block =
   | TextBlock
+  | HeadingBlock
   | ShortAnswerBlock
   | MultipleChoiceBlock
   | MultiselectBlock;

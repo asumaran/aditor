@@ -8,6 +8,7 @@ import {
   createShortAnswerBlock,
   createMultipleChoiceBlock,
   createMultiselectBlock,
+  createHeadingBlock,
 } from '@/lib/blockFactory';
 import type { Block, Option } from '@/types';
 
@@ -50,8 +51,13 @@ const EditorContent: FC = () => {
     dispatch({ type: 'ADD_BLOCK', payload: newBlock });
   }, [dispatch]);
 
+  const addHeadingBlock = useCallback(() => {
+    const newBlock = createHeadingBlock('New heading block');
+    dispatch({ type: 'ADD_BLOCK', payload: newBlock });
+  }, [dispatch]);
+
   const addShortAnswerBlock = useCallback(() => {
-    const newBlock = createShortAnswerBlock('Question');
+    const newBlock = createShortAnswerBlock('Sample Short Answer Question');
     dispatch({ type: 'ADD_BLOCK', payload: newBlock });
   }, [dispatch]);
 
@@ -69,7 +75,7 @@ const EditorContent: FC = () => {
     <main className='max-w-2xl mx-auto bg-white p-10 m-10 rounded shadow-sm'>
       <h1 className='mb-10'>Form Editor</h1>
       <div className='mb-10'>
-        <section className='space-y-3' aria-label='Content blocks'>
+        <section className='space-y-3 my-10' aria-label='Content blocks'>
           {state.blocks.map((block) => (
             <BlockRenderer
               key={block.id}
@@ -82,18 +88,21 @@ const EditorContent: FC = () => {
             />
           ))}
         </section>
-
-        <div className='mt-6 space-x-2'>
-          <Button onClick={addTextBlock} variant='default'>
+        <hr />
+        <div className='flex flex-col items-start space-y-2 my-10'>
+          <Button size='sm' onClick={addTextBlock}>
             Add Text Block
           </Button>
-          <Button onClick={addShortAnswerBlock} variant='outline'>
+          <Button size='sm' onClick={addHeadingBlock}>
+            Add Heading Block
+          </Button>
+          <Button size='sm' onClick={addShortAnswerBlock}>
             Add Short Answer
           </Button>
-          <Button onClick={addMultipleChoiceBlock} variant='outline'>
+          <Button size='sm' onClick={addMultipleChoiceBlock}>
             Add Multiple Choice
           </Button>
-          <Button onClick={addMultiselectBlock} variant='outline'>
+          <Button size='sm' onClick={addMultiselectBlock}>
             Add Multiselect
           </Button>
         </div>

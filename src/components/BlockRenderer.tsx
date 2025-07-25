@@ -16,6 +16,7 @@ interface BlockRendererProps {
 const getBlockValue = (block: Block): string => {
   switch (block.type) {
     case 'text':
+    case 'heading':
       return block.properties.title;
     case 'short_answer':
       return block.properties.label;

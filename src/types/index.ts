@@ -8,6 +8,7 @@ export type {
   MultiselectBlockProperties,
   Block,
   TextBlock,
+  HeadingBlock,
   ShortAnswerBlock,
   MultipleChoiceBlock,
   MultiselectBlock,

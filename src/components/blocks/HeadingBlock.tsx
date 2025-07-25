@@ -3,14 +3,14 @@ import { useContentEditable } from '@/hooks';
 import { cn } from '@/lib/utils';
 import type { BlockComponentProps } from '@/types';
 
-interface TextBlockProps extends BlockComponentProps {
+interface HeadingBlockProps extends BlockComponentProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
   className?: string;
 }
 
-export const TextBlock: FC<TextBlockProps> = ({
+export const HeadingBlock: FC<HeadingBlockProps> = ({
   value,
   onChange,
   placeholder = 'Enter text...',

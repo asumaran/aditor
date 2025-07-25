@@ -89,7 +89,11 @@ export const BlockWrapper: FC<BlockWrapperProps> = ({
   }
 
   return (
-    <Popover open={isPopoverOpen} onOpenChange={handlePopoverOpenChange}>
+    <Popover
+      open={isPopoverOpen}
+      onOpenChange={handlePopoverOpenChange}
+      modal={true}
+    >
       <PopoverTrigger asChild>
         <div
           onMouseEnter={handleMouseEnter}

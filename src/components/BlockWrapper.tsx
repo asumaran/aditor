@@ -65,10 +65,30 @@ export const BlockWrapper: FC<BlockWrapperProps> = ({
 
   const handlePopoverOpenChange = useCallback((open: boolean) => {
     setIsPopoverOpen(open);
-    if (!open) {
+    // Only reset to menu view when opening the popover
+    // This prevents the visual flick from options -> menu -> closed when closing
+    if (open) {
       setCurrentView('menu');
     }
   }, []);
+
+  const handleEscapeKeyDown = useCallback(
+    (event: KeyboardEvent) => {
+      // Check if the focused element is an input within the OptionsView
+      // This prevents popover close for ANY input in the options management view,
+      // including both "add option" and "edit option" inputs.
+      const activeElement = document.activeElement as HTMLInputElement;
+      if (
+        activeElement &&
+        activeElement.tagName === 'INPUT' &&
+        currentView === 'options'
+      ) {
+        event.preventDefault();
+        // Let the OptionsView handle the escape behavior for its inputs
+      }
+    },
+    [currentView],
+  );
 
   if (!isFormBlock) {
     return (
@@ -114,7 +134,8 @@ export const BlockWrapper: FC<BlockWrapperProps> = ({
         side='right'
         align='start'
         alignOffset={-2}
-        className='p-0 max-h-[min(24rem,80vh)]'
+        className='p-0 max-h-[min(80vh,40rem)] w-80'
+        onEscapeKeyDown={handleEscapeKeyDown}
       >
         {currentView === 'menu' ? (
           <div className='py-2'>

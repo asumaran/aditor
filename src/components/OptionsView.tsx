@@ -34,7 +34,6 @@ export const OptionsView: FC<OptionsViewProps> = ({
     if (newOptionText.trim()) {
       addOption(newOptionText.trim());
       setNewOptionText('');
-      setIsAddingOption(false);
     }
   };
 
@@ -80,7 +79,7 @@ export const OptionsView: FC<OptionsViewProps> = ({
       </div>
 
       {/* Content */}
-      <div className='flex-1 overflow-y-auto min-h-0'>
+      <div className='flex flex-col min-h-0'>
         {/* Add Option Input */}
         {isAddingOption && (
           <div className='p-4 border-b flex-shrink-0'>
@@ -103,7 +102,7 @@ export const OptionsView: FC<OptionsViewProps> = ({
         )}
 
         {/* Options List */}
-        <div className='py-2 min-h-0'>
+        <div className='py-2 overflow-y-auto max-h-[32rem]'>
           {options.map((option) => (
             <OptionItem
               key={option.id}

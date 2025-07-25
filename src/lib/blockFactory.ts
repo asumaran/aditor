@@ -8,9 +8,7 @@ import type {
 import { generateId } from './utils';
 import { createDefaultOptions } from './optionUtils';
 
-export const createTextBlock = (
-  title: string = 'New text block',
-): TextBlock => ({
+export const createTextBlock = (title: string = ''): TextBlock => ({
   id: generateId(),
   type: 'text' as const,
   properties: {

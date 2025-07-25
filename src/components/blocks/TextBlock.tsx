@@ -13,9 +13,10 @@ interface TextBlockProps extends BlockComponentProps {
 export const TextBlock: FC<TextBlockProps> = ({
   value,
   onChange,
-  placeholder = 'Enter text...',
+  placeholder = "Write, enter '/' for commands…",
   className,
 }) => {
+  console.log('placeholder', placeholder);
   const {
     elementRef,
     handleInput,
@@ -35,8 +36,9 @@ export const TextBlock: FC<TextBlockProps> = ({
       onCompositionEnd={handleCompositionEnd}
       onBlur={handleBlur}
       className={cn(
-        'min-h-[1.5rem] p-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-text',
+        'focus:outline-none cursor-text',
         !currentValue && 'text-gray-400',
+        !currentValue && 'after:content-[attr(data-placeholder)]',
         className,
       )}
       data-placeholder={placeholder}

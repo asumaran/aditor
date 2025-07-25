@@ -106,25 +106,35 @@ export const BlockRenderer: FC<BlockRendererProps> = ({
           }
         : commonProps;
 
-  return (
-    <BlockWrapper
-      onBlockClick={handleBlockClick}
-      blockType={block.type}
-      blockId={block.id}
-      required={getBlockRequired(block)}
-      options={getBlockOptions(block)}
-      onRequiredChange={handleRequiredChange}
-      className={className}
+  const isFormBlock = ['short_answer', 'multiple_choice', 'multiselect'].includes(block.type);
+
+  const content = (
+    <ErrorBoundary
+      fallback={
+        <div className='p-2 border border-red-200 rounded bg-red-50 text-red-600 text-sm'>
+          Error rendering block: {block.type}
+        </div>
+      }
     >
-      <ErrorBoundary
-        fallback={
-          <div className='p-2 border border-red-200 rounded bg-red-50 text-red-600 text-sm'>
-            Error rendering block: {block.type}
-          </div>
-        }
-      >
-        <Component {...specificProps} />
-      </ErrorBoundary>
-    </BlockWrapper>
+      <Component {...specificProps} />
+    </ErrorBoundary>
   );
+
+  if (isFormBlock) {
+    return (
+      <BlockWrapper
+        onBlockClick={handleBlockClick}
+        blockType={block.type}
+        blockId={block.id}
+        required={getBlockRequired(block)}
+        options={getBlockOptions(block)}
+        onRequiredChange={handleRequiredChange}
+        className={className}
+      >
+        {content}
+      </BlockWrapper>
+    );
+  }
+
+  return <div className={className}>{content}</div>;
 };

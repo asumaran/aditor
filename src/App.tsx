@@ -12,11 +12,7 @@ import {
 } from '@/lib/blockFactory';
 import type { Block, Option } from '@/types';
 
-const INITIAL_BLOCKS: readonly Block[] = [
-  createTextBlock('Welcome to the editor!'),
-  createMultipleChoiceBlock('Sample Multiple Choice Question'),
-  createMultiselectBlock('Sample Multiselect Question'),
-] as const;
+const INITIAL_BLOCKS: readonly Block[] = [createTextBlock()] as const;
 
 const EditorContent: FC = () => {
   const { state, dispatch } = useEditor();

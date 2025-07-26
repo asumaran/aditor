@@ -60,6 +60,24 @@ const EditorContent: FC = () => {
     return newBlock.id;
   }, [dispatch]);
 
+  const handleDeleteBlockAndFocusPrevious = useCallback((blockId: Block['id']) => {
+    const blockIndex = state.blocks.findIndex(block => block.id === blockId);
+    
+    // Don't delete if it's the only block
+    if (state.blocks.length <= 1) return;
+    
+    // Find the previous block to focus
+    const previousBlock = blockIndex > 0 ? state.blocks[blockIndex - 1] : null;
+    
+    // Delete the block
+    dispatch({ type: 'REMOVE_BLOCK', payload: { id: blockId } });
+    
+    // Focus the previous block if it exists
+    if (previousBlock) {
+      setFocusBlockId(previousBlock.id);
+    }
+  }, [state.blocks, dispatch]);
+
   const addTextBlock = useCallback(() => {
     const newBlock = createTextBlock('New text block');
     dispatch({ type: 'ADD_BLOCK', payload: newBlock });
@@ -125,6 +143,7 @@ const EditorContent: FC = () => {
                   onRequiredChange={handleRequiredChange}
                   onBlockClick={handleBlockClick}
                   onCreateBlockAfter={handleCreateBlockAfter}
+                  onDeleteBlock={handleDeleteBlockAndFocusPrevious}
                   className='w-full'
                   autoFocus={shouldAutoFocus}
                 />

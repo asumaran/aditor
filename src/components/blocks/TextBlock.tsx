@@ -1,5 +1,5 @@
-import { type FC, useEffect } from 'react';
-import { useContentEditable } from '@/hooks';
+import { type FC, useMemo } from 'react';
+import { useContentEditable, useBlockCommands } from '@/hooks';
 import { cn } from '@/lib/utils';
 import type { BlockComponentProps } from '@/types';
 
@@ -10,6 +10,7 @@ interface TextBlockProps extends BlockComponentProps {
   className?: string;
   autoFocus?: boolean;
   onCreateBlockAfter?: () => number;
+  onDeleteBlock?: () => void;
 }
 
 export const TextBlock: FC<TextBlockProps> = ({
@@ -19,6 +20,7 @@ export const TextBlock: FC<TextBlockProps> = ({
   className,
   autoFocus = false,
   onCreateBlockAfter,
+  onDeleteBlock,
 }) => {
   const {
     elementRef,
@@ -27,28 +29,34 @@ export const TextBlock: FC<TextBlockProps> = ({
     handleCompositionEnd,
     handleBlur,
     currentValue,
-  } = useContentEditable({ value, onChange });
+  } = useContentEditable({ value, onChange, autoFocus });
 
-  useEffect(() => {
-    if (autoFocus && elementRef.current) {
-      elementRef.current.focus();
-    }
-  }, [autoFocus, elementRef]);
+  const commands = useMemo(
+    () => [
+      {
+        key: 'Enter',
+        handler: () => {
+          // Enter: Create new TextBlock
+          if (onCreateBlockAfter) {
+            onCreateBlockAfter();
+          }
+        },
+      },
+      {
+        key: 'Backspace',
+        condition: () => !currentValue.trim(),
+        handler: () => {
+          // Backspace on empty block: Delete block
+          if (onDeleteBlock) {
+            onDeleteBlock();
+          }
+        },
+      },
+    ],
+    [currentValue, onCreateBlockAfter, onDeleteBlock],
+  );
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === 'Enter') {
-      if (e.shiftKey) {
-        // Shift+Enter: Allow default behavior (line break)
-        return;
-      } else {
-        // Enter: Create new TextBlock
-        e.preventDefault();
-        if (onCreateBlockAfter) {
-          onCreateBlockAfter();
-        }
-      }
-    }
-  };
+  const { handleKeyDown } = useBlockCommands({ commands });
 
   return (
     <div
@@ -61,9 +69,9 @@ export const TextBlock: FC<TextBlockProps> = ({
       onBlur={handleBlur}
       onKeyDown={handleKeyDown}
       className={cn(
-        'cursor-text focus:outline-none whitespace-break-spaces',
+        'cursor-text whitespace-break-spaces focus:outline-none',
         !currentValue && 'text-gray-400',
-        !currentValue && 'after:content-[attr(data-placeholder)]',
+        !currentValue && 'focus:after:content-[attr(data-placeholder)]',
         className,
       )}
       data-placeholder={placeholder}

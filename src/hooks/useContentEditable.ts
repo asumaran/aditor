@@ -3,11 +3,13 @@ import { useRef, useEffect, useCallback, useState } from 'react';
 interface UseContentEditableProps {
   value: string;
   onChange: (value: string) => void;
+  autoFocus?: boolean;
 }
 
 export const useContentEditable = ({
   value,
   onChange,
+  autoFocus = false,
 }: UseContentEditableProps) => {
   const elementRef = useRef<HTMLDivElement>(null);
   const isComposingRef = useRef(false);
@@ -32,6 +34,14 @@ export const useContentEditable = ({
 
       const target = event.target as HTMLDivElement;
       const newValue = target.innerText;
+      
+      // Normalize empty content immediately, don't wait for blur
+      if (!newValue.trim()) {
+        setCurrentValue('');
+        onChange('');
+        return;
+      }
+      
       setCurrentValue(newValue);
       onChange(newValue);
     },
@@ -76,6 +86,14 @@ export const useContentEditable = ({
     setCurrentValue(value);
     moveCursorToEnd();
   }, [value, moveCursorToEnd]);
+
+  // Handle autoFocus
+  useEffect(() => {
+    if (autoFocus && elementRef.current) {
+      elementRef.current.focus();
+      moveCursorToEnd();
+    }
+  }, [autoFocus, moveCursorToEnd]);
 
   return {
     elementRef,

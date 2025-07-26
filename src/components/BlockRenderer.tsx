@@ -11,6 +11,7 @@ interface BlockRendererProps {
   onBlockClick?: (blockId: Block['id']) => void;
   onRequiredChange?: (blockId: Block['id'], required: boolean) => void;
   onCreateBlockAfter?: (afterBlockId: Block['id']) => number;
+  onDeleteBlock?: (blockId: Block['id']) => void;
   className?: string;
   autoFocus?: boolean;
 }
@@ -62,6 +63,7 @@ export const BlockRenderer: FC<BlockRendererProps> = ({
   onBlockClick,
   onRequiredChange,
   onCreateBlockAfter,
+  onDeleteBlock,
   className,
   autoFocus = false,
 }) => {
@@ -95,6 +97,7 @@ export const BlockRenderer: FC<BlockRendererProps> = ({
     required: getBlockRequired(block),
     autoFocus: autoFocus && (block.type === 'text' || block.type === 'heading'),
     onCreateBlockAfter: onCreateBlockAfter ? () => onCreateBlockAfter(block.id) : undefined,
+    onDeleteBlock: onDeleteBlock ? () => onDeleteBlock(block.id) : undefined,
   };
 
   const specificProps =

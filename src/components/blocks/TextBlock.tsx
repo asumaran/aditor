@@ -1,7 +1,7 @@
 import { type FC, useMemo } from 'react';
 import { useContentEditable, useBlockCommands } from '@/hooks';
 import { useEditor } from '@/hooks';
-import { cn, isCursorAtFirstLine, isCursorAtLastLine } from '@/lib/utils';
+import { cn, isCursorAtFirstLine, isCursorAtLastLine, getCursorHorizontalPosition, navigateToLastLine, navigateToFirstLine } from '@/lib/utils';
 import { getPreviousBlockId, getNextBlockId } from '@/lib/editorUtils';
 import type { BlockComponentProps } from '@/types';
 
@@ -59,11 +59,14 @@ export const TextBlock: FC<TextBlockProps> = ({
       },
       {
         key: 'ArrowUp',
-        condition: () =>
-          elementRef.current && isCursorAtFirstLine(elementRef.current),
-        handler: () => {
-          // Arrow up at first line: Navigate to previous block directly in DOM
+        condition: () => {
+          // Only handle if we're at first line
+          return elementRef.current && isCursorAtFirstLine(elementRef.current);
+        },
+        handler: (e) => {
+          // Navigate to previous block
           if (elementRef.current && blockId) {
+            const horizontalPos = getCursorHorizontalPosition(elementRef.current);
             const previousBlockId = getPreviousBlockId(state, blockId);
             if (previousBlockId) {
               const previousBlock = document.querySelector(
@@ -71,26 +74,31 @@ export const TextBlock: FC<TextBlockProps> = ({
               ) as HTMLElement;
 
               if (previousBlock) {
-                previousBlock.focus();
-                // Move cursor to end of previous block (natural for up arrow)
-                const range = document.createRange();
-                range.selectNodeContents(previousBlock);
-                range.collapse(false);
-                const selection = window.getSelection();
-                selection?.removeAllRanges();
-                selection?.addRange(range);
+                navigateToLastLine(previousBlock, horizontalPos);
               }
+            } else {
+              // No previous block - this is the first block
+              // Move cursor to beginning of current block
+              const range = document.createRange();
+              range.selectNodeContents(elementRef.current);
+              range.collapse(true);
+              const selection = window.getSelection();
+              selection?.removeAllRanges();
+              selection?.addRange(range);
             }
           }
         },
       },
       {
         key: 'ArrowDown',
-        condition: () =>
-          elementRef.current && isCursorAtLastLine(elementRef.current),
-        handler: () => {
-          // Arrow down at last line: Navigate to next block directly in DOM
+        condition: () => {
+          // Only handle if we're at last line
+          return elementRef.current && isCursorAtLastLine(elementRef.current);
+        },
+        handler: (e) => {
+          // Navigate to next block
           if (elementRef.current && blockId) {
+            const horizontalPos = getCursorHorizontalPosition(elementRef.current);
             const nextBlockId = getNextBlockId(state, blockId);
             if (nextBlockId) {
               const nextBlock = document.querySelector(
@@ -98,15 +106,17 @@ export const TextBlock: FC<TextBlockProps> = ({
               ) as HTMLElement;
 
               if (nextBlock) {
-                nextBlock.focus();
-                // Move cursor to beginning of next block (natural for down arrow)
-                const range = document.createRange();
-                range.selectNodeContents(nextBlock);
-                range.collapse(true);
-                const selection = window.getSelection();
-                selection?.removeAllRanges();
-                selection?.addRange(range);
+                navigateToFirstLine(nextBlock, horizontalPos);
               }
+            } else {
+              // No next block - this is the last block
+              // Move cursor to end of current block
+              const range = document.createRange();
+              range.selectNodeContents(elementRef.current);
+              range.collapse(false);
+              const selection = window.getSelection();
+              selection?.removeAllRanges();
+              selection?.addRange(range);
             }
           }
         },

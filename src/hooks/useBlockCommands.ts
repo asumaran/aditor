@@ -4,7 +4,7 @@ interface BlockCommand {
   key: string;
   modifiers?: ('shift' | 'ctrl' | 'meta' | 'alt')[];
   condition?: () => boolean;
-  handler: () => void;
+  handler: (e?: React.KeyboardEvent) => void;
 }
 
 interface UseBlockCommandsProps {
@@ -43,7 +43,7 @@ export const useBlockCommands = ({ commands }: UseBlockCommandsProps) => {
         if (!(command.key === 'Enter' && e.shiftKey)) {
           e.preventDefault();
         }
-        command.handler();
+        command.handler(e);
         return; // Stop after first matching command
       }
     },

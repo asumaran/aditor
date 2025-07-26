@@ -10,6 +10,12 @@ import {
   createMultiselectBlock,
   createHeadingBlock,
 } from '@/lib/blockFactory';
+import {
+  getOrderedBlocks,
+  getBlockIndex,
+  getPreviousBlockId,
+  getNextBlockId,
+} from '@/lib/editorUtils';
 import type { Block, Option } from '@/types';
 
 const INITIAL_BLOCKS: readonly Block[] = [createTextBlock()] as const;
@@ -53,30 +59,83 @@ const EditorContent: FC = () => {
     console.log('Block clicked:', blockId);
   }, []);
 
-  const handleCreateBlockAfter = useCallback((afterBlockId: Block['id']) => {
-    const newBlock = createTextBlock();
-    dispatch({ type: 'INSERT_BLOCK_AFTER', payload: { afterBlockId, newBlock } });
-    setFocusBlockId(newBlock.id);
-    return newBlock.id;
-  }, [dispatch]);
+  const handleCreateBlockAfter = useCallback(
+    (afterBlockId: Block['id']) => {
+      const newBlock = createTextBlock();
+      dispatch({
+        type: 'INSERT_BLOCK_AFTER',
+        payload: { afterBlockId, newBlock },
+      });
+      setFocusBlockId(newBlock.id);
+      return newBlock.id;
+    },
+    [dispatch],
+  );
 
-  const handleDeleteBlockAndFocusPrevious = useCallback((blockId: Block['id']) => {
-    const blockIndex = state.blocks.findIndex(block => block.id === blockId);
-    
-    // Don't delete if it's the only block
-    if (state.blocks.length <= 1) return;
-    
-    // Find the previous block to focus
-    const previousBlock = blockIndex > 0 ? state.blocks[blockIndex - 1] : null;
-    
-    // Delete the block
-    dispatch({ type: 'REMOVE_BLOCK', payload: { id: blockId } });
-    
-    // Focus the previous block if it exists
-    if (previousBlock) {
-      setFocusBlockId(previousBlock.id);
-    }
-  }, [state.blocks, dispatch]);
+  const handleDeleteBlockAndFocusPrevious = useCallback(
+    (blockId: Block['id']) => {
+      // Don't delete if it's the only block
+      if (getOrderedBlocks(state).length <= 1) return;
+
+      // Find the previous block to focus
+      const previousBlockId = getPreviousBlockId(state, blockId);
+
+      // Delete the block
+      dispatch({ type: 'REMOVE_BLOCK', payload: { id: blockId } });
+
+      // Focus the previous block if it exists
+      if (previousBlockId) {
+        setFocusBlockId(previousBlockId);
+      }
+    },
+    [state, dispatch],
+  );
+
+  const handleNavigateToPrevious = useCallback(
+    (blockId: Block['id']) => {
+      const previousBlockId = getPreviousBlockId(state, blockId);
+      if (previousBlockId) {
+        // Find the DOM element and focus it directly
+        const element = document.querySelector(
+          `[data-block-id="${previousBlockId}"]`,
+        ) as HTMLElement;
+        if (element) {
+          element.focus();
+          // Move cursor to end
+          const range = document.createRange();
+          range.selectNodeContents(element);
+          range.collapse(false);
+          const selection = window.getSelection();
+          selection?.removeAllRanges();
+          selection?.addRange(range);
+        }
+      }
+    },
+    [state],
+  );
+
+  const handleNavigateToNext = useCallback(
+    (blockId: Block['id']) => {
+      const nextBlockId = getNextBlockId(state, blockId);
+      if (nextBlockId) {
+        // Find the DOM element and focus it directly
+        const element = document.querySelector(
+          `[data-block-id="${nextBlockId}"]`,
+        ) as HTMLElement;
+        if (element) {
+          element.focus();
+          // Move cursor to end
+          const range = document.createRange();
+          range.selectNodeContents(element);
+          range.collapse(false);
+          const selection = window.getSelection();
+          selection?.removeAllRanges();
+          selection?.addRange(range);
+        }
+      }
+    },
+    [state],
+  );
 
   const addTextBlock = useCallback(() => {
     const newBlock = createTextBlock('New text block');
@@ -127,13 +186,16 @@ const EditorContent: FC = () => {
         </div>
         <div className='grow rounded-sm bg-white p-5 shadow-sm'>
           <section className='space-y-3' aria-label='Content blocks'>
-            {state.blocks.map((block, index) => {
-              // Auto-focus if it's the first text block AND the only block, 
+            {getOrderedBlocks(state).map((block, index) => {
+              // Auto-focus if it's the first text block AND the only block,
               // OR if it's a newly created block that should be focused
-              const shouldAutoFocus = 
-                (index === 0 && block.type === 'text' && state.blocks.length === 1) ||
-                (focusBlockId === block.id);
-              
+              const orderedBlocks = getOrderedBlocks(state);
+              const shouldAutoFocus =
+                (index === 0 &&
+                  block.type === 'text' &&
+                  orderedBlocks.length === 1) ||
+                focusBlockId === block.id;
+
               return (
                 <BlockRenderer
                   key={block.id}
@@ -144,6 +206,8 @@ const EditorContent: FC = () => {
                   onBlockClick={handleBlockClick}
                   onCreateBlockAfter={handleCreateBlockAfter}
                   onDeleteBlock={handleDeleteBlockAndFocusPrevious}
+                  onNavigateToPrevious={handleNavigateToPrevious}
+                  onNavigateToNext={handleNavigateToNext}
                   className='w-full'
                   autoFocus={shouldAutoFocus}
                 />
@@ -153,7 +217,7 @@ const EditorContent: FC = () => {
         </div>
       </div>
       <div className='my-10 text-[12px] text-gray-500'>
-        <pre>{JSON.stringify(state.blocks, null, 2)}</pre>
+        <pre>{JSON.stringify(getOrderedBlocks(state), null, 2)}</pre>
       </div>
     </main>
   );

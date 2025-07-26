@@ -47,7 +47,7 @@ export const useBlockCommands = ({ commands }: UseBlockCommandsProps) => {
         return; // Stop after first matching command
       }
     },
-    [commands]
+    [commands],
   );
 
   return { handleKeyDown };

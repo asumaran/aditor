@@ -34,14 +34,14 @@ export const useContentEditable = ({
 
       const target = event.target as HTMLDivElement;
       const newValue = target.innerText;
-      
+
       // Normalize empty content immediately, don't wait for blur
       if (!newValue.trim()) {
         setCurrentValue('');
         onChange('');
         return;
       }
-      
+
       setCurrentValue(newValue);
       onChange(newValue);
     },
@@ -90,8 +90,12 @@ export const useContentEditable = ({
   // Handle autoFocus
   useEffect(() => {
     if (autoFocus && elementRef.current) {
-      elementRef.current.focus();
-      moveCursorToEnd();
+      // Force focus with a small delay to ensure DOM is ready
+      const timer = setTimeout(() => {
+        elementRef.current?.focus();
+        moveCursorToEnd();
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [autoFocus, moveCursorToEnd]);
 

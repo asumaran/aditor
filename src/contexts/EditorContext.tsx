@@ -1,6 +1,13 @@
 import { useReducer, type ReactNode } from 'react';
 import type { Block, EditorAction } from '@/types';
 import { EditorContext, type EditorState } from './EditorContextDefinition';
+import {
+  addBlockToState,
+  insertBlockAfter,
+  removeBlockFromState,
+  updateBlockInState,
+  getBlockById,
+} from '@/lib/editorUtils';
 
 const editorReducer = (
   state: EditorState,
@@ -8,195 +15,139 @@ const editorReducer = (
 ): EditorState => {
   switch (action.type) {
     case 'ADD_BLOCK':
-      return {
-        ...state,
-        blocks: [...state.blocks, action.payload],
-      };
+      return addBlockToState(state, action.payload);
 
     case 'INSERT_BLOCK_AFTER':
-      const afterIndex = state.blocks.findIndex(
-        (block) => block.id === action.payload.afterBlockId
+      return insertBlockAfter(
+        state,
+        action.payload.afterBlockId,
+        action.payload.newBlock,
       );
-      if (afterIndex === -1) {
-        // If block not found, add at the end
-        return {
-          ...state,
-          blocks: [...state.blocks, action.payload.newBlock],
-        };
+
+    case 'UPDATE_BLOCK_CONTENT': {
+      const block = getBlockById(state, action.payload.id);
+      if (!block) return state;
+
+      let updatedProperties;
+      switch (block.type) {
+        case 'text':
+        case 'heading':
+          updatedProperties = {
+            ...block.properties,
+            title: action.payload.value,
+          };
+          break;
+        case 'short_answer':
+        case 'multiple_choice':
+        case 'multiselect':
+          updatedProperties = {
+            ...block.properties,
+            label: action.payload.value,
+          };
+          break;
+        default:
+          return state;
       }
-      // Insert the new block after the found block
-      const newBlocks = [...state.blocks];
-      newBlocks.splice(afterIndex + 1, 0, action.payload.newBlock);
-      return {
-        ...state,
-        blocks: newBlocks,
-      };
 
-    case 'UPDATE_BLOCK_CONTENT':
-      return {
-        ...state,
-        blocks: state.blocks.map((block) => {
-          if (block.id !== action.payload.id) return block;
+      return updateBlockInState(state, action.payload.id, {
+        properties: updatedProperties,
+      });
+    }
 
-          switch (block.type) {
-            case 'text':
-              return {
-                ...block,
-                properties: {
-                  ...block.properties,
-                  title: action.payload.value,
-                },
-              };
-            case 'short_answer':
-              return {
-                ...block,
-                properties: {
-                  ...block.properties,
-                  label: action.payload.value,
-                },
-              } as typeof block;
-            case 'multiple_choice':
-              return {
-                ...block,
-                properties: {
-                  ...block.properties,
-                  label: action.payload.value,
-                },
-              } as typeof block;
-            case 'multiselect':
-              return {
-                ...block,
-                properties: {
-                  ...block.properties,
-                  label: action.payload.value,
-                },
-              } as typeof block;
-            default:
-              return block;
-          }
-        }),
-      };
+    case 'UPDATE_BLOCK_REQUIRED': {
+      const block = getBlockById(state, action.payload.id);
+      if (!block) return state;
 
-    case 'UPDATE_BLOCK_REQUIRED':
-      return {
-        ...state,
-        blocks: state.blocks.map((block) => {
-          if (block.id !== action.payload.id) return block;
+      if (
+        !['short_answer', 'multiple_choice', 'multiselect'].includes(block.type)
+      ) {
+        return state;
+      }
 
-          switch (block.type) {
-            case 'short_answer':
-              return {
-                ...block,
-                properties: {
-                  ...block.properties,
-                  required: action.payload.required,
-                },
-              } as typeof block;
-            case 'multiple_choice':
-              return {
-                ...block,
-                properties: {
-                  ...block.properties,
-                  required: action.payload.required,
-                },
-              } as typeof block;
-            case 'multiselect':
-              return {
-                ...block,
-                properties: {
-                  ...block.properties,
-                  required: action.payload.required,
-                },
-              } as typeof block;
-            default:
-              return block;
-          }
-        }),
-      };
+      return updateBlockInState(state, action.payload.id, {
+        properties: {
+          ...block.properties,
+          required: action.payload.required,
+        },
+      });
+    }
 
-    case 'UPDATE_BLOCK_OPTIONS':
-      return {
-        ...state,
-        blocks: state.blocks.map((block) => {
-          if (block.id !== action.payload.id) return block;
-          if (block.type !== 'multiple_choice' && block.type !== 'multiselect')
-            return block;
+    case 'UPDATE_BLOCK_OPTIONS': {
+      const block = getBlockById(state, action.payload.id);
+      if (
+        !block ||
+        (block.type !== 'multiple_choice' && block.type !== 'multiselect')
+      ) {
+        return state;
+      }
 
-          return {
-            ...block,
-            properties: {
-              ...block.properties,
-              options: action.payload.options,
-            },
-          };
-        }),
-      };
+      return updateBlockInState(state, action.payload.id, {
+        properties: {
+          ...block.properties,
+          options: action.payload.options,
+        },
+      });
+    }
 
-    case 'ADD_OPTION':
-      return {
-        ...state,
-        blocks: state.blocks.map((block) => {
-          if (block.id !== action.payload.blockId) return block;
-          if (block.type !== 'multiple_choice' && block.type !== 'multiselect')
-            return block;
+    case 'ADD_OPTION': {
+      const block = getBlockById(state, action.payload.blockId);
+      if (
+        !block ||
+        (block.type !== 'multiple_choice' && block.type !== 'multiselect')
+      ) {
+        return state;
+      }
 
-          return {
-            ...block,
-            properties: {
-              ...block.properties,
-              options: [action.payload.option, ...block.properties.options],
-            },
-          };
-        }),
-      };
+      return updateBlockInState(state, action.payload.blockId, {
+        properties: {
+          ...block.properties,
+          options: [action.payload.option, ...block.properties.options],
+        },
+      });
+    }
 
-    case 'REMOVE_OPTION':
-      return {
-        ...state,
-        blocks: state.blocks.map((block) => {
-          if (block.id !== action.payload.blockId) return block;
-          if (block.type !== 'multiple_choice' && block.type !== 'multiselect')
-            return block;
+    case 'REMOVE_OPTION': {
+      const block = getBlockById(state, action.payload.blockId);
+      if (
+        !block ||
+        (block.type !== 'multiple_choice' && block.type !== 'multiselect')
+      ) {
+        return state;
+      }
 
-          return {
-            ...block,
-            properties: {
-              ...block.properties,
-              options: block.properties.options.filter(
-                (option) => option.id !== action.payload.optionId,
-              ),
-            },
-          };
-        }),
-      };
+      return updateBlockInState(state, action.payload.blockId, {
+        properties: {
+          ...block.properties,
+          options: block.properties.options.filter(
+            (option) => option.id !== action.payload.optionId,
+          ),
+        },
+      });
+    }
 
-    case 'UPDATE_OPTION':
-      return {
-        ...state,
-        blocks: state.blocks.map((block) => {
-          if (block.id !== action.payload.blockId) return block;
-          if (block.type !== 'multiple_choice' && block.type !== 'multiselect')
-            return block;
+    case 'UPDATE_OPTION': {
+      const block = getBlockById(state, action.payload.blockId);
+      if (
+        !block ||
+        (block.type !== 'multiple_choice' && block.type !== 'multiselect')
+      ) {
+        return state;
+      }
 
-          return {
-            ...block,
-            properties: {
-              ...block.properties,
-              options: block.properties.options.map((option) =>
-                option.id === action.payload.optionId
-                  ? { ...option, text: action.payload.text }
-                  : option,
-              ),
-            },
-          };
-        }),
-      };
+      return updateBlockInState(state, action.payload.blockId, {
+        properties: {
+          ...block.properties,
+          options: block.properties.options.map((option) =>
+            option.id === action.payload.optionId
+              ? { ...option, text: action.payload.text }
+              : option,
+          ),
+        },
+      });
+    }
 
     case 'REMOVE_BLOCK':
-      return {
-        ...state,
-        blocks: state.blocks.filter((block) => block.id !== action.payload.id),
-      };
+      return removeBlockFromState(state, action.payload.id);
 
     default:
       return state;
@@ -212,9 +163,18 @@ export const EditorProvider = ({
   children,
   initialBlocks = [],
 }: EditorProviderProps) => {
-  const [state, dispatch] = useReducer(editorReducer, {
-    blocks: initialBlocks,
-  });
+  const initialState = {
+    blocks: initialBlocks.map((block) => block.id),
+    blockMap: initialBlocks.reduce(
+      (map, block) => {
+        map[block.id] = block;
+        return map;
+      },
+      {} as Record<number, Block>,
+    ),
+  };
+
+  const [state, dispatch] = useReducer(editorReducer, initialState);
 
   return (
     <EditorContext.Provider value={{ state, dispatch }}>

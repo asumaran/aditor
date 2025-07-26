@@ -35,7 +35,7 @@ export const HeadingBlock: FC<HeadingBlockProps> = ({
       onCompositionEnd={handleCompositionEnd}
       onBlur={handleBlur}
       className={cn(
-        'min-h-[1.5rem] p-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-text',
+        'min-h-[1.5rem] cursor-text rounded-md border border-gray-200 p-2 focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none',
         !currentValue && 'text-gray-400',
         className,
       )}

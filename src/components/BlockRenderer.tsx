@@ -10,7 +10,9 @@ interface BlockRendererProps {
   onOptionsChange?: (id: Block['id'], options: readonly Option[]) => void;
   onBlockClick?: (blockId: Block['id']) => void;
   onRequiredChange?: (blockId: Block['id'], required: boolean) => void;
+  onCreateBlockAfter?: (afterBlockId: Block['id']) => number;
   className?: string;
+  autoFocus?: boolean;
 }
 
 const getBlockValue = (block: Block): string => {
@@ -59,7 +61,9 @@ export const BlockRenderer: FC<BlockRendererProps> = ({
   onOptionsChange,
   onBlockClick,
   onRequiredChange,
+  onCreateBlockAfter,
   className,
+  autoFocus = false,
 }) => {
   const Component = getBlockComponent(block.type);
 
@@ -89,6 +93,8 @@ export const BlockRenderer: FC<BlockRendererProps> = ({
     value: getBlockValue(block),
     onChange: handleChange,
     required: getBlockRequired(block),
+    autoFocus: autoFocus && (block.type === 'text' || block.type === 'heading'),
+    onCreateBlockAfter: onCreateBlockAfter ? () => onCreateBlockAfter(block.id) : undefined,
   };
 
   const specificProps =
@@ -106,12 +112,16 @@ export const BlockRenderer: FC<BlockRendererProps> = ({
           }
         : commonProps;
 
-  const isFormBlock = ['short_answer', 'multiple_choice', 'multiselect'].includes(block.type);
+  const isFormBlock = [
+    'short_answer',
+    'multiple_choice',
+    'multiselect',
+  ].includes(block.type);
 
   const content = (
     <ErrorBoundary
       fallback={
-        <div className='p-2 border border-red-200 rounded bg-red-50 text-red-600 text-sm'>
+        <div className='rounded border border-red-200 bg-red-50 p-2 text-sm text-red-600'>
           Error rendering block: {block.type}
         </div>
       }

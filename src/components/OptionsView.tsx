@@ -57,13 +57,13 @@ export const OptionsView: FC<OptionsViewProps> = ({
   };
 
   return (
-    <div className='w-full p-0 h-full flex flex-col'>
+    <div className='flex h-full w-full flex-col p-0'>
       {/* Header */}
-      <div className='flex items-center justify-between p-4 border-b flex-shrink-0'>
+      <div className='flex flex-shrink-0 items-center justify-between border-b p-4'>
         <div className='flex items-center gap-2'>
           <button
             onClick={onBack}
-            className='p-1 hover:bg-accent rounded-sm transition-colors'
+            className='hover:bg-accent rounded-sm p-1 transition-colors'
           >
             <ArrowLeft className='h-4 w-4' />
           </button>
@@ -72,17 +72,17 @@ export const OptionsView: FC<OptionsViewProps> = ({
         <button
           onClick={handleAddClick}
           disabled={isAddingOption}
-          className='p-1 hover:bg-accent rounded-sm transition-colors disabled:opacity-50'
+          className='hover:bg-accent rounded-sm p-1 transition-colors disabled:opacity-50'
         >
           <Plus className='h-4 w-4' />
         </button>
       </div>
 
       {/* Content */}
-      <div className='flex flex-col min-h-0'>
+      <div className='flex min-h-0 flex-col'>
         {/* Add Option Input */}
         {isAddingOption && (
-          <div className='p-4 border-b flex-shrink-0'>
+          <div className='flex-shrink-0 border-b p-4'>
             <input
               ref={inputRef}
               type='text'
@@ -96,13 +96,13 @@ export const OptionsView: FC<OptionsViewProps> = ({
                 }
               }}
               placeholder='Option text'
-              className='w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+              className='w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
             />
           </div>
         )}
 
         {/* Options List */}
-        <div className='py-2 overflow-y-auto max-h-[32rem]'>
+        <div className='max-h-[32rem] overflow-y-auto py-2'>
           {options.map((option) => (
             <OptionItem
               key={option.id}
@@ -112,7 +112,7 @@ export const OptionsView: FC<OptionsViewProps> = ({
             />
           ))}
           {options.length === 0 && !isAddingOption && (
-            <div className='px-4 py-8 text-center text-gray-500 text-sm'>
+            <div className='px-4 py-8 text-center text-sm text-gray-500'>
               No options yet. Click + to add one.
             </div>
           )}
@@ -157,7 +157,7 @@ const OptionItem: FC<OptionItemProps> = ({ option, onChange, onRemove }) => {
   };
 
   return (
-    <div className='flex items-center gap-2 px-4 py-2 hover:bg-accent group'>
+    <div className='hover:bg-accent group flex items-center gap-2 px-4 py-2'>
       <div className='flex-1'>
         {isEditing ? (
           <input
@@ -167,13 +167,13 @@ const OptionItem: FC<OptionItemProps> = ({ option, onChange, onRemove }) => {
             onChange={(e) => setText(e.target.value)}
             onKeyDown={handleKeyDown}
             onBlur={handleSave}
-            className='w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500'
+            className='w-full rounded border border-gray-300 px-2 py-1 text-sm focus:ring-1 focus:ring-blue-500 focus:outline-none'
           />
         ) : (
           <span
             onClick={() => setIsEditing(true)}
             className={cn(
-              'block px-2 py-1 text-sm cursor-pointer hover:bg-gray-50 rounded',
+              'block cursor-pointer rounded px-2 py-1 text-sm hover:bg-gray-50',
               !option.text && 'text-gray-400 italic',
             )}
           >
@@ -183,7 +183,7 @@ const OptionItem: FC<OptionItemProps> = ({ option, onChange, onRemove }) => {
       </div>
       <button
         onClick={() => onRemove(option.id)}
-        className='p-1 opacity-0 group-hover:opacity-100 hover:bg-red-100 hover:text-red-600 rounded transition-all'
+        className='rounded p-1 opacity-0 transition-all group-hover:opacity-100 hover:bg-red-100 hover:text-red-600'
       >
         <X className='h-3 w-3' />
       </button>

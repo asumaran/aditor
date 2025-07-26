@@ -13,6 +13,25 @@ const editorReducer = (
         blocks: [...state.blocks, action.payload],
       };
 
+    case 'INSERT_BLOCK_AFTER':
+      const afterIndex = state.blocks.findIndex(
+        (block) => block.id === action.payload.afterBlockId
+      );
+      if (afterIndex === -1) {
+        // If block not found, add at the end
+        return {
+          ...state,
+          blocks: [...state.blocks, action.payload.newBlock],
+        };
+      }
+      // Insert the new block after the found block
+      const newBlocks = [...state.blocks];
+      newBlocks.splice(afterIndex + 1, 0, action.payload.newBlock);
+      return {
+        ...state,
+        blocks: newBlocks,
+      };
+
     case 'UPDATE_BLOCK_CONTENT':
       return {
         ...state,

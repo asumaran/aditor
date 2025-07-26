@@ -2,6 +2,7 @@ import type { Block, Option } from './blocks';
 
 export type EditorAction =
   | { type: 'ADD_BLOCK'; payload: Block }
+  | { type: 'INSERT_BLOCK_AFTER'; payload: { afterBlockId: number; newBlock: Block } }
   | { type: 'UPDATE_BLOCK_CONTENT'; payload: { id: number; value: string } }
   | {
       type: 'UPDATE_BLOCK_REQUIRED';

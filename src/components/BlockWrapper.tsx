@@ -97,7 +97,7 @@ export const BlockWrapper: FC<BlockWrapperProps> = ({
         onMouseLeave={handleMouseLeave}
         onClick={handleClick}
         className={cn(
-          'relative transition-all duration-200 rounded-md p-2',
+          'relative rounded-md p-2 transition-all duration-200',
           'hover:cursor-pointer',
           isHovered && 'shadow-[0_0_0_2px_rgb(59_130_246_/_0.5)]', // Blue shadow on hover
           className,
@@ -120,7 +120,7 @@ export const BlockWrapper: FC<BlockWrapperProps> = ({
           onMouseLeave={handleMouseLeave}
           onClick={handleClick}
           className={cn(
-            'relative transition-all duration-200 rounded-md p-2',
+            'relative rounded-md p-2 transition-all duration-200',
             'hover:cursor-pointer',
             (isHovered || isPopoverOpen) &&
               'shadow-[0_0_0_2px_rgb(59_130_246_/_0.5)]', // Blue shadow on hover or when popover is open
@@ -134,13 +134,13 @@ export const BlockWrapper: FC<BlockWrapperProps> = ({
         side='right'
         align='start'
         alignOffset={-2}
-        className='p-0 max-h-[min(80vh,40rem)] w-80'
+        className='max-h-[min(80vh,40rem)] w-80 p-0'
         onEscapeKeyDown={handleEscapeKeyDown}
       >
         {currentView === 'menu' ? (
           <div className='py-2'>
             <div
-              className='flex items-center justify-between px-4 py-2 hover:bg-accent hover:cursor-pointer'
+              className='hover:bg-accent flex items-center justify-between px-4 py-2 hover:cursor-pointer'
               onClick={handleRequiredToggle}
             >
               <span className='text-sm font-medium'>Required</span>
@@ -152,7 +152,7 @@ export const BlockWrapper: FC<BlockWrapperProps> = ({
             </div>
             {hasOptionsSupport && (
               <div
-                className='flex items-center justify-between px-4 py-2 hover:bg-accent hover:cursor-pointer'
+                className='hover:bg-accent flex items-center justify-between px-4 py-2 hover:cursor-pointer'
                 onClick={handleOptionsClick}
               >
                 <span className='text-sm font-medium'>Options</span>

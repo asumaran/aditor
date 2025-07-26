@@ -50,13 +50,13 @@ export const MultiselectBlock: FC<MultiselectBlockProps> = ({
           onBlur={handleBlur}
           onClick={handleClickWithStopPropagation}
           className={cn(
-            'min-h-[1.5rem] p-1 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 w-fit cursor-text font-bold',
+            'min-h-[1.5rem] w-fit cursor-text rounded p-1 font-bold focus:ring-1 focus:ring-blue-500 focus:outline-none',
             !currentValue && 'text-gray-400',
           )}
           data-placeholder='Select label'
         />
         {required && (
-          <span className='text-red-500 ml-1' aria-label='Required field'>
+          <span className='ml-1 text-red-500' aria-label='Required field'>
             *
           </span>
         )}

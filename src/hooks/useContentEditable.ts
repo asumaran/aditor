@@ -31,7 +31,7 @@ export const useContentEditable = ({
       if (isComposingRef.current) return;
 
       const target = event.target as HTMLDivElement;
-      const newValue = target.innerText.replace(/^\n+|\n+$/g, '').trim();
+      const newValue = target.innerText;
       setCurrentValue(newValue);
       onChange(newValue);
     },
@@ -46,7 +46,7 @@ export const useContentEditable = ({
     (event: React.CompositionEvent<HTMLDivElement>) => {
       isComposingRef.current = false;
       const target = event.target as HTMLDivElement;
-      const newValue = target.innerText.replace(/^\n+|\n+$/g, '').trim();
+      const newValue = target.innerText;
       setCurrentValue(newValue);
       onChange(newValue);
     },
@@ -56,10 +56,10 @@ export const useContentEditable = ({
   const handleBlur = useCallback(
     (event: React.FocusEvent<HTMLDivElement>) => {
       const target = event.target as HTMLDivElement;
-      const newValue = target.innerText.replace(/^\n+|\n+$/g, '').trim();
+      const newValue = target.innerText;
 
-      // Si el contenido está vacío, limpiar el elemento
-      if (!newValue) {
+      // Si el contenido está completamente vacío (solo espacios/saltos), limpiar el elemento
+      if (!newValue.trim()) {
         target.innerHTML = '';
         setCurrentValue('');
         onChange('');

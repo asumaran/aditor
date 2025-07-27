@@ -294,44 +294,81 @@ export const setCursorAtHorizontalPosition = (
 };
 
 /**
+ * Set cursor at specific character position in element
+ */
+const setCursorAtPosition = (element: HTMLElement, position: number): void => {
+  const selection = window.getSelection();
+  if (!selection) return;
+  
+  const walker = document.createTreeWalker(
+    element,
+    NodeFilter.SHOW_TEXT,
+    null
+  );
+  
+  let currentOffset = 0;
+  let node: Node | null;
+  
+  while ((node = walker.nextNode())) {
+    const nodeLength = node.textContent?.length || 0;
+    if (currentOffset + nodeLength >= position) {
+      const offsetInNode = position - currentOffset;
+      const range = document.createRange();
+      range.setStart(node, offsetInNode);
+      range.collapse(true);
+      selection.removeAllRanges();
+      selection.addRange(range);
+      return;
+    }
+    currentOffset += nodeLength;
+  }
+  
+  // Fallback: go to end
+  const range = document.createRange();
+  range.selectNodeContents(element);
+  range.collapse(false);
+  selection.removeAllRanges();
+  selection.addRange(range);
+};
+
+/**
  * Navigate to last line of target element and set cursor at horizontal position
  */
 export const navigateToLastLine = (
   targetElement: HTMLElement,
   horizontalPosition: number
 ): void => {
-  targetElement.focus();
+  const selection = window.getSelection();
+  if (!selection) return;
   
-  setTimeout(() => {
-    const selection = window.getSelection();
-    if (!selection) return;
-    
-    // Place cursor at the end of the element
+  // Calculate target position directly without intermediate steps
+  const content = targetElement.textContent || '';
+  
+  if (!content) {
+    // Empty element - focus at start
     const range = document.createRange();
     range.selectNodeContents(targetElement);
-    range.collapse(false);
+    range.collapse(true);
     selection.removeAllRanges();
     selection.addRange(range);
-    
-    // Move cursor to beginning of current line
-    selection.modify('move', 'backward', 'lineboundary');
-    
-    // Now set horizontal position from the beginning of this line
-    const lineStart = selection.getRangeAt(0).cloneRange();
-    
-    // Move forward by horizontalPosition characters
-    for (let i = 0; i < horizontalPosition; i++) {
-      const before = selection.getRangeAt(0).cloneRange();
-      selection.modify('move', 'forward', 'character');
-      const after = selection.getRangeAt(0);
-      
-      // Check if we hit a newline or end of content
-      if (before.compareBoundaryPoints(Range.START_TO_START, after) === 0) {
-        // Cursor didn't move, we're at the end
-        break;
-      }
-    }
-  }, 0);
+    targetElement.focus();
+    return;
+  }
+  
+  // Find last line start position
+  const lines = content.split('\n');
+  let lastLineStart = 0;
+  for (let i = 0; i < lines.length - 1; i++) {
+    lastLineStart += lines[i].length + 1; // +1 for \n
+  }
+  
+  // Calculate final position (start of last line + horizontal offset)
+  const lastLineLength = lines[lines.length - 1].length;
+  const targetPos = lastLineStart + Math.min(horizontalPosition, lastLineLength);
+  
+  // Set cursor directly to calculated position
+  setCursorAtPosition(targetElement, targetPos);
+  targetElement.focus();
 };
 
 /**
@@ -341,20 +378,27 @@ export const navigateToFirstLine = (
   targetElement: HTMLElement,
   horizontalPosition: number
 ): void => {
+  const content = targetElement.textContent || '';
+  
+  if (!content) {
+    // Empty element - focus at start
+    const selection = window.getSelection();
+    if (!selection) return;
+    const range = document.createRange();
+    range.selectNodeContents(targetElement);
+    range.collapse(true);
+    selection.removeAllRanges();
+    selection.addRange(range);
+    targetElement.focus();
+    return;
+  }
+  
+  // Find first line length and calculate position
+  const firstLineEnd = content.indexOf('\n');
+  const firstLineLength = firstLineEnd === -1 ? content.length : firstLineEnd;
+  const targetPos = Math.min(horizontalPosition, firstLineLength);
+  
+  // Set cursor directly to calculated position
+  setCursorAtPosition(targetElement, targetPos);
   targetElement.focus();
-  
-  const selection = window.getSelection();
-  if (!selection) return;
-  
-  // Go to start of element
-  const range = document.createRange();
-  range.selectNodeContents(targetElement);
-  range.collapse(true);
-  selection.removeAllRanges();
-  selection.addRange(range);
-  
-  // Now set horizontal position on first line
-  setTimeout(() => {
-    setCursorAtHorizontalPosition(targetElement, horizontalPosition, false);
-  }, 0);
 };

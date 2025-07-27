@@ -1,7 +1,14 @@
 import { type FC, useMemo } from 'react';
 import { useContentEditable, useBlockCommands } from '@/hooks';
 import { useEditor } from '@/hooks';
-import { cn, isCursorAtFirstLine, isCursorAtLastLine, getCursorHorizontalPosition, navigateToLastLine, navigateToFirstLine } from '@/lib/utils';
+import {
+  cn,
+  isCursorAtFirstLine,
+  isCursorAtLastLine,
+  getCursorHorizontalPosition,
+  navigateToLastLine,
+  navigateToFirstLine,
+} from '@/lib/utils';
 import { getPreviousBlockId, getNextBlockId } from '@/lib/editorUtils';
 import type { BlockComponentProps } from '@/types';
 
@@ -66,7 +73,9 @@ export const TextBlock: FC<TextBlockProps> = ({
         handler: (e) => {
           // Navigate to previous block
           if (elementRef.current && blockId) {
-            const horizontalPos = getCursorHorizontalPosition(elementRef.current);
+            const horizontalPos = getCursorHorizontalPosition(
+              elementRef.current,
+            );
             const previousBlockId = getPreviousBlockId(state, blockId);
             if (previousBlockId) {
               const previousBlock = document.querySelector(
@@ -98,7 +107,9 @@ export const TextBlock: FC<TextBlockProps> = ({
         handler: (e) => {
           // Navigate to next block
           if (elementRef.current && blockId) {
-            const horizontalPos = getCursorHorizontalPosition(elementRef.current);
+            const horizontalPos = getCursorHorizontalPosition(
+              elementRef.current,
+            );
             const nextBlockId = getNextBlockId(state, blockId);
             if (nextBlockId) {
               const nextBlock = document.querySelector(
@@ -135,23 +146,26 @@ export const TextBlock: FC<TextBlockProps> = ({
   const { handleKeyDown } = useBlockCommands({ commands });
 
   return (
-    <div
-      ref={elementRef}
-      contentEditable
-      suppressContentEditableWarning
-      onInput={handleInput}
-      onCompositionStart={handleCompositionStart}
-      onCompositionEnd={handleCompositionEnd}
-      onBlur={handleBlur}
-      onKeyDown={handleKeyDown}
-      data-block-id={blockId}
-      className={cn(
-        'cursor-text whitespace-break-spaces focus:outline-none',
-        !currentValue && 'text-gray-400',
-        !currentValue && 'focus:after:content-[attr(data-placeholder)]',
-        className,
-      )}
-      data-placeholder={placeholder}
-    />
+    <div className='mt-[2px] mb-[1px] w-full max-w-[1285px]'>
+      <div
+        ref={elementRef}
+        contentEditable
+        suppressContentEditableWarning
+        onInput={handleInput}
+        onCompositionStart={handleCompositionStart}
+        onCompositionEnd={handleCompositionEnd}
+        onBlur={handleBlur}
+        onKeyDown={handleKeyDown}
+        data-block-id={blockId}
+        className={cn(
+          'w-full max-w-full px-[2px] pt-[3px] pb-[3px] break-words whitespace-break-spaces caret-[#322f2c]',
+          'focus:outline-none',
+          !currentValue && 'text-gray-400',
+          !currentValue && 'focus:after:content-[attr(data-placeholder)]',
+          className,
+        )}
+        data-placeholder={placeholder}
+      />
+    </div>
   );
 };

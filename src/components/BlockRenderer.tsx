@@ -162,5 +162,5 @@ export const BlockRenderer: FC<BlockRendererProps> = ({
     );
   }
 
-  return <div className={className}>{content}</div>;
+  return <>{content}</>;
 };

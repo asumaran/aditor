@@ -12,7 +12,6 @@ import {
 } from '@/lib/blockFactory';
 import {
   getOrderedBlocks,
-  getBlockIndex,
   getPreviousBlockId,
   getNextBlockId,
 } from '@/lib/editorUtils';
@@ -164,8 +163,8 @@ const EditorContent: FC = () => {
 
   return (
     <main>
-      <div className='m-10 mx-auto flex max-w-5xl gap-2 rounded'>
-        <div className='w-40 shrink rounded-sm bg-white shadow-sm'>
+      <div className='flex min-h-[calc(100vh-200px)] shadow-xl shadow-gray-900'>
+        <div className='w-40 shrink basis-50 bg-gray-100'>
           <div className='flex flex-col items-start space-y-1 p-5'>
             <Button size='sm' onClick={addTextBlock}>
               Text Block
@@ -184,39 +183,43 @@ const EditorContent: FC = () => {
             </Button>
           </div>
         </div>
-        <div className='grow rounded-sm bg-white p-5 shadow-sm'>
-          <section className='space-y-3' aria-label='Content blocks'>
-            {getOrderedBlocks(state).map((block, index) => {
-              // Auto-focus if it's the first text block AND the only block,
-              // OR if it's a newly created block that should be focused
-              const orderedBlocks = getOrderedBlocks(state);
-              const shouldAutoFocus =
-                (index === 0 &&
-                  block.type === 'text' &&
-                  orderedBlocks.length === 1) ||
-                focusBlockId === block.id;
+        <div className='grow bg-white p-5'>
+          <div className='m-auto w-[600px]'>
+            <section
+              className='flex w-full max-w-full shrink-0 grow flex-col items-start text-base leading-[1.5]'
+              aria-label='Content blocks'
+            >
+              {getOrderedBlocks(state).map((block, index) => {
+                // Auto-focus if it's the first text block AND the only block,
+                // OR if it's a newly created block that should be focused
+                const orderedBlocks = getOrderedBlocks(state);
+                const shouldAutoFocus =
+                  (index === 0 &&
+                    block.type === 'text' &&
+                    orderedBlocks.length === 1) ||
+                  focusBlockId === block.id;
 
-              return (
-                <BlockRenderer
-                  key={block.id}
-                  block={block}
-                  onChange={handleBlockChange}
-                  onOptionsChange={handleOptionsChange}
-                  onRequiredChange={handleRequiredChange}
-                  onBlockClick={handleBlockClick}
-                  onCreateBlockAfter={handleCreateBlockAfter}
-                  onDeleteBlock={handleDeleteBlockAndFocusPrevious}
-                  onNavigateToPrevious={handleNavigateToPrevious}
-                  onNavigateToNext={handleNavigateToNext}
-                  className='w-full'
-                  autoFocus={shouldAutoFocus}
-                />
-              );
-            })}
-          </section>
+                return (
+                  <BlockRenderer
+                    key={block.id}
+                    block={block}
+                    onChange={handleBlockChange}
+                    onOptionsChange={handleOptionsChange}
+                    onRequiredChange={handleRequiredChange}
+                    onBlockClick={handleBlockClick}
+                    onCreateBlockAfter={handleCreateBlockAfter}
+                    onDeleteBlock={handleDeleteBlockAndFocusPrevious}
+                    onNavigateToPrevious={handleNavigateToPrevious}
+                    onNavigateToNext={handleNavigateToNext}
+                    autoFocus={shouldAutoFocus}
+                  />
+                );
+              })}
+            </section>
+          </div>
         </div>
       </div>
-      <div className='my-10 text-[12px] text-gray-500'>
+      <div className='m-10 text-[12px] text-gray-100'>
         <pre>{JSON.stringify(getOrderedBlocks(state), null, 2)}</pre>
       </div>
     </main>

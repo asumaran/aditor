@@ -39,7 +39,6 @@ export const TextBlock: FC<TextBlockProps> = ({
     handleInput,
     handleCompositionStart,
     handleCompositionEnd,
-    handleBlur,
     currentValue,
   } = useContentEditable({ value, onChange, autoFocus });
 
@@ -154,7 +153,6 @@ export const TextBlock: FC<TextBlockProps> = ({
         onInput={handleInput}
         onCompositionStart={handleCompositionStart}
         onCompositionEnd={handleCompositionEnd}
-        onBlur={handleBlur}
         onKeyDown={handleKeyDown}
         data-block-id={blockId}
         className={cn(

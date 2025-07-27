@@ -35,13 +35,6 @@ export const useContentEditable = ({
       const target = event.target as HTMLDivElement;
       const newValue = target.innerText;
 
-      // Normalize empty content immediately, don't wait for blur
-      if (!newValue.trim()) {
-        setCurrentValue('');
-        onChange('');
-        return;
-      }
-
       setCurrentValue(newValue);
       onChange(newValue);
     },
@@ -63,20 +56,6 @@ export const useContentEditable = ({
     [onChange],
   );
 
-  const handleBlur = useCallback(
-    (event: React.FocusEvent<HTMLDivElement>) => {
-      const target = event.target as HTMLDivElement;
-      const newValue = target.innerText;
-
-      // Si el contenido está completamente vacío (solo espacios/saltos), limpiar el elemento
-      if (!newValue.trim()) {
-        target.innerHTML = '';
-        setCurrentValue('');
-        onChange('');
-      }
-    },
-    [onChange],
-  );
 
   useEffect(() => {
     const element = elementRef.current;
@@ -104,7 +83,6 @@ export const useContentEditable = ({
     handleInput,
     handleCompositionStart,
     handleCompositionEnd,
-    handleBlur,
     currentValue,
   };
 };

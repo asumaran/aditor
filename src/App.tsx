@@ -2,7 +2,7 @@ import { type FC, useCallback, useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { BlockRenderer } from '@/components';
 import { EditorProvider } from '@/contexts';
-import { useEditor } from '@/hooks';
+import { useEditor, useClickToFocus } from '@/hooks';
 import {
   createTextBlock,
   createShortAnswerBlock,
@@ -32,6 +32,9 @@ const EditorContent: FC = () => {
       return () => clearTimeout(timer);
     }
   }, [focusBlockId]);
+
+  // Handle click-to-focus functionality
+  useClickToFocus('mouse-listener');
 
   const handleBlockChange = useCallback(
     (id: Block['id'], value: string) => {
@@ -183,7 +186,7 @@ const EditorContent: FC = () => {
             </Button>
           </div>
         </div>
-        <div className='grow bg-white p-5'>
+        <div className='grow bg-white p-5' id='mouse-listener'>
           <div className='m-auto w-[600px]'>
             <section
               className='flex w-full max-w-full shrink-0 grow flex-col items-start text-base leading-[1.5]'

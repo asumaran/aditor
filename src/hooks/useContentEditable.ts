@@ -4,12 +4,14 @@ interface UseContentEditableProps {
   value: string;
   onChange: (value: string) => void;
   autoFocus?: boolean;
+  cursorAtStart?: boolean;
 }
 
 export const useContentEditable = ({
   value,
   onChange,
   autoFocus = false,
+  cursorAtStart = false,
 }: UseContentEditableProps) => {
   const elementRef = useRef<HTMLDivElement>(null);
   const isComposingRef = useRef(false);
@@ -28,12 +30,31 @@ export const useContentEditable = ({
     selection?.addRange(range);
   }, []);
 
+  const moveCursorToStart = useCallback(() => {
+    const element = elementRef.current;
+    if (!element) return;
+
+    const range = document.createRange();
+    range.selectNodeContents(element);
+    range.collapse(true);
+
+    const selection = window.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+  }, []);
+
   const handleInput = useCallback(
     (event: React.FormEvent<HTMLDivElement>) => {
       if (isComposingRef.current) return;
 
       const target = event.target as HTMLDivElement;
-      const newValue = target.innerText;
+      let newValue = target.innerText;
+
+      // If content is exactly one newline, clear it completely for placeholder
+      if (newValue === '\n') {
+        newValue = '';
+        target.textContent = '';
+      }
 
       setCurrentValue(newValue);
       onChange(newValue);
@@ -59,12 +80,17 @@ export const useContentEditable = ({
 
   useEffect(() => {
     const element = elementRef.current;
-    if (!element || element.innerText === value) return;
+    if (!element || element.textContent === value) return;
 
-    element.innerText = value;
+    element.textContent = value;
     setCurrentValue(value);
-    moveCursorToEnd();
-  }, [value, moveCursorToEnd]);
+    
+    if (cursorAtStart) {
+      moveCursorToStart();
+    } else {
+      moveCursorToEnd();
+    }
+  }, [value, moveCursorToEnd, moveCursorToStart, cursorAtStart]);
 
   // Handle autoFocus
   useEffect(() => {
@@ -72,11 +98,15 @@ export const useContentEditable = ({
       // Force focus with a small delay to ensure DOM is ready
       const timer = setTimeout(() => {
         elementRef.current?.focus();
-        moveCursorToEnd();
+        if (cursorAtStart) {
+          moveCursorToStart();
+        } else {
+          moveCursorToEnd();
+        }
       }, 0);
       return () => clearTimeout(timer);
     }
-  }, [autoFocus, moveCursorToEnd]);
+  }, [autoFocus, moveCursorToEnd, moveCursorToStart, cursorAtStart]);
 
   return {
     elementRef,

@@ -9,6 +9,7 @@ import {
   navigateToLastLine,
   navigateToFirstLine,
 } from '@/lib/utils';
+import { splitContentAtCursor } from '@/lib/splitContent';
 import { getPreviousBlockId, getNextBlockId } from '@/lib/editorUtils';
 import type { BlockComponentProps } from '@/types';
 
@@ -18,7 +19,8 @@ interface TextBlockProps extends BlockComponentProps {
   placeholder?: string;
   className?: string;
   autoFocus?: boolean;
-  onCreateBlockAfter?: () => number;
+  cursorAtStart?: boolean;
+  onCreateBlockAfter?: (initialContent?: string) => number;
   onDeleteBlock?: () => void;
   blockId?: number;
 }
@@ -29,6 +31,7 @@ export const TextBlock: FC<TextBlockProps> = ({
   placeholder = "Write, enter '/' for commands…",
   className,
   autoFocus = false,
+  cursorAtStart = false,
   onCreateBlockAfter,
   onDeleteBlock,
   blockId,
@@ -40,16 +43,22 @@ export const TextBlock: FC<TextBlockProps> = ({
     handleCompositionStart,
     handleCompositionEnd,
     currentValue,
-  } = useContentEditable({ value, onChange, autoFocus });
+  } = useContentEditable({ value, onChange, autoFocus, cursorAtStart });
 
   const commands = useMemo(
     () => [
       {
         key: 'Enter',
         handler: () => {
-          // Enter: Create new TextBlock
-          if (onCreateBlockAfter) {
-            onCreateBlockAfter();
+          // Enter: Split content and create new TextBlock
+          if (onCreateBlockAfter && elementRef.current) {
+            const { before, after } = splitContentAtCursor(elementRef.current);
+            
+            // Update current block with content before cursor
+            onChange(before);
+            
+            // Create new block with content after cursor
+            onCreateBlockAfter(after);
           }
         },
       },
@@ -158,6 +167,7 @@ export const TextBlock: FC<TextBlockProps> = ({
         className={cn(
           'w-full max-w-full px-[2px] pt-[3px] pb-[3px] break-words whitespace-break-spaces caret-[#322f2c]',
           'focus:outline-none',
+          'min-h-[1.5em]', // Ensure minimum height for empty lines
           !currentValue && 'text-gray-400',
           !currentValue && 'focus:after:content-[attr(data-placeholder)]',
           className,

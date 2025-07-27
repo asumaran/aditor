@@ -342,7 +342,7 @@ export const navigateToLastLine = (
   if (!selection) return;
   
   // Calculate target position directly without intermediate steps
-  const content = targetElement.textContent || '';
+  const content = targetElement.innerText || '';
   
   if (!content) {
     // Empty element - focus at start
@@ -378,7 +378,7 @@ export const navigateToFirstLine = (
   targetElement: HTMLElement,
   horizontalPosition: number
 ): void => {
-  const content = targetElement.textContent || '';
+  const content = targetElement.innerText || '';
   
   if (!content) {
     // Empty element - focus at start

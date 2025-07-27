@@ -10,12 +10,13 @@ interface BlockRendererProps {
   onOptionsChange?: (id: Block['id'], options: readonly Option[]) => void;
   onBlockClick?: (blockId: Block['id']) => void;
   onRequiredChange?: (blockId: Block['id'], required: boolean) => void;
-  onCreateBlockAfter?: (afterBlockId: Block['id']) => number;
+  onCreateBlockAfter?: (afterBlockId: Block['id'], initialContent?: string) => number;
   onDeleteBlock?: (blockId: Block['id']) => void;
   onNavigateToPrevious?: (blockId: Block['id']) => void;
   onNavigateToNext?: (blockId: Block['id']) => void;
   className?: string;
   autoFocus?: boolean;
+  cursorAtStart?: boolean;
 }
 
 const getBlockValue = (block: Block): string => {
@@ -70,6 +71,7 @@ export const BlockRenderer: FC<BlockRendererProps> = ({
   onNavigateToNext,
   className,
   autoFocus = false,
+  cursorAtStart = false,
 }) => {
   const Component = getBlockComponent(block.type);
 
@@ -100,8 +102,9 @@ export const BlockRenderer: FC<BlockRendererProps> = ({
     onChange: handleChange,
     required: getBlockRequired(block),
     autoFocus: autoFocus && (block.type === 'text' || block.type === 'heading'),
+    cursorAtStart: cursorAtStart && (block.type === 'text' || block.type === 'heading'),
     onCreateBlockAfter: onCreateBlockAfter
-      ? () => onCreateBlockAfter(block.id)
+      ? (initialContent?: string) => onCreateBlockAfter(block.id, initialContent)
       : undefined,
     onDeleteBlock: onDeleteBlock ? () => onDeleteBlock(block.id) : undefined,
     onNavigateToPrevious: onNavigateToPrevious

@@ -22,12 +22,18 @@ const INITIAL_BLOCKS: readonly Block[] = [createTextBlock()] as const;
 const EditorContent: FC = () => {
   const { state, dispatch } = useEditor();
   const [focusBlockId, setFocusBlockId] = useState<number | null>(null);
+  const [cursorAtStartBlockIds, setCursorAtStartBlockIds] = useState<Set<number>>(new Set());
 
-  // Clear focus block ID after it's been applied
+  // Clear focus block ID and cursor at start after they've been applied
   useEffect(() => {
     if (focusBlockId) {
       const timer = setTimeout(() => {
         setFocusBlockId(null);
+        setCursorAtStartBlockIds(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(focusBlockId);
+          return newSet;
+        });
       }, 100);
       return () => clearTimeout(timer);
     }
@@ -62,13 +68,19 @@ const EditorContent: FC = () => {
   }, []);
 
   const handleCreateBlockAfter = useCallback(
-    (afterBlockId: Block['id']) => {
-      const newBlock = createTextBlock();
+    (afterBlockId: Block['id'], initialContent?: string) => {
+      const newBlock = createTextBlock(initialContent || '');
       dispatch({
         type: 'INSERT_BLOCK_AFTER',
         payload: { afterBlockId, newBlock },
       });
       setFocusBlockId(newBlock.id);
+      
+      // If the new block has content (split from previous), cursor should be at start
+      if (initialContent) {
+        setCursorAtStartBlockIds(prev => new Set(prev).add(newBlock.id));
+      }
+      
       return newBlock.id;
     },
     [dispatch],
@@ -201,6 +213,8 @@ const EditorContent: FC = () => {
                     block.type === 'text' &&
                     orderedBlocks.length === 1) ||
                   focusBlockId === block.id;
+                
+                const shouldCursorAtStart = cursorAtStartBlockIds.has(block.id);
 
                 return (
                   <BlockRenderer
@@ -215,6 +229,7 @@ const EditorContent: FC = () => {
                     onNavigateToPrevious={handleNavigateToPrevious}
                     onNavigateToNext={handleNavigateToNext}
                     autoFocus={shouldAutoFocus}
+                    cursorAtStart={shouldCursorAtStart}
                   />
                 );
               })}

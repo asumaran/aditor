@@ -5,3 +5,4 @@ export { useBlockOptions } from './useBlockOptions';
 export { useEditor } from './useEditor';
 export { useBlockCommands } from './useBlockCommands';
 export { useClickToFocus } from './useClickToFocus';
+export { useBlockCreation } from './useBlockCreation';

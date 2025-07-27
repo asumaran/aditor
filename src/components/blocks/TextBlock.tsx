@@ -1,5 +1,5 @@
 import { type FC, useMemo } from 'react';
-import { useContentEditable, useBlockCommands } from '@/hooks';
+import { useContentEditable, useBlockCommands, useBlockCreation } from '@/hooks';
 import { useEditor } from '@/hooks';
 import {
   cn,
@@ -9,7 +9,6 @@ import {
   navigateToLastLine,
   navigateToFirstLine,
 } from '@/lib/utils';
-import { splitContentAtCursor } from '@/lib/splitContent';
 import { getPreviousBlockId, getNextBlockId } from '@/lib/editorUtils';
 import type { BlockComponentProps } from '@/types';
 
@@ -20,7 +19,7 @@ interface TextBlockProps extends BlockComponentProps {
   className?: string;
   autoFocus?: boolean;
   cursorAtStart?: boolean;
-  onCreateBlockAfter?: (initialContent?: string) => number;
+  onCreateBlockAfter?: (options?: { initialContent?: string; cursorAtStart?: boolean }) => number;
   onDeleteBlock?: () => void;
   blockId?: number;
 }
@@ -45,20 +44,19 @@ export const TextBlock: FC<TextBlockProps> = ({
     currentValue,
   } = useContentEditable({ value, onChange, autoFocus, cursorAtStart });
 
+  const { splitAndCreateBlock } = useBlockCreation({
+    onCreateBlockAfter,
+    onChange,
+  });
+
   const commands = useMemo(
     () => [
       {
         key: 'Enter',
         handler: () => {
           // Enter: Split content and create new TextBlock
-          if (onCreateBlockAfter && elementRef.current) {
-            const { before, after } = splitContentAtCursor(elementRef.current);
-            
-            // Update current block with content before cursor
-            onChange(before);
-            
-            // Create new block with content after cursor
-            onCreateBlockAfter(after);
+          if (elementRef.current) {
+            splitAndCreateBlock(elementRef.current);
           }
         },
       },
@@ -143,7 +141,7 @@ export const TextBlock: FC<TextBlockProps> = ({
     ],
     [
       currentValue,
-      onCreateBlockAfter,
+      splitAndCreateBlock,
       onDeleteBlock,
       blockId,
       elementRef,

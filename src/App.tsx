@@ -68,16 +68,18 @@ const EditorContent: FC = () => {
   }, []);
 
   const handleCreateBlockAfter = useCallback(
-    (afterBlockId: Block['id'], initialContent?: string) => {
-      const newBlock = createTextBlock(initialContent || '');
+    (afterBlockId: Block['id'], options?: { initialContent?: string; cursorAtStart?: boolean }) => {
+      const { initialContent = '', cursorAtStart = false } = options || {};
+      
+      const newBlock = createTextBlock(initialContent);
       dispatch({
         type: 'INSERT_BLOCK_AFTER',
         payload: { afterBlockId, newBlock },
       });
       setFocusBlockId(newBlock.id);
       
-      // If the new block has content (split from previous), cursor should be at start
-      if (initialContent) {
+      // Set cursor position based on context
+      if (cursorAtStart) {
         setCursorAtStartBlockIds(prev => new Set(prev).add(newBlock.id));
       }
       

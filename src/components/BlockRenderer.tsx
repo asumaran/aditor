@@ -10,7 +10,7 @@ interface BlockRendererProps {
   onOptionsChange?: (id: Block['id'], options: readonly Option[]) => void;
   onBlockClick?: (blockId: Block['id']) => void;
   onRequiredChange?: (blockId: Block['id'], required: boolean) => void;
-  onCreateBlockAfter?: (afterBlockId: Block['id'], initialContent?: string) => number;
+  onCreateBlockAfter?: (afterBlockId: Block['id'], options?: { initialContent?: string; cursorAtStart?: boolean }) => number;
   onDeleteBlock?: (blockId: Block['id']) => void;
   onNavigateToPrevious?: (blockId: Block['id']) => void;
   onNavigateToNext?: (blockId: Block['id']) => void;
@@ -104,7 +104,7 @@ export const BlockRenderer: FC<BlockRendererProps> = ({
     autoFocus: autoFocus && (block.type === 'text' || block.type === 'heading'),
     cursorAtStart: cursorAtStart && (block.type === 'text' || block.type === 'heading'),
     onCreateBlockAfter: onCreateBlockAfter
-      ? (initialContent?: string) => onCreateBlockAfter(block.id, initialContent)
+      ? (options?: { initialContent?: string; cursorAtStart?: boolean }) => onCreateBlockAfter(block.id, options)
       : undefined,
     onDeleteBlock: onDeleteBlock ? () => onDeleteBlock(block.id) : undefined,
     onNavigateToPrevious: onNavigateToPrevious

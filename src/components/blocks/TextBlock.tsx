@@ -84,6 +84,25 @@ export const TextBlock: FC<TextBlockProps> = ({
         },
       },
       {
+        key: 'Backspace',
+        modifiers: ['meta'], // Cmd+Backspace on Mac
+        condition: () => {
+          // Only handle when cursor is at the very start of the block
+          return elementRef.current && isCursorAtStart(elementRef.current);
+        },
+        handler: (e) => {
+          if (!currentValue.trim()) {
+            // Empty block: Delete block
+            if (onDeleteBlock) {
+              onDeleteBlock();
+            }
+          } else {
+            // Non-empty block: Merge with previous
+            mergeWithPreviousBlock(currentValue);
+          }
+        },
+      },
+      {
         key: 'ArrowUp',
         condition: () => {
           // Only handle if we're at first line

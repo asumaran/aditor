@@ -1,4 +1,4 @@
-import { type FC, useMemo } from 'react';
+import { type FC, useMemo, useCallback } from 'react';
 import { useContentEditable, useBlockCommands, useBlockCreation } from '@/hooks';
 import { useEditor } from '@/hooks';
 import {
@@ -46,10 +46,18 @@ export const TextBlock: FC<TextBlockProps> = ({
     currentValue,
   } = useContentEditable({ value, onChange, autoFocus, cursorAtStart, blockId });
 
-  const { splitAndCreateBlock, isCursorAtStart, mergeWithPreviousBlock } = useBlockCreation({
+  const hasPreviousBlock = useMemo(() => {
+    if (!blockId) return false;
+    const previousBlockId = getPreviousBlockId(state, blockId);
+    return !!previousBlockId;
+  }, [state, blockId]);
+
+  const { splitAndCreateBlock, isCursorAtStart, mergeWithPreviousBlock, handleBackspace } = useBlockCreation({
     onCreateBlockAfter,
     onChange,
     onMergeWithPrevious,
+    onDeleteBlock,
+    hasPreviousBlock,
   });
 
   const commands = useMemo(
@@ -72,14 +80,8 @@ export const TextBlock: FC<TextBlockProps> = ({
           return !currentValue.trim() || (elementRef.current && isCursorAtStart(elementRef.current));
         },
         handler: () => {
-          if (!currentValue.trim()) {
-            // Empty block: Delete block
-            if (onDeleteBlock) {
-              onDeleteBlock();
-            }
-          } else if (elementRef.current && isCursorAtStart(elementRef.current)) {
-            // Cursor at start: Merge with previous block
-            mergeWithPreviousBlock(currentValue);
+          if (elementRef.current) {
+            handleBackspace(elementRef.current, currentValue);
           }
         },
       },
@@ -90,15 +92,9 @@ export const TextBlock: FC<TextBlockProps> = ({
           // Only handle when cursor is at the very start of the block
           return elementRef.current && isCursorAtStart(elementRef.current);
         },
-        handler: (e) => {
-          if (!currentValue.trim()) {
-            // Empty block: Delete block
-            if (onDeleteBlock) {
-              onDeleteBlock();
-            }
-          } else {
-            // Non-empty block: Merge with previous
-            mergeWithPreviousBlock(currentValue);
+        handler: () => {
+          if (elementRef.current) {
+            handleBackspace(elementRef.current, currentValue);
           }
         },
       },
@@ -179,8 +175,7 @@ export const TextBlock: FC<TextBlockProps> = ({
       currentValue,
       splitAndCreateBlock,
       isCursorAtStart,
-      mergeWithPreviousBlock,
-      onDeleteBlock,
+      handleBackspace,
       blockId,
       elementRef,
       state,

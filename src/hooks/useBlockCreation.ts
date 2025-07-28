@@ -5,9 +5,17 @@ interface UseBlockCreationProps {
   onCreateBlockAfter?: (options?: { initialContent?: string; cursorAtStart?: boolean }) => number;
   onChange?: (value: string) => void;
   onMergeWithPrevious?: (currentContent: string) => void;
+  onDeleteBlock?: () => void;
+  hasPreviousBlock?: boolean;
 }
 
-export const useBlockCreation = ({ onCreateBlockAfter, onChange, onMergeWithPrevious }: UseBlockCreationProps) => {
+export const useBlockCreation = ({ 
+  onCreateBlockAfter, 
+  onChange, 
+  onMergeWithPrevious,
+  onDeleteBlock,
+  hasPreviousBlock = true 
+}: UseBlockCreationProps) => {
   
   const splitAndCreateBlock = useCallback((element: HTMLElement) => {
     if (!onCreateBlockAfter || !onChange) return null;
@@ -47,14 +55,40 @@ export const useBlockCreation = ({ onCreateBlockAfter, onChange, onMergeWithPrev
   }, []);
 
   const mergeWithPreviousBlock = useCallback((currentValue: string) => {
-    if (onMergeWithPrevious) {
+    // Only merge if there's a previous block
+    if (hasPreviousBlock && onMergeWithPrevious) {
       onMergeWithPrevious(currentValue);
     }
-  }, [onMergeWithPrevious]);
+  }, [onMergeWithPrevious, hasPreviousBlock]);
+
+  const canMergeWithPrevious = useCallback(() => {
+    return hasPreviousBlock && onMergeWithPrevious !== undefined;
+  }, [onMergeWithPrevious, hasPreviousBlock]);
+
+  const handleBackspace = useCallback((element: HTMLElement, currentValue: string) => {
+    // If empty block
+    if (!currentValue.trim()) {
+      // Only delete if not first block
+      if (hasPreviousBlock && onDeleteBlock) {
+        onDeleteBlock();
+      }
+      return true;
+    }
+    
+    // If cursor at start
+    if (isCursorAtStart(element)) {
+      mergeWithPreviousBlock(currentValue);
+      return true;
+    }
+    
+    return false;
+  }, [hasPreviousBlock, onDeleteBlock, isCursorAtStart, mergeWithPreviousBlock]);
 
   return {
     splitAndCreateBlock,
     isCursorAtStart,
     mergeWithPreviousBlock,
+    canMergeWithPrevious,
+    handleBackspace,
   };
 };

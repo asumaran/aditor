@@ -21,6 +21,7 @@ interface TextBlockProps extends BlockComponentProps {
   cursorAtStart?: boolean;
   onCreateBlockAfter?: (options?: { initialContent?: string; cursorAtStart?: boolean }) => number;
   onDeleteBlock?: () => void;
+  onMergeWithPrevious?: (currentContent: string) => void;
   blockId?: number;
 }
 
@@ -33,6 +34,7 @@ export const TextBlock: FC<TextBlockProps> = ({
   cursorAtStart = false,
   onCreateBlockAfter,
   onDeleteBlock,
+  onMergeWithPrevious,
   blockId,
 }) => {
   const { state } = useEditor();
@@ -42,11 +44,12 @@ export const TextBlock: FC<TextBlockProps> = ({
     handleCompositionStart,
     handleCompositionEnd,
     currentValue,
-  } = useContentEditable({ value, onChange, autoFocus, cursorAtStart });
+  } = useContentEditable({ value, onChange, autoFocus, cursorAtStart, blockId });
 
-  const { splitAndCreateBlock } = useBlockCreation({
+  const { splitAndCreateBlock, isCursorAtStart, mergeWithPreviousBlock } = useBlockCreation({
     onCreateBlockAfter,
     onChange,
+    onMergeWithPrevious,
   });
 
   const commands = useMemo(
@@ -62,11 +65,21 @@ export const TextBlock: FC<TextBlockProps> = ({
       },
       {
         key: 'Backspace',
-        condition: () => !currentValue.trim(),
+        condition: () => {
+          // Handle two cases:
+          // 1. Empty block (delete block)
+          // 2. Cursor at start (merge with previous)
+          return !currentValue.trim() || (elementRef.current && isCursorAtStart(elementRef.current));
+        },
         handler: () => {
-          // Backspace on empty block: Delete block
-          if (onDeleteBlock) {
-            onDeleteBlock();
+          if (!currentValue.trim()) {
+            // Empty block: Delete block
+            if (onDeleteBlock) {
+              onDeleteBlock();
+            }
+          } else if (elementRef.current && isCursorAtStart(elementRef.current)) {
+            // Cursor at start: Merge with previous block
+            mergeWithPreviousBlock(currentValue);
           }
         },
       },
@@ -83,6 +96,8 @@ export const TextBlock: FC<TextBlockProps> = ({
               elementRef.current,
             );
             const previousBlockId = getPreviousBlockId(state, blockId);
+            
+            
             if (previousBlockId) {
               const previousBlock = document.querySelector(
                 `[data-block-id="${previousBlockId}"]`,
@@ -92,7 +107,7 @@ export const TextBlock: FC<TextBlockProps> = ({
                 navigateToLastLine(previousBlock, horizontalPos);
               }
             } else {
-              // No previous block - this is the first block
+              // No previous block - this is the first block (Example 1)
               // Move cursor to beginning of current block
               const range = document.createRange();
               range.selectNodeContents(elementRef.current);
@@ -117,6 +132,8 @@ export const TextBlock: FC<TextBlockProps> = ({
               elementRef.current,
             );
             const nextBlockId = getNextBlockId(state, blockId);
+            
+            
             if (nextBlockId) {
               const nextBlock = document.querySelector(
                 `[data-block-id="${nextBlockId}"]`,
@@ -126,7 +143,7 @@ export const TextBlock: FC<TextBlockProps> = ({
                 navigateToFirstLine(nextBlock, horizontalPos);
               }
             } else {
-              // No next block - this is the last block
+              // No next block - this is the last block (Example 2)
               // Move cursor to end of current block
               const range = document.createRange();
               range.selectNodeContents(elementRef.current);
@@ -142,6 +159,8 @@ export const TextBlock: FC<TextBlockProps> = ({
     [
       currentValue,
       splitAndCreateBlock,
+      isCursorAtStart,
+      mergeWithPreviousBlock,
       onDeleteBlock,
       blockId,
       elementRef,

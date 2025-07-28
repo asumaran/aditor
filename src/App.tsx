@@ -24,18 +24,18 @@ const EditorContent: FC = () => {
   const [focusBlockId, setFocusBlockId] = useState<number | null>(null);
   const [cursorAtStartBlockIds, setCursorAtStartBlockIds] = useState<Set<number>>(new Set());
 
-  // Clear focus block ID and cursor at start after they've been applied
+  // Clear focus block ID after it's been applied
   useEffect(() => {
     if (focusBlockId) {
-      const timer = setTimeout(() => {
+      // Clear on next tick to ensure React has applied the focus
+      Promise.resolve().then(() => {
         setFocusBlockId(null);
         setCursorAtStartBlockIds(prev => {
           const newSet = new Set(prev);
           newSet.delete(focusBlockId);
           return newSet;
         });
-      }, 100);
-      return () => clearTimeout(timer);
+      });
     }
   }, [focusBlockId]);
 
@@ -103,6 +103,74 @@ const EditorContent: FC = () => {
       if (previousBlockId) {
         setFocusBlockId(previousBlockId);
       }
+    },
+    [state, dispatch],
+  );
+
+  const handleMergeWithPrevious = useCallback(
+    (blockId: Block['id'], currentContent: string) => {
+      // Don't merge if it's the first block
+      const previousBlockId = getPreviousBlockId(state, blockId);
+      if (!previousBlockId) return;
+
+      const currentBlock = state.blockMap[blockId];
+      const previousBlock = state.blockMap[previousBlockId];
+      
+      // Only merge with text/heading blocks
+      if (!previousBlock || !['text', 'heading'].includes(previousBlock.type)) return;
+
+      // Get the previous block's content
+      const previousContent = previousBlock.properties.title || '';
+      const mergedContent = previousContent + currentContent;
+
+      // Store the junction point position before updating
+      const junctionPoint = previousContent.length;
+      
+      // Delete the current block first
+      dispatch({ type: 'REMOVE_BLOCK', payload: { id: blockId } });
+      
+      // Update the previous block with merged content
+      dispatch({ 
+        type: 'UPDATE_BLOCK_CONTENT', 
+        payload: { id: previousBlockId, value: mergedContent } 
+      });
+
+      // Focus the block
+      setFocusBlockId(previousBlockId);
+      
+      // Handle cursor positioning outside of React
+      requestAnimationFrame(() => {
+        const element = document.querySelector(`[data-block-id="${previousBlockId}"]`) as HTMLElement;
+        if (!element) return;
+        
+        element.focus();
+        
+        // Set cursor at junction point using vanilla JS
+        const selection = window.getSelection();
+        if (!selection) return;
+        
+        const range = document.createRange();
+        const walker = document.createTreeWalker(
+          element,
+          NodeFilter.SHOW_TEXT,
+          null
+        );
+        
+        let currentOffset = 0;
+        let node: Node | null;
+        
+        while ((node = walker.nextNode())) {
+          const nodeLength = node.textContent?.length || 0;
+          if (currentOffset + nodeLength >= junctionPoint) {
+            range.setStart(node, junctionPoint - currentOffset);
+            range.collapse(true);
+            selection.removeAllRanges();
+            selection.addRange(range);
+            return;
+          }
+          currentOffset += nodeLength;
+        }
+      });
     },
     [state, dispatch],
   );
@@ -228,6 +296,7 @@ const EditorContent: FC = () => {
                     onBlockClick={handleBlockClick}
                     onCreateBlockAfter={handleCreateBlockAfter}
                     onDeleteBlock={handleDeleteBlockAndFocusPrevious}
+                    onMergeWithPrevious={handleMergeWithPrevious}
                     onNavigateToPrevious={handleNavigateToPrevious}
                     onNavigateToNext={handleNavigateToNext}
                     autoFocus={shouldAutoFocus}

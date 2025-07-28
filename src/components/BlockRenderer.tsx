@@ -12,6 +12,7 @@ interface BlockRendererProps {
   onRequiredChange?: (blockId: Block['id'], required: boolean) => void;
   onCreateBlockAfter?: (afterBlockId: Block['id'], options?: { initialContent?: string; cursorAtStart?: boolean }) => number;
   onDeleteBlock?: (blockId: Block['id']) => void;
+  onMergeWithPrevious?: (blockId: Block['id'], currentContent: string) => void;
   onNavigateToPrevious?: (blockId: Block['id']) => void;
   onNavigateToNext?: (blockId: Block['id']) => void;
   className?: string;
@@ -67,6 +68,7 @@ export const BlockRenderer: FC<BlockRendererProps> = ({
   onRequiredChange,
   onCreateBlockAfter,
   onDeleteBlock,
+  onMergeWithPrevious,
   onNavigateToPrevious,
   onNavigateToNext,
   className,
@@ -107,6 +109,7 @@ export const BlockRenderer: FC<BlockRendererProps> = ({
       ? (options?: { initialContent?: string; cursorAtStart?: boolean }) => onCreateBlockAfter(block.id, options)
       : undefined,
     onDeleteBlock: onDeleteBlock ? () => onDeleteBlock(block.id) : undefined,
+    onMergeWithPrevious: onMergeWithPrevious ? (currentContent: string) => onMergeWithPrevious(block.id, currentContent) : undefined,
     onNavigateToPrevious: onNavigateToPrevious
       ? () => onNavigateToPrevious(block.id)
       : undefined,

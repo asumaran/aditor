@@ -5,6 +5,7 @@ interface UseContentEditableProps {
   onChange: (value: string) => void;
   autoFocus?: boolean;
   cursorAtStart?: boolean;
+  blockId?: number;
 }
 
 export const useContentEditable = ({
@@ -12,6 +13,7 @@ export const useContentEditable = ({
   onChange,
   autoFocus = false,
   cursorAtStart = false,
+  blockId,
 }: UseContentEditableProps) => {
   const elementRef = useRef<HTMLDivElement>(null);
   const isComposingRef = useRef(false);
@@ -78,13 +80,16 @@ export const useContentEditable = ({
   );
 
 
+
   useEffect(() => {
     const element = elementRef.current;
     if (!element || element.textContent === value) return;
 
+    // Simple update - just set the content
     element.textContent = value;
     setCurrentValue(value);
     
+    // Normal cursor positioning
     if (cursorAtStart) {
       moveCursorToStart();
     } else {
@@ -96,15 +101,15 @@ export const useContentEditable = ({
   useEffect(() => {
     if (autoFocus && elementRef.current) {
       // Force focus with a small delay to ensure DOM is ready
-      const timer = setTimeout(() => {
+      // Use Promise to avoid setTimeout
+      Promise.resolve().then(() => {
         elementRef.current?.focus();
         if (cursorAtStart) {
           moveCursorToStart();
         } else {
           moveCursorToEnd();
         }
-      }, 0);
-      return () => clearTimeout(timer);
+      });
     }
   }, [autoFocus, moveCursorToEnd, moveCursorToStart, cursorAtStart]);
 

@@ -1,0 +1,91 @@
+import { useMemo, useCallback } from 'react';
+import { useEditor } from '@/hooks';
+import {
+  isCursorAtFirstLine,
+  isCursorAtLastLine,
+  getCursorHorizontalPosition,
+  navigateToLastLine,
+  navigateToFirstLine,
+} from '@/lib/utils';
+import { getPreviousBlockId, getNextBlockId } from '@/lib/editorUtils';
+
+interface UseBlockNavigationProps {
+  blockId?: number;
+  elementRef: React.RefObject<HTMLElement>;
+}
+
+export const useBlockNavigation = ({ blockId, elementRef }: UseBlockNavigationProps) => {
+  const { state } = useEditor();
+
+  const handleArrowUp = useCallback(() => {
+    if (elementRef.current && blockId) {
+      const horizontalPos = getCursorHorizontalPosition(elementRef.current);
+      const previousBlockId = getPreviousBlockId(state, blockId);
+      
+      if (previousBlockId) {
+        const previousBlock = document.querySelector(
+          `[data-block-id="${previousBlockId}"]`,
+        ) as HTMLElement;
+
+        if (previousBlock) {
+          navigateToLastLine(previousBlock, horizontalPos);
+        }
+      } else {
+        // No previous block - move cursor to beginning of current block
+        const range = document.createRange();
+        range.selectNodeContents(elementRef.current);
+        range.collapse(true);
+        const selection = window.getSelection();
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+      }
+    }
+  }, [blockId, state, elementRef]);
+
+  const handleArrowDown = useCallback(() => {
+    if (elementRef.current && blockId) {
+      const horizontalPos = getCursorHorizontalPosition(elementRef.current);
+      const nextBlockId = getNextBlockId(state, blockId);
+      
+      if (nextBlockId) {
+        const nextBlock = document.querySelector(
+          `[data-block-id="${nextBlockId}"]`,
+        ) as HTMLElement;
+
+        if (nextBlock) {
+          navigateToFirstLine(nextBlock, horizontalPos);
+        }
+      } else {
+        // No next block - move cursor to end of current block
+        const range = document.createRange();
+        range.selectNodeContents(elementRef.current);
+        range.collapse(false);
+        const selection = window.getSelection();
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+      }
+    }
+  }, [blockId, state, elementRef]);
+
+  const navigationCommands = useMemo(
+    () => [
+      {
+        key: 'ArrowUp',
+        condition: () => {
+          return elementRef.current && isCursorAtFirstLine(elementRef.current);
+        },
+        handler: handleArrowUp,
+      },
+      {
+        key: 'ArrowDown',
+        condition: () => {
+          return elementRef.current && isCursorAtLastLine(elementRef.current);
+        },
+        handler: handleArrowDown,
+      },
+    ],
+    [handleArrowUp, handleArrowDown, elementRef],
+  );
+
+  return { navigationCommands };
+};

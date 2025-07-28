@@ -13,7 +13,6 @@ export const useContentEditable = ({
   onChange,
   autoFocus = false,
   cursorAtStart = false,
-  blockId,
 }: UseContentEditableProps) => {
   const elementRef = useRef<HTMLDivElement>(null);
   const isComposingRef = useRef(false);

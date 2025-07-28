@@ -92,7 +92,8 @@ export const removeBlockFromState = (
   state: EditorState,
   blockId: number,
 ): EditorState => {
-  const { [blockId]: removedBlock, ...remainingBlocks } = state.blockMap;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { [blockId]: _, ...remainingBlocks } = state.blockMap;
   return {
     blocks: state.blocks.filter((id) => id !== blockId),
     blockMap: remainingBlocks,

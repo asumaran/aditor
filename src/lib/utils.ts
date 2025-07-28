@@ -64,30 +64,11 @@ export const isCursorAtFirstLine = (editableElement: HTMLElement): boolean => {
     
     // If no newline found, we're on the first line
     return lastNewlineBeforeCursor === -1;
-  } catch (e) {
+  } catch {
     return false;
   }
 };
 
-/**
- * Get the last text node in an element
- */
-const getLastTextNode = (element: HTMLElement): Text | null => {
-  const walker = document.createTreeWalker(
-    element,
-    NodeFilter.SHOW_TEXT,
-    null
-  );
-  
-  let lastTextNode: Text | null = null;
-  let node: Node | null;
-  
-  while ((node = walker.nextNode())) {
-    lastTextNode = node as Text;
-  }
-  
-  return lastTextNode;
-};
 
 /**
  * Check if cursor is at the last line of a contentEditable element
@@ -114,7 +95,6 @@ export const isCursorAtLastLine = (editableElement: HTMLElement): boolean => {
     
     // Get the text content and split into lines
     const lines = content.split('\n');
-    const lineCount = lines.length;
     
     // Get cursor position as character offset
     const preRange = document.createRange();
@@ -149,7 +129,7 @@ export const isCursorAtLastLine = (editableElement: HTMLElement): boolean => {
     
     
     return isLastLine;
-  } catch (e) {
+  } catch {
     return false;
   }
 };

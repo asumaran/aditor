@@ -113,7 +113,6 @@ const EditorContent: FC = () => {
       const previousBlockId = getPreviousBlockId(state, blockId);
       if (!previousBlockId) return;
 
-      const currentBlock = state.blockMap[blockId];
       const previousBlock = state.blockMap[previousBlockId];
       
       // Only merge with text/heading blocks

@@ -1,15 +1,8 @@
-import { type FC, useMemo, useCallback } from 'react';
-import { useContentEditable, useBlockCommands, useBlockCreation } from '@/hooks';
+import { type FC, useMemo } from 'react';
+import { useContentEditable, useBlockCommands, useBlockCreation, useBlockNavigation } from '@/hooks';
 import { useEditor } from '@/hooks';
-import {
-  cn,
-  isCursorAtFirstLine,
-  isCursorAtLastLine,
-  getCursorHorizontalPosition,
-  navigateToLastLine,
-  navigateToFirstLine,
-} from '@/lib/utils';
-import { getPreviousBlockId, getNextBlockId } from '@/lib/editorUtils';
+import { cn } from '@/lib/utils';
+import { getPreviousBlockId } from '@/lib/editorUtils';
 import type { BlockComponentProps } from '@/types';
 
 interface TextBlockProps extends BlockComponentProps {
@@ -52,13 +45,15 @@ export const TextBlock: FC<TextBlockProps> = ({
     return !!previousBlockId;
   }, [state, blockId]);
 
-  const { splitAndCreateBlock, isCursorAtStart, mergeWithPreviousBlock, handleBackspace } = useBlockCreation({
+  const { splitAndCreateBlock, isCursorAtStart, handleBackspace } = useBlockCreation({
     onCreateBlockAfter,
     onChange,
     onMergeWithPrevious,
     onDeleteBlock,
     hasPreviousBlock,
   });
+
+  const { navigationCommands } = useBlockNavigation({ blockId, elementRef });
 
   const commands = useMemo(
     () => [
@@ -98,87 +93,15 @@ export const TextBlock: FC<TextBlockProps> = ({
           }
         },
       },
-      {
-        key: 'ArrowUp',
-        condition: () => {
-          // Only handle if we're at first line
-          return elementRef.current && isCursorAtFirstLine(elementRef.current);
-        },
-        handler: (e) => {
-          // Navigate to previous block
-          if (elementRef.current && blockId) {
-            const horizontalPos = getCursorHorizontalPosition(
-              elementRef.current,
-            );
-            const previousBlockId = getPreviousBlockId(state, blockId);
-            
-            
-            if (previousBlockId) {
-              const previousBlock = document.querySelector(
-                `[data-block-id="${previousBlockId}"]`,
-              ) as HTMLElement;
-
-              if (previousBlock) {
-                navigateToLastLine(previousBlock, horizontalPos);
-              }
-            } else {
-              // No previous block - this is the first block (Example 1)
-              // Move cursor to beginning of current block
-              const range = document.createRange();
-              range.selectNodeContents(elementRef.current);
-              range.collapse(true);
-              const selection = window.getSelection();
-              selection?.removeAllRanges();
-              selection?.addRange(range);
-            }
-          }
-        },
-      },
-      {
-        key: 'ArrowDown',
-        condition: () => {
-          // Only handle if we're at last line
-          return elementRef.current && isCursorAtLastLine(elementRef.current);
-        },
-        handler: (e) => {
-          // Navigate to next block
-          if (elementRef.current && blockId) {
-            const horizontalPos = getCursorHorizontalPosition(
-              elementRef.current,
-            );
-            const nextBlockId = getNextBlockId(state, blockId);
-            
-            
-            if (nextBlockId) {
-              const nextBlock = document.querySelector(
-                `[data-block-id="${nextBlockId}"]`,
-              ) as HTMLElement;
-
-              if (nextBlock) {
-                navigateToFirstLine(nextBlock, horizontalPos);
-              }
-            } else {
-              // No next block - this is the last block (Example 2)
-              // Move cursor to end of current block
-              const range = document.createRange();
-              range.selectNodeContents(elementRef.current);
-              range.collapse(false);
-              const selection = window.getSelection();
-              selection?.removeAllRanges();
-              selection?.addRange(range);
-            }
-          }
-        },
-      },
+      ...navigationCommands,
     ],
     [
       currentValue,
       splitAndCreateBlock,
       isCursorAtStart,
       handleBackspace,
-      blockId,
+      navigationCommands,
       elementRef,
-      state,
     ],
   );
 

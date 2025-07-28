@@ -34,6 +34,9 @@ export const useBlockCreation = ({ onCreateBlockAfter, onChange, onMergeWithPrev
 
     const range = selection.getRangeAt(0);
     
+    // If there's a selection (not just cursor), don't treat as "at start"
+    if (!range.collapsed) return false;
+    
     // Get cursor position as character offset
     const preRange = document.createRange();
     preRange.selectNodeContents(element);

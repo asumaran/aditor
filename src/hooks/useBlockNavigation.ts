@@ -32,8 +32,9 @@ export const useBlockNavigation = ({
 }: UseBlockNavigationProps) => {
   const { state } = useEditor();
 
-  const handleArrowUp = useCallback(() => {
+  const handleArrowUp = useCallback((e?: React.KeyboardEvent) => {
     if (elementRef.current && blockId) {
+      e?.preventDefault(); // Prevent default browser behavior
       const horizontalPos = getCursorHorizontalPosition(elementRef.current);
       const previousBlockId = getPreviousBlockId(state, blockId);
 
@@ -57,8 +58,9 @@ export const useBlockNavigation = ({
     }
   }, [blockId, state, elementRef]);
 
-  const handleArrowDown = useCallback(() => {
+  const handleArrowDown = useCallback((e?: React.KeyboardEvent) => {
     if (elementRef.current && blockId) {
+      e?.preventDefault(); // Prevent default browser behavior
       const horizontalPos = getCursorHorizontalPosition(elementRef.current);
       const nextBlockId = getNextBlockId(state, blockId);
 
@@ -95,7 +97,51 @@ export const useBlockNavigation = ({
         handler: handleArrowUp,
       },
       {
+        key: 'ArrowUp',
+        modifiers: ['meta'] as const, // Cmd+ArrowUp on Mac
+        condition: () => {
+          return (
+            !isSlashInputMode && // Prevent navigation when slash dropdown is open
+            elementRef.current ? isCursorAtFirstLine(elementRef.current) : false
+          );
+        },
+        handler: handleArrowUp,
+      },
+      {
+        key: 'ArrowUp',
+        modifiers: ['ctrl'] as const, // Ctrl+ArrowUp on Windows/Linux
+        condition: () => {
+          return (
+            !isSlashInputMode && // Prevent navigation when slash dropdown is open
+            elementRef.current ? isCursorAtFirstLine(elementRef.current) : false
+          );
+        },
+        handler: handleArrowUp,
+      },
+      {
         key: 'ArrowDown',
+        condition: () => {
+          return (
+            !isSlashInputMode && // Prevent navigation when slash dropdown is open
+            elementRef.current ? isCursorAtLastLine(elementRef.current) : false
+          );
+        },
+        handler: handleArrowDown,
+      },
+      {
+        key: 'ArrowDown',
+        modifiers: ['meta'] as const, // Cmd+ArrowDown on Mac
+        condition: () => {
+          return (
+            !isSlashInputMode && // Prevent navigation when slash dropdown is open
+            elementRef.current ? isCursorAtLastLine(elementRef.current) : false
+          );
+        },
+        handler: handleArrowDown,
+      },
+      {
+        key: 'ArrowDown',
+        modifiers: ['ctrl'] as const, // Ctrl+ArrowDown on Windows/Linux
         condition: () => {
           return (
             !isSlashInputMode && // Prevent navigation when slash dropdown is open

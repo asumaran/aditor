@@ -14,14 +14,17 @@ interface UseBlockNavigationProps {
   elementRef: React.RefObject<HTMLElement>;
 }
 
-export const useBlockNavigation = ({ blockId, elementRef }: UseBlockNavigationProps) => {
+export const useBlockNavigation = ({
+  blockId,
+  elementRef,
+}: UseBlockNavigationProps) => {
   const { state } = useEditor();
 
   const handleArrowUp = useCallback(() => {
     if (elementRef.current && blockId) {
       const horizontalPos = getCursorHorizontalPosition(elementRef.current);
       const previousBlockId = getPreviousBlockId(state, blockId);
-      
+
       if (previousBlockId) {
         const previousBlock = document.querySelector(
           `[data-block-id="${previousBlockId}"]`,
@@ -46,7 +49,7 @@ export const useBlockNavigation = ({ blockId, elementRef }: UseBlockNavigationPr
     if (elementRef.current && blockId) {
       const horizontalPos = getCursorHorizontalPosition(elementRef.current);
       const nextBlockId = getNextBlockId(state, blockId);
-      
+
       if (nextBlockId) {
         const nextBlock = document.querySelector(
           `[data-block-id="${nextBlockId}"]`,

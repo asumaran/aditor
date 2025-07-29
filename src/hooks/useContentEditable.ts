@@ -78,8 +78,6 @@ export const useContentEditable = ({
     [onChange],
   );
 
-
-
   useEffect(() => {
     const element = elementRef.current;
     if (!element || element.textContent === value) return;
@@ -87,7 +85,7 @@ export const useContentEditable = ({
     // Simple update - just set the content
     element.textContent = value;
     setCurrentValue(value);
-    
+
     // Normal cursor positioning
     if (cursorAtStart) {
       moveCursorToStart();

@@ -10,7 +10,10 @@ interface BlockRendererProps {
   onOptionsChange?: (id: Block['id'], options: readonly Option[]) => void;
   onBlockClick?: (blockId: Block['id']) => void;
   onRequiredChange?: (blockId: Block['id'], required: boolean) => void;
-  onCreateBlockAfter?: (afterBlockId: Block['id'], options?: { initialContent?: string; cursorAtStart?: boolean }) => number;
+  onCreateBlockAfter?: (
+    afterBlockId: Block['id'],
+    options?: { initialContent?: string; cursorAtStart?: boolean },
+  ) => number;
   onDeleteBlock?: (blockId: Block['id']) => void;
   onMergeWithPrevious?: (blockId: Block['id'], currentContent: string) => void;
   onNavigateToPrevious?: (blockId: Block['id']) => void;
@@ -104,12 +107,17 @@ export const BlockRenderer: FC<BlockRendererProps> = ({
     onChange: handleChange,
     required: getBlockRequired(block),
     autoFocus: autoFocus && (block.type === 'text' || block.type === 'heading'),
-    cursorAtStart: cursorAtStart && (block.type === 'text' || block.type === 'heading'),
+    cursorAtStart:
+      cursorAtStart && (block.type === 'text' || block.type === 'heading'),
     onCreateBlockAfter: onCreateBlockAfter
-      ? (options?: { initialContent?: string; cursorAtStart?: boolean }) => onCreateBlockAfter(block.id, options)
+      ? (options?: { initialContent?: string; cursorAtStart?: boolean }) =>
+          onCreateBlockAfter(block.id, options)
       : undefined,
     onDeleteBlock: onDeleteBlock ? () => onDeleteBlock(block.id) : undefined,
-    onMergeWithPrevious: onMergeWithPrevious ? (currentContent: string) => onMergeWithPrevious(block.id, currentContent) : undefined,
+    onMergeWithPrevious: onMergeWithPrevious
+      ? (currentContent: string) =>
+          onMergeWithPrevious(block.id, currentContent)
+      : undefined,
     onNavigateToPrevious: onNavigateToPrevious
       ? () => onNavigateToPrevious(block.id)
       : undefined,

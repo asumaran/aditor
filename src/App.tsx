@@ -22,7 +22,9 @@ const INITIAL_BLOCKS: readonly Block[] = [createTextBlock()] as const;
 const EditorContent: FC = () => {
   const { state, dispatch } = useEditor();
   const [focusBlockId, setFocusBlockId] = useState<number | null>(null);
-  const [cursorAtStartBlockIds, setCursorAtStartBlockIds] = useState<Set<number>>(new Set());
+  const [cursorAtStartBlockIds, setCursorAtStartBlockIds] = useState<
+    Set<number>
+  >(new Set());
 
   // Clear focus block ID after it's been applied
   useEffect(() => {
@@ -30,7 +32,7 @@ const EditorContent: FC = () => {
       // Clear on next tick to ensure React has applied the focus
       Promise.resolve().then(() => {
         setFocusBlockId(null);
-        setCursorAtStartBlockIds(prev => {
+        setCursorAtStartBlockIds((prev) => {
           const newSet = new Set(prev);
           newSet.delete(focusBlockId);
           return newSet;
@@ -68,21 +70,24 @@ const EditorContent: FC = () => {
   }, []);
 
   const handleCreateBlockAfter = useCallback(
-    (afterBlockId: Block['id'], options?: { initialContent?: string; cursorAtStart?: boolean }) => {
+    (
+      afterBlockId: Block['id'],
+      options?: { initialContent?: string; cursorAtStart?: boolean },
+    ) => {
       const { initialContent = '', cursorAtStart = false } = options || {};
-      
+
       const newBlock = createTextBlock(initialContent);
       dispatch({
         type: 'INSERT_BLOCK_AFTER',
         payload: { afterBlockId, newBlock },
       });
       setFocusBlockId(newBlock.id);
-      
+
       // Set cursor position based on context
       if (cursorAtStart) {
-        setCursorAtStartBlockIds(prev => new Set(prev).add(newBlock.id));
+        setCursorAtStartBlockIds((prev) => new Set(prev).add(newBlock.id));
       }
-      
+
       return newBlock.id;
     },
     [dispatch],
@@ -114,9 +119,10 @@ const EditorContent: FC = () => {
       if (!previousBlockId) return;
 
       const previousBlock = state.blockMap[previousBlockId];
-      
+
       // Only merge with text/heading blocks
-      if (!previousBlock || !['text', 'heading'].includes(previousBlock.type)) return;
+      if (!previousBlock || !['text', 'heading'].includes(previousBlock.type))
+        return;
 
       // Get the previous block's content
       const previousContent = previousBlock.properties.title || '';
@@ -124,40 +130,42 @@ const EditorContent: FC = () => {
 
       // Store the junction point position before updating
       const junctionPoint = previousContent.length;
-      
+
       // Delete the current block first
       dispatch({ type: 'REMOVE_BLOCK', payload: { id: blockId } });
-      
+
       // Update the previous block with merged content
-      dispatch({ 
-        type: 'UPDATE_BLOCK_CONTENT', 
-        payload: { id: previousBlockId, value: mergedContent } 
+      dispatch({
+        type: 'UPDATE_BLOCK_CONTENT',
+        payload: { id: previousBlockId, value: mergedContent },
       });
 
       // Focus the block
       setFocusBlockId(previousBlockId);
-      
+
       // Handle cursor positioning outside of React
       requestAnimationFrame(() => {
-        const element = document.querySelector(`[data-block-id="${previousBlockId}"]`) as HTMLElement;
+        const element = document.querySelector(
+          `[data-block-id="${previousBlockId}"]`,
+        ) as HTMLElement;
         if (!element) return;
-        
+
         element.focus();
-        
+
         // Set cursor at junction point using vanilla JS
         const selection = window.getSelection();
         if (!selection) return;
-        
+
         const range = document.createRange();
         const walker = document.createTreeWalker(
           element,
           NodeFilter.SHOW_TEXT,
-          null
+          null,
         );
-        
+
         let currentOffset = 0;
         let node: Node | null;
-        
+
         while ((node = walker.nextNode())) {
           const nodeLength = node.textContent?.length || 0;
           if (currentOffset + nodeLength >= junctionPoint) {
@@ -282,7 +290,7 @@ const EditorContent: FC = () => {
                     block.type === 'text' &&
                     orderedBlocks.length === 1) ||
                   focusBlockId === block.id;
-                
+
                 const shouldCursorAtStart = cursorAtStartBlockIds.has(block.id);
 
                 return (

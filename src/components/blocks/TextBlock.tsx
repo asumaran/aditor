@@ -1,5 +1,10 @@
 import { type FC, useMemo } from 'react';
-import { useContentEditable, useBlockCommands, useBlockCreation, useBlockNavigation } from '@/hooks';
+import {
+  useContentEditable,
+  useBlockCommands,
+  useBlockCreation,
+  useBlockNavigation,
+} from '@/hooks';
 import { useEditor } from '@/hooks';
 import { cn } from '@/lib/utils';
 import { getPreviousBlockId } from '@/lib/editorUtils';
@@ -12,7 +17,10 @@ interface TextBlockProps extends BlockComponentProps {
   className?: string;
   autoFocus?: boolean;
   cursorAtStart?: boolean;
-  onCreateBlockAfter?: (options?: { initialContent?: string; cursorAtStart?: boolean }) => number;
+  onCreateBlockAfter?: (options?: {
+    initialContent?: string;
+    cursorAtStart?: boolean;
+  }) => number;
   onDeleteBlock?: () => void;
   onMergeWithPrevious?: (currentContent: string) => void;
   blockId?: number;
@@ -37,7 +45,13 @@ export const TextBlock: FC<TextBlockProps> = ({
     handleCompositionStart,
     handleCompositionEnd,
     currentValue,
-  } = useContentEditable({ value, onChange, autoFocus, cursorAtStart, blockId });
+  } = useContentEditable({
+    value,
+    onChange,
+    autoFocus,
+    cursorAtStart,
+    blockId,
+  });
 
   const hasPreviousBlock = useMemo(() => {
     if (!blockId) return false;
@@ -45,13 +59,14 @@ export const TextBlock: FC<TextBlockProps> = ({
     return !!previousBlockId;
   }, [state, blockId]);
 
-  const { splitAndCreateBlock, isCursorAtStart, handleBackspace } = useBlockCreation({
-    onCreateBlockAfter,
-    onChange,
-    onMergeWithPrevious,
-    onDeleteBlock,
-    hasPreviousBlock,
-  });
+  const { splitAndCreateBlock, isCursorAtStart, handleBackspace } =
+    useBlockCreation({
+      onCreateBlockAfter,
+      onChange,
+      onMergeWithPrevious,
+      onDeleteBlock,
+      hasPreviousBlock,
+    });
 
   const { navigationCommands } = useBlockNavigation({ blockId, elementRef });
 
@@ -72,7 +87,10 @@ export const TextBlock: FC<TextBlockProps> = ({
           // Handle two cases:
           // 1. Empty block (delete block)
           // 2. Cursor at start (merge with previous)
-          return !currentValue.trim() || (elementRef.current && isCursorAtStart(elementRef.current));
+          return (
+            !currentValue.trim() ||
+            (elementRef.current && isCursorAtStart(elementRef.current))
+          );
         },
         handler: () => {
           if (elementRef.current) {

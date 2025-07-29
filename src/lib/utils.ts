@@ -51,24 +51,23 @@ export const isCursorAtFirstLine = (editableElement: HTMLElement): boolean => {
 
   try {
     const range = selection.getRangeAt(0);
-    
+
     // Get the current cursor position as a character offset from start
     const preRange = document.createRange();
     preRange.selectNodeContents(editableElement);
     preRange.setEnd(range.startContainer, range.startOffset);
     const cursorPosition = preRange.toString().length;
-    
+
     // Find the last newline before cursor position
     const textBeforeCursor = content.substring(0, cursorPosition);
     const lastNewlineBeforeCursor = textBeforeCursor.lastIndexOf('\n');
-    
+
     // If no newline found, we're on the first line
     return lastNewlineBeforeCursor === -1;
   } catch {
     return false;
   }
 };
-
 
 /**
  * Check if cursor is at the last line of a contentEditable element
@@ -92,42 +91,42 @@ export const isCursorAtLastLine = (editableElement: HTMLElement): boolean => {
 
   try {
     const range = selection.getRangeAt(0);
-    
+
     // Get the text content and split into lines
     const lines = content.split('\n');
-    
+
     // Get cursor position as character offset
     const preRange = document.createRange();
     preRange.selectNodeContents(editableElement);
     preRange.setEnd(range.startContainer, range.startOffset);
     const cursorOffset = preRange.toString().length;
-    
+
     // Find which line the cursor is on
     let currentLine = 0;
     let charCount = 0;
-    
+
     for (let i = 0; i < lines.length; i++) {
       const lineLength = lines[i].length;
-      const nextCharCount = charCount + lineLength + (i < lines.length - 1 ? 1 : 0);
-      
+      const nextCharCount =
+        charCount + lineLength + (i < lines.length - 1 ? 1 : 0);
+
       if (cursorOffset <= charCount + lineLength) {
         currentLine = i;
         break;
       }
       charCount = nextCharCount;
     }
-    
+
     // The last actual line with content
     let lastLineWithContent = lines.length - 1;
-    
+
     // If content ends with \n, there's an empty line at the end that we should ignore
     if (content.endsWith('\n') && lines[lines.length - 1] === '') {
       lastLineWithContent = lines.length - 2;
     }
-    
+
     const isLastLine = currentLine >= lastLineWithContent;
-    
-    
+
     return isLastLine;
   } catch {
     return false;
@@ -137,19 +136,21 @@ export const isCursorAtLastLine = (editableElement: HTMLElement): boolean => {
 /**
  * Get the horizontal position of the cursor for navigation
  */
-export const getCursorHorizontalPosition = (editableElement: HTMLElement): number => {
+export const getCursorHorizontalPosition = (
+  editableElement: HTMLElement,
+): number => {
   const selection = window.getSelection();
   if (!selection?.rangeCount) return 0;
-  
+
   const range = selection.getRangeAt(0);
-  
+
   // Create a range from the beginning of the current line to the cursor
   const lineStartRange = range.cloneRange();
-  
+
   // Find the start of the current line
   let node = range.startContainer;
   let offset = range.startOffset;
-  
+
   // Walk backwards to find the start of the line
   while (node && offset > 0) {
     if (node.nodeType === Node.TEXT_NODE) {
@@ -162,7 +163,8 @@ export const getCursorHorizontalPosition = (editableElement: HTMLElement): numbe
       // Move to previous sibling or parent
       if (node.previousSibling) {
         node = node.previousSibling;
-        offset = node.nodeType === Node.TEXT_NODE ? (node.textContent?.length || 0) : 0;
+        offset =
+          node.nodeType === Node.TEXT_NODE ? node.textContent?.length || 0 : 0;
       } else if (node.parentNode && node.parentNode !== editableElement) {
         node = node.parentNode;
         offset = 0;
@@ -176,13 +178,13 @@ export const getCursorHorizontalPosition = (editableElement: HTMLElement): numbe
       break;
     }
   }
-  
+
   if (!node) {
     lineStartRange.setStart(editableElement, 0);
   }
-  
+
   lineStartRange.setEnd(range.startContainer, range.startOffset);
-  
+
   // Return the character offset from start of line
   return lineStartRange.toString().length;
 };
@@ -193,13 +195,13 @@ export const getCursorHorizontalPosition = (editableElement: HTMLElement): numbe
 export const setCursorAtHorizontalPosition = (
   targetElement: HTMLElement,
   horizontalPosition: number,
-  preferEnd: boolean = false
+  preferEnd: boolean = false,
 ): void => {
   const selection = window.getSelection();
   if (!selection) return;
-  
+
   const range = document.createRange();
-  
+
   // If element is empty, just focus it
   if (!targetElement.textContent) {
     range.selectNodeContents(targetElement);
@@ -208,26 +210,26 @@ export const setCursorAtHorizontalPosition = (
     selection.addRange(range);
     return;
   }
-  
+
   // Find the correct position
   let currentOffset = 0;
   let targetNode: Node | null = null;
   let targetOffset = 0;
   let foundPosition = false;
-  
+
   const walker = document.createTreeWalker(
     targetElement,
     NodeFilter.SHOW_TEXT,
-    null
+    null,
   );
-  
+
   let node: Node | null;
   let lastValidNode: Node | null = null;
   let lastValidOffset = 0;
-  
+
   while ((node = walker.nextNode())) {
     const text = node.textContent || '';
-    
+
     // Check each character in the text node
     for (let i = 0; i < text.length; i++) {
       if (currentOffset === horizontalPosition) {
@@ -236,7 +238,7 @@ export const setCursorAtHorizontalPosition = (
         foundPosition = true;
         break;
       }
-      
+
       // Reset position counter at newlines
       if (text[i] === '\n') {
         if (currentOffset <= horizontalPosition && preferEnd) {
@@ -251,20 +253,20 @@ export const setCursorAtHorizontalPosition = (
       } else {
         currentOffset++;
       }
-      
+
       lastValidNode = node;
       lastValidOffset = i + 1;
     }
-    
+
     if (foundPosition) break;
   }
-  
+
   // If we didn't find the exact position, use the last valid position
   if (!foundPosition && lastValidNode) {
     targetNode = lastValidNode;
     targetOffset = lastValidOffset;
   }
-  
+
   if (targetNode) {
     range.setStart(targetNode, targetOffset);
     range.collapse(true);
@@ -279,16 +281,12 @@ export const setCursorAtHorizontalPosition = (
 const setCursorAtPosition = (element: HTMLElement, position: number): void => {
   const selection = window.getSelection();
   if (!selection) return;
-  
-  const walker = document.createTreeWalker(
-    element,
-    NodeFilter.SHOW_TEXT,
-    null
-  );
-  
+
+  const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null);
+
   let currentOffset = 0;
   let node: Node | null;
-  
+
   while ((node = walker.nextNode())) {
     const nodeLength = node.textContent?.length || 0;
     if (currentOffset + nodeLength >= position) {
@@ -302,7 +300,7 @@ const setCursorAtPosition = (element: HTMLElement, position: number): void => {
     }
     currentOffset += nodeLength;
   }
-  
+
   // Fallback: go to end
   const range = document.createRange();
   range.selectNodeContents(element);
@@ -316,14 +314,14 @@ const setCursorAtPosition = (element: HTMLElement, position: number): void => {
  */
 export const navigateToLastLine = (
   targetElement: HTMLElement,
-  horizontalPosition: number
+  horizontalPosition: number,
 ): void => {
   const selection = window.getSelection();
   if (!selection) return;
-  
+
   // Calculate target position directly without intermediate steps
   const content = targetElement.innerText || '';
-  
+
   if (!content) {
     // Empty element - focus at start
     const range = document.createRange();
@@ -334,18 +332,19 @@ export const navigateToLastLine = (
     targetElement.focus();
     return;
   }
-  
+
   // Find last line start position
   const lines = content.split('\n');
   let lastLineStart = 0;
   for (let i = 0; i < lines.length - 1; i++) {
     lastLineStart += lines[i].length + 1; // +1 for \n
   }
-  
+
   // Calculate final position (start of last line + horizontal offset)
   const lastLineLength = lines[lines.length - 1].length;
-  const targetPos = lastLineStart + Math.min(horizontalPosition, lastLineLength);
-  
+  const targetPos =
+    lastLineStart + Math.min(horizontalPosition, lastLineLength);
+
   // Set cursor directly to calculated position
   setCursorAtPosition(targetElement, targetPos);
   targetElement.focus();
@@ -356,10 +355,10 @@ export const navigateToLastLine = (
  */
 export const navigateToFirstLine = (
   targetElement: HTMLElement,
-  horizontalPosition: number
+  horizontalPosition: number,
 ): void => {
   const content = targetElement.innerText || '';
-  
+
   if (!content) {
     // Empty element - focus at start
     const selection = window.getSelection();
@@ -372,12 +371,12 @@ export const navigateToFirstLine = (
     targetElement.focus();
     return;
   }
-  
+
   // Find first line length and calculate position
   const firstLineEnd = content.indexOf('\n');
   const firstLineLength = firstLineEnd === -1 ? content.length : firstLineEnd;
   const targetPos = Math.min(horizontalPosition, firstLineLength);
-  
+
   // Set cursor directly to calculated position
   setCursorAtPosition(targetElement, targetPos);
   targetElement.focus();

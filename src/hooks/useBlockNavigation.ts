@@ -11,12 +11,24 @@ import { getPreviousBlockId, getNextBlockId } from '@/lib/editorUtils';
 
 interface UseBlockNavigationProps {
   blockId?: number;
-  elementRef: React.RefObject<HTMLElement>;
+  elementRef: React.RefObject<HTMLElement | null>;
+  /**
+   * SLASH COMMAND CONFLICT PREVENTION
+   * 
+   * This flag prevents block navigation when slash command dropdown is open.
+   * Without this, arrow keys would both navigate the slash dropdown AND move between blocks,
+   * causing confusing UX where the cursor jumps to other blocks while selecting commands.
+   * 
+   * When true: Block navigation is disabled, allowing slash dropdown to handle arrow keys
+   * When false: Normal block navigation behavior
+   */
+  isSlashInputMode?: boolean;
 }
 
 export const useBlockNavigation = ({
   blockId,
   elementRef,
+  isSlashInputMode = false,
 }: UseBlockNavigationProps) => {
   const { state } = useEditor();
 
@@ -75,19 +87,25 @@ export const useBlockNavigation = ({
       {
         key: 'ArrowUp',
         condition: () => {
-          return elementRef.current && isCursorAtFirstLine(elementRef.current);
+          return (
+            !isSlashInputMode && // Prevent navigation when slash dropdown is open
+            elementRef.current ? isCursorAtFirstLine(elementRef.current) : false
+          );
         },
         handler: handleArrowUp,
       },
       {
         key: 'ArrowDown',
         condition: () => {
-          return elementRef.current && isCursorAtLastLine(elementRef.current);
+          return (
+            !isSlashInputMode && // Prevent navigation when slash dropdown is open
+            elementRef.current ? isCursorAtLastLine(elementRef.current) : false
+          );
         },
         handler: handleArrowDown,
       },
     ],
-    [handleArrowUp, handleArrowDown, elementRef],
+    [handleArrowUp, handleArrowDown, elementRef, isSlashInputMode],
   );
 
   return { navigationCommands };

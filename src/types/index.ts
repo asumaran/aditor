@@ -3,6 +3,7 @@ export type {
   BlockProperties,
   Option,
   TextBlockProperties,
+  HeadingBlockProperties,
   ShortAnswerBlockProperties,
   MultipleChoiceBlockProperties,
   MultiselectBlockProperties,

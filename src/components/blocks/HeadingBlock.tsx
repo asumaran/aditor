@@ -4,8 +4,11 @@ import {
   useBlockCommands,
   useBlockNavigation,
   useBlockCreation,
+  useSlashCommands,
 } from '@/hooks';
+import type { Modifier } from '@/hooks/useBlockCommands';
 import { useEditor } from '@/hooks';
+import { SlashCommandDropdown } from '@/components/SlashCommandDropdown';
 import { cn } from '@/lib/utils';
 import { getPreviousBlockId } from '@/lib/editorUtils';
 import type { BlockComponentProps } from '@/types';
@@ -25,6 +28,8 @@ interface HeadingBlockProps extends BlockComponentProps {
   onDeleteBlock?: () => void;
   onMergeWithPrevious?: (currentContent: string) => void;
 }
+
+const metaModifier: Modifier[] = ['meta'];
 
 export const HeadingBlock: FC<HeadingBlockProps> = ({
   value,
@@ -68,12 +73,50 @@ export const HeadingBlock: FC<HeadingBlockProps> = ({
       hasPreviousBlock,
     });
 
-  const { navigationCommands } = useBlockNavigation({ blockId, elementRef });
+  /**
+   * HOOK ORDER CRITICAL SECTION
+   * 
+   * useSlashCommands MUST be called before useBlockNavigation because:
+   * - useBlockNavigation needs the isSlashInputMode value from useSlashCommands
+   * - React hooks must maintain consistent order between renders
+   * - Wrong order causes "Cannot access before initialization" errors
+   */
+  const {
+    isOpen,
+    filteredBlocks,
+    handleSelectBlock,
+    handleBlur: handleSlashBlur,
+    slashCommands,
+    isSlashInputMode,
+    selectedIndex,
+  } = useSlashCommands({
+    elementRef,
+    currentValue,
+    onChange,
+  });
+
+  const { navigationCommands } = useBlockNavigation({
+    blockId,
+    elementRef,
+    isSlashInputMode, // This value comes from useSlashCommands above
+  });
 
   const commands = useMemo(
     () => [
       {
         key: 'Enter',
+        /**
+         * ENTER KEY CONFLICT PREVENTION
+         * 
+         * Prevents block's Enter command from executing when slash dropdown is open.
+         * Without this condition, pressing Enter to select a slash command would ALSO
+         * create a new block, causing unwanted block creation.
+         * 
+         * The slash command's Enter handler has higher priority in the command array
+         * and will handle Enter when dropdown is open. This condition ensures the
+         * block's Enter only runs when appropriate.
+         */
+        condition: () => !isOpen, // Only handle Enter when slash menu is not open
         handler: () => {
           // Headings don't support line breaks - split content and create new TextBlock
           if (elementRef.current) {
@@ -89,7 +132,7 @@ export const HeadingBlock: FC<HeadingBlockProps> = ({
           // 2. Cursor at start (merge with previous)
           return (
             !currentValue.trim() ||
-            (elementRef.current && isCursorAtStart(elementRef.current))
+            (elementRef.current ? isCursorAtStart(elementRef.current) : false)
           );
         },
         handler: () => {
@@ -100,10 +143,10 @@ export const HeadingBlock: FC<HeadingBlockProps> = ({
       },
       {
         key: 'Backspace',
-        modifiers: ['meta'], // Cmd+Backspace on Mac
+        modifiers: metaModifier, // Cmd+Backspace on Mac
         condition: () => {
           // Only handle when cursor is at the very start of the block
-          return elementRef.current && isCursorAtStart(elementRef.current);
+          return elementRef.current ? isCursorAtStart(elementRef.current) : false;
         },
         handler: () => {
           if (elementRef.current) {
@@ -111,6 +154,7 @@ export const HeadingBlock: FC<HeadingBlockProps> = ({
           }
         },
       },
+      ...slashCommands,
       ...navigationCommands,
     ],
     [
@@ -119,30 +163,50 @@ export const HeadingBlock: FC<HeadingBlockProps> = ({
       isCursorAtStart,
       handleBackspace,
       navigationCommands,
+      slashCommands,
       elementRef,
+      isOpen,
     ],
   );
 
   const { handleKeyDown } = useBlockCommands({ commands });
 
+  const renderContent = () => {
+    return (
+      <h2
+        ref={elementRef as React.RefObject<HTMLHeadingElement>}
+        contentEditable
+        suppressContentEditableWarning
+        onInput={handleInput}
+        onCompositionStart={handleCompositionStart}
+        onCompositionEnd={handleCompositionEnd}
+        onKeyDown={handleKeyDown}
+        onBlur={handleSlashBlur}
+        data-block-id={blockId}
+        className={cn(
+          'm-0 w-full max-w-full px-[2px] pt-[3px] pb-[3px] text-3xl leading-[1.3] font-semibold break-words whitespace-break-spaces',
+          'focus:outline-none',
+          !currentValue && !isSlashInputMode && 'text-gray-400',
+          !currentValue &&
+            !isSlashInputMode &&
+            'focus:after:content-[attr(data-placeholder)]',
+          className,
+        )}
+        data-placeholder={placeholder}
+      />
+    );
+  };
+
   return (
-    <h2
-      ref={elementRef}
-      contentEditable
-      suppressContentEditableWarning
-      onInput={handleInput}
-      onCompositionStart={handleCompositionStart}
-      onCompositionEnd={handleCompositionEnd}
-      onKeyDown={handleKeyDown}
-      data-block-id={blockId}
-      className={cn(
-        'm-0 w-full max-w-full px-[2px] pt-[3px] pb-[3px] text-3xl leading-[1.3] font-semibold break-words whitespace-break-spaces',
-        'focus:outline-none',
-        !currentValue && 'text-gray-400',
-        !currentValue && 'focus:after:content-[attr(data-placeholder)]',
-        className,
-      )}
-      data-placeholder={placeholder}
-    />
+    <>
+      {renderContent()}
+      <SlashCommandDropdown
+        isOpen={isOpen}
+        filteredBlocks={filteredBlocks}
+        onSelect={handleSelectBlock}
+        targetRef={elementRef}
+        selectedIndex={selectedIndex}
+      />
+    </>
   );
 };

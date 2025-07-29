@@ -15,7 +15,7 @@ import {
   getPreviousBlockId,
   getNextBlockId,
 } from '@/lib/editorUtils';
-import type { Block, Option } from '@/types';
+import type { Block, Option, TextBlockProperties, HeadingBlockProperties } from '@/types';
 
 const INITIAL_BLOCKS: readonly Block[] = [createTextBlock()] as const;
 
@@ -125,7 +125,8 @@ const EditorContent: FC = () => {
         return;
 
       // Get the previous block's content
-      const previousContent = previousBlock.properties.title || '';
+      // TypeScript: We know this is safe because we checked the block type above
+      const previousContent = (previousBlock.properties as TextBlockProperties | HeadingBlockProperties).title || '';
       const mergedContent = previousContent + currentContent;
 
       // Store the junction point position before updating

@@ -14,7 +14,7 @@ export const useContentEditable = ({
   autoFocus = false,
   cursorAtStart = false,
 }: UseContentEditableProps) => {
-  const elementRef = useRef<HTMLDivElement>(null);
+  const elementRef = useRef<HTMLElement>(null);
   const isComposingRef = useRef(false);
   const [currentValue, setCurrentValue] = useState(value);
 
@@ -62,6 +62,10 @@ export const useContentEditable = ({
     },
     [onChange],
   );
+
+  const handleBlur = useCallback(() => {
+    // Optional blur handler for components that need it
+  }, []);
 
   const handleCompositionStart = useCallback(() => {
     isComposingRef.current = true;
@@ -115,6 +119,7 @@ export const useContentEditable = ({
     handleInput,
     handleCompositionStart,
     handleCompositionEnd,
+    handleBlur,
     currentValue,
   };
 };

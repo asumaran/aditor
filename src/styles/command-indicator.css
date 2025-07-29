@@ -1,0 +1,24 @@
+/* Estilos para el command indicator como Notion */
+.notion-temporary-input {
+  position: relative;
+  display: inline-block;
+}
+
+/* Placeholder usando ::after */
+.notion-temporary-input.pseudoAfter.show-placeholder::after {
+  content: var(--pseudoAfter--content, 'Filter...');
+  color: var(--pseudoAfter--color, rgba(70, 68, 64, 0.45));
+  pointer-events: none;
+  display: inline;
+  margin-left: 0;
+}
+
+/* Ocultar placeholder cuando NO tiene la clase show-placeholder */
+.notion-temporary-input.pseudoAfter:not(.show-placeholder)::after {
+  display: none;
+}
+
+/* Ocultar durante composición (IME) */
+.notion-temporary-input.pseudoAfterWhenComposing.show-placeholder:focus-within::after {
+  display: var(--pseudoAfterWhenComposing--display, none);
+}

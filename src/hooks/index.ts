@@ -7,3 +7,5 @@ export { useBlockCommands } from './useBlockCommands';
 export { useClickToFocus } from './useClickToFocus';
 export { useBlockCreation } from './useBlockCreation';
 export { useBlockNavigation } from './useBlockNavigation';
+export { useSlashCommands } from './useSlashCommands';
+export { useCommandIndicator } from './useCommandIndicator';

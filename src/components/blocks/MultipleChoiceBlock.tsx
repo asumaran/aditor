@@ -145,7 +145,7 @@ export const MultipleChoiceBlock: FC<MultipleChoiceBlockProps> = ({
     <div className={cn('space-y-3', className)}>
       <div className='flex items-center'>
         <div
-          ref={elementRef}
+          ref={elementRef as React.RefObject<HTMLDivElement>}
           contentEditable
           suppressContentEditableWarning
           onInput={handleInput}

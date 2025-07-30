@@ -5,7 +5,7 @@ import {
   addBlockToState,
   insertBlockAfter,
   removeBlockFromState,
-  updateBlockInState,
+  updateBlockPropertiesInState,
   getBlockById,
 } from '@/lib/editorUtils';
 
@@ -28,29 +28,29 @@ const editorReducer = (
       const block = getBlockById(state, action.payload.id);
       if (!block) return state;
 
-      let updatedProperties;
       switch (block.type) {
         case 'text':
         case 'heading':
-          updatedProperties = {
-            ...block.properties,
+          return updateBlockPropertiesInState(state, action.payload.id, {
             title: action.payload.value,
-          };
-          break;
+          });
         case 'short_answer':
         case 'multiple_choice':
         case 'multiselect':
-          updatedProperties = {
-            ...block.properties,
+          return updateBlockPropertiesInState(state, action.payload.id, {
             label: action.payload.value,
-          };
-          break;
+          });
         default:
           return state;
       }
+    }
 
-      return updateBlockInState(state, action.payload.id, {
-        properties: updatedProperties,
+    case 'UPDATE_BLOCK_FIELD': {
+      const block = getBlockById(state, action.payload.id);
+      if (!block) return state;
+
+      return updateBlockPropertiesInState(state, action.payload.id, {
+        [action.payload.fieldId]: action.payload.value,
       });
     }
 
@@ -64,11 +64,8 @@ const editorReducer = (
         return state;
       }
 
-      return updateBlockInState(state, action.payload.id, {
-        properties: {
-          ...block.properties,
-          required: action.payload.required,
-        },
+      return updateBlockPropertiesInState(state, action.payload.id, {
+        required: action.payload.required,
       });
     }
 
@@ -81,11 +78,8 @@ const editorReducer = (
         return state;
       }
 
-      return updateBlockInState(state, action.payload.id, {
-        properties: {
-          ...block.properties,
-          options: action.payload.options,
-        },
+      return updateBlockPropertiesInState(state, action.payload.id, {
+        options: action.payload.options,
       });
     }
 
@@ -98,11 +92,8 @@ const editorReducer = (
         return state;
       }
 
-      return updateBlockInState(state, action.payload.blockId, {
-        properties: {
-          ...block.properties,
-          options: [action.payload.option, ...block.properties.options],
-        },
+      return updateBlockPropertiesInState(state, action.payload.blockId, {
+        options: [action.payload.option, ...block.properties.options],
       });
     }
 
@@ -115,13 +106,10 @@ const editorReducer = (
         return state;
       }
 
-      return updateBlockInState(state, action.payload.blockId, {
-        properties: {
-          ...block.properties,
-          options: block.properties.options.filter(
-            (option) => option.id !== action.payload.optionId,
-          ),
-        },
+      return updateBlockPropertiesInState(state, action.payload.blockId, {
+        options: block.properties.options.filter(
+          (option) => option.id !== action.payload.optionId,
+        ),
       });
     }
 
@@ -134,15 +122,12 @@ const editorReducer = (
         return state;
       }
 
-      return updateBlockInState(state, action.payload.blockId, {
-        properties: {
-          ...block.properties,
-          options: block.properties.options.map((option) =>
-            option.id === action.payload.optionId
-              ? { ...option, text: action.payload.text }
-              : option,
-          ),
-        },
+      return updateBlockPropertiesInState(state, action.payload.blockId, {
+        options: block.properties.options.map((option) =>
+          option.id === action.payload.optionId
+            ? { ...option, text: action.payload.text }
+            : option,
+        ),
       });
     }
 

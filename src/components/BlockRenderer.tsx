@@ -3,16 +3,22 @@ import { ErrorBoundary } from './ErrorBoundary';
 import { BlockWrapper } from './BlockWrapper';
 import { getBlockComponent } from '@/lib/componentRegistry';
 import type { Block, Option } from '@/types';
+import type { FieldChangeHandler } from '@/types/editables';
 
 interface BlockRendererProps {
   block: Block;
   onChange: (id: Block['id'], value: string) => void;
+  onFieldChange?: (id: Block['id'], fieldId: string, value: string) => void;
   onOptionsChange?: (id: Block['id'], options: readonly Option[]) => void;
   onBlockClick?: (blockId: Block['id']) => void;
   onRequiredChange?: (blockId: Block['id'], required: boolean) => void;
   onCreateBlockAfter?: (
     afterBlockId: Block['id'],
-    options?: { initialContent?: string; cursorAtStart?: boolean; blockType?: string },
+    options?: {
+      initialContent?: string;
+      cursorAtStart?: boolean;
+      blockType?: string;
+    },
   ) => number;
   onChangeBlockType?: (blockId: Block['id'], newType: string) => void;
   onDeleteBlock?: (blockId: Block['id']) => void;
@@ -67,6 +73,7 @@ const getBlockOptions = (block: Block): readonly Option[] => {
 export const BlockRenderer: FC<BlockRendererProps> = ({
   block,
   onChange,
+  onFieldChange,
   onOptionsChange,
   onBlockClick,
   onRequiredChange,
@@ -84,6 +91,18 @@ export const BlockRenderer: FC<BlockRendererProps> = ({
 
   const handleChange = (value: string) => {
     onChange(block.id, value);
+  };
+
+  const handleFieldChange: FieldChangeHandler = (
+    fieldId: string,
+    value: string,
+  ) => {
+    if (onFieldChange) {
+      onFieldChange(block.id, fieldId, value);
+    } else {
+      // Fallback to legacy onChange for primary field
+      onChange(block.id, value);
+    }
   };
 
   const handleOptionsChange = (options: readonly Option[]) => {
@@ -107,16 +126,20 @@ export const BlockRenderer: FC<BlockRendererProps> = ({
   const commonProps = {
     value: getBlockValue(block),
     onChange: handleChange,
+    onFieldChange: handleFieldChange,
     required: getBlockRequired(block),
-    autoFocus: autoFocus && (block.type === 'text' || block.type === 'heading'),
-    cursorAtStart:
-      cursorAtStart && (block.type === 'text' || block.type === 'heading'),
+    autoFocus: autoFocus,
+    cursorAtStart: cursorAtStart,
     onCreateBlockAfter: onCreateBlockAfter
-      ? (options?: { initialContent?: string; cursorAtStart?: boolean; blockType?: string }) =>
-          onCreateBlockAfter(block.id, options)
+      ? (options?: {
+          initialContent?: string;
+          cursorAtStart?: boolean;
+          blockType?: string;
+        }) => onCreateBlockAfter(block.id, options)
       : undefined,
     onChangeBlockType: onChangeBlockType
-      ? (blockId: number, newType: string) => onChangeBlockType(blockId, newType)
+      ? (blockId: number, newType: string) =>
+          onChangeBlockType(blockId, newType)
       : undefined,
     onDeleteBlock: onDeleteBlock ? () => onDeleteBlock(block.id) : undefined,
     onMergeWithPrevious: onMergeWithPrevious

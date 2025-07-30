@@ -48,6 +48,7 @@ export const SlashCommandDropdown: FC<SlashCommandDropdownProps> = ({
   return (
     <div
       ref={dropdownRef}
+      data-slash-dropdown
       className={cn(
         'z-50 min-w-[240px] overflow-hidden rounded-md bg-white shadow-md',
         'border border-gray-200',

@@ -15,7 +15,12 @@ import {
   getPreviousBlockId,
   getNextBlockId,
 } from '@/lib/editorUtils';
-import type { Block, Option, TextBlockProperties, HeadingBlockProperties, ShortAnswerBlockProperties, MultipleChoiceBlockProperties, MultiselectBlockProperties } from '@/types';
+import type {
+  Block,
+  Option,
+  TextBlockProperties,
+  HeadingBlockProperties,
+} from '@/types';
 
 const INITIAL_BLOCKS: readonly Block[] = [createTextBlock()] as const;
 
@@ -51,6 +56,13 @@ const EditorContent: FC = () => {
     [dispatch],
   );
 
+  const handleFieldChange = useCallback(
+    (id: Block['id'], fieldId: string, value: string) => {
+      dispatch({ type: 'UPDATE_BLOCK_FIELD', payload: { id, fieldId, value } });
+    },
+    [dispatch],
+  );
+
   const handleOptionsChange = useCallback(
     (id: Block['id'], options: readonly Option[]) => {
       dispatch({ type: 'UPDATE_BLOCK_OPTIONS', payload: { id, options } });
@@ -72,9 +84,17 @@ const EditorContent: FC = () => {
   const handleCreateBlockAfter = useCallback(
     (
       afterBlockId: Block['id'],
-      options?: { initialContent?: string; cursorAtStart?: boolean; blockType?: string },
+      options?: {
+        initialContent?: string;
+        cursorAtStart?: boolean;
+        blockType?: string;
+      },
     ) => {
-      const { initialContent = '', cursorAtStart = false, blockType = 'text' } = options || {};
+      const {
+        initialContent = '',
+        cursorAtStart = false,
+        blockType = 'text',
+      } = options || {};
 
       let newBlock: Block;
       switch (blockType) {
@@ -137,16 +157,16 @@ const EditorContent: FC = () => {
 
       /**
        * CONTENT PRESERVATION LOGIC
-       * 
+       *
        * When changing block types via slash commands, we should only preserve content
        * if the original block had meaningful content. Since slash commands only work
        * when blocks are empty (cursor at position 0), we should create new blocks
        * empty rather than preserving slash command text.
-       * 
+       *
        * For block type changes, we always create the new block empty since this
        * operation happens when the original block was empty.
        */
-      
+
       // Create new block of the specified type - always empty for slash command conversions
       let newBlock: Block;
       switch (newType) {
@@ -207,7 +227,12 @@ const EditorContent: FC = () => {
 
       // Get the previous block's content
       // TypeScript: We know this is safe because we checked the block type above
-      const previousContent = (previousBlock.properties as TextBlockProperties | HeadingBlockProperties).title || '';
+      const previousContent =
+        (
+          previousBlock.properties as
+            | TextBlockProperties
+            | HeadingBlockProperties
+        ).title || '';
       const mergedContent = previousContent + currentContent;
 
       // Store the junction point position before updating
@@ -380,6 +405,7 @@ const EditorContent: FC = () => {
                     key={block.id}
                     block={block}
                     onChange={handleBlockChange}
+                    onFieldChange={handleFieldChange}
                     onOptionsChange={handleOptionsChange}
                     onRequiredChange={handleRequiredChange}
                     onBlockClick={handleBlockClick}

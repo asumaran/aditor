@@ -78,17 +78,17 @@ export const useCommandIndicator = ({
         } else {
           /**
            * CONTENT CONCATENATION ORDER
-           * 
+           *
            * When slash command mode exits with text (no command selected), we preserve
            * the typed text as regular content in the block.
-           * 
+           *
            * Order: commandText + originalContent
            * - commandText: The slash and typed query (e.g., "/hello")
            * - originalContent: Text that was in block before slash (e.g., "foo")
-           * 
+           *
            * Example scenarios:
            * - Empty block + "/hello" → "/hello"
-           * - "foo" at start + "/hello" → "/hellofoo" 
+           * - "foo" at start + "/hello" → "/hellofoo"
            * - Slash commands only trigger at cursor position 0, so command always comes first
            */
           const commandText = indicatorRef.current.textContent || '';
@@ -100,19 +100,19 @@ export const useCommandIndicator = ({
 
           // Replace entire content
           elementRef.current.textContent = finalContent;
-          
+
           /**
            * CURSOR POSITIONING FIX
-           * 
+           *
            * When exiting slash command mode, we need to position the cursor at the end
            * of the command text to make continued typing feel natural.
-           * 
+           *
            * Problem: Without this, cursor ends up in wrong position causing text like
            * "/foobar" to appear as "r/fooba" when user continues typing.
-           * 
+           *
            * Solution: Position cursor at end of command text (not at end of entire content)
            * since user was typing the command and expects to continue from there.
-           * 
+           *
            * Example: "foo" + "/hello" → "/hellofoo" with cursor after "/hello"
            */
           const selection = window.getSelection();
@@ -120,7 +120,7 @@ export const useCommandIndicator = ({
             const range = document.createRange();
             // Cursor should be positioned at the end of the command text
             const cursorPosition = commandText.length;
-            
+
             // Set cursor at the end of the inserted text
             if (elementRef.current.firstChild) {
               range.setStart(elementRef.current.firstChild, cursorPosition);
@@ -129,7 +129,7 @@ export const useCommandIndicator = ({
               selection.addRange(range);
             }
           }
-          
+
           onChange(finalContent);
         }
       } else {
@@ -157,21 +157,23 @@ export const useCommandIndicator = ({
 
   /**
    * AUTO-EXIT FUNCTIONALITY
-   * 
+   *
    * Automatically exits slash command mode when user types text that doesn't match any commands.
    * This prevents the slash mode from staying active indefinitely when typing non-command text.
-   * 
+   *
    * Logic:
    * - Only triggers when in command mode AND query is 5+ characters AND no commands match
    * - 5 character threshold allows short commands like "text" (4 chars) to still work
    * - Uses setTimeout(0) to avoid React state update conflicts during render
    * - Calls exitCommandMode(true) to preserve the typed text as regular block content
-   * 
+   *
    * Example: typing "/foobar" will auto-exit at the 5th character since no commands match
    */
   useEffect(() => {
     if (isCommandMode && query.length >= 5 && filteredCommands.length === 0) {
-      console.log('No commands match query after 5+ characters, auto-exiting command mode');
+      console.log(
+        'No commands match query after 5+ characters, auto-exiting command mode',
+      );
       setTimeout(() => {
         exitCommandMode(true); // Keep the command text as regular text
       }, 0);

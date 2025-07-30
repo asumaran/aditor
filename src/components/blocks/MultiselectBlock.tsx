@@ -41,7 +41,7 @@ export const MultiselectBlock: FC<MultiselectBlockProps> = ({
     <div className={cn('space-y-2', className)}>
       <div className='flex items-center'>
         <div
-          ref={elementRef}
+          ref={elementRef as React.RefObject<HTMLDivElement>}
           contentEditable
           suppressContentEditableWarning
           onInput={handleInput}

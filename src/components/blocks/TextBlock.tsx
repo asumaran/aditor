@@ -78,7 +78,7 @@ export const TextBlock: FC<TextBlockProps> = ({
 
   /**
    * HOOK ORDER CRITICAL SECTION
-   * 
+   *
    * useSlashCommands MUST be called before useBlockNavigation because:
    * - useBlockNavigation needs the isSlashInputMode value from useSlashCommands
    * - React hooks must maintain consistent order between renders
@@ -120,11 +120,11 @@ export const TextBlock: FC<TextBlockProps> = ({
         key: 'Enter',
         /**
          * ENTER KEY CONFLICT PREVENTION
-         * 
+         *
          * Prevents block's Enter command from executing when slash dropdown is open.
          * Without this condition, pressing Enter to select a slash command would ALSO
          * create a new block, causing unwanted block creation.
-         * 
+         *
          * The slash command's Enter handler has higher priority in the command array
          * and will handle Enter when dropdown is open. This condition ensures the
          * block's Enter only runs when appropriate.
@@ -159,7 +159,9 @@ export const TextBlock: FC<TextBlockProps> = ({
         modifiers: metaModifier, // Cmd+Backspace on Mac
         condition: () => {
           // Only handle when cursor is at the very start of the block
-          return elementRef.current ? isCursorAtStart(elementRef.current) : false;
+          return elementRef.current
+            ? isCursorAtStart(elementRef.current)
+            : false;
         },
         handler: () => {
           if (elementRef.current) {

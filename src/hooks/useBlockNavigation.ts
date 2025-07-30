@@ -18,11 +18,11 @@ interface UseBlockNavigationProps {
   elementRef: React.RefObject<HTMLElement | null>;
   /**
    * SLASH COMMAND CONFLICT PREVENTION
-   * 
+   *
    * This flag prevents block navigation when slash command dropdown is open.
    * Without this, arrow keys would both navigate the slash dropdown AND move between blocks,
    * causing confusing UX where the cursor jumps to other blocks while selecting commands.
-   * 
+   *
    * When true: Block navigation is disabled, allowing slash dropdown to handle arrow keys
    * When false: Normal block navigation behavior
    */
@@ -36,67 +36,73 @@ export const useBlockNavigation = ({
 }: UseBlockNavigationProps) => {
   const { state } = useEditor();
 
-  const handleArrowUp = useCallback((e?: React.KeyboardEvent) => {
-    if (elementRef.current && blockId) {
-      e?.preventDefault(); // Prevent default browser behavior
-      const horizontalPos = getCursorHorizontalPosition(elementRef.current);
-      const previousBlockId = getPreviousBlockId(state, blockId);
+  const handleArrowUp = useCallback(
+    (e?: React.KeyboardEvent) => {
+      if (elementRef.current && blockId) {
+        e?.preventDefault(); // Prevent default browser behavior
+        const horizontalPos = getCursorHorizontalPosition(elementRef.current);
+        const previousBlockId = getPreviousBlockId(state, blockId);
 
-      if (previousBlockId) {
-        const previousBlock = document.querySelector(
-          `[data-block-id="${previousBlockId}"]`,
-        ) as HTMLElement;
+        if (previousBlockId) {
+          const previousBlock = document.querySelector(
+            `[data-block-id="${previousBlockId}"]`,
+          ) as HTMLElement;
 
-        if (previousBlock) {
-          navigateToLastLine(previousBlock, horizontalPos);
+          if (previousBlock) {
+            navigateToLastLine(previousBlock, horizontalPos);
+          }
+        } else {
+          // No previous block - move cursor to beginning of current block
+          const range = document.createRange();
+          range.selectNodeContents(elementRef.current);
+          range.collapse(true);
+          const selection = window.getSelection();
+          selection?.removeAllRanges();
+          selection?.addRange(range);
         }
-      } else {
-        // No previous block - move cursor to beginning of current block
-        const range = document.createRange();
-        range.selectNodeContents(elementRef.current);
-        range.collapse(true);
-        const selection = window.getSelection();
-        selection?.removeAllRanges();
-        selection?.addRange(range);
       }
-    }
-  }, [blockId, state, elementRef]);
+    },
+    [blockId, state, elementRef],
+  );
 
-  const handleArrowDown = useCallback((e?: React.KeyboardEvent) => {
-    if (elementRef.current && blockId) {
-      e?.preventDefault(); // Prevent default browser behavior
-      const horizontalPos = getCursorHorizontalPosition(elementRef.current);
-      const nextBlockId = getNextBlockId(state, blockId);
+  const handleArrowDown = useCallback(
+    (e?: React.KeyboardEvent) => {
+      if (elementRef.current && blockId) {
+        e?.preventDefault(); // Prevent default browser behavior
+        const horizontalPos = getCursorHorizontalPosition(elementRef.current);
+        const nextBlockId = getNextBlockId(state, blockId);
 
-      if (nextBlockId) {
-        const nextBlock = document.querySelector(
-          `[data-block-id="${nextBlockId}"]`,
-        ) as HTMLElement;
+        if (nextBlockId) {
+          const nextBlock = document.querySelector(
+            `[data-block-id="${nextBlockId}"]`,
+          ) as HTMLElement;
 
-        if (nextBlock) {
-          navigateToFirstLine(nextBlock, horizontalPos);
+          if (nextBlock) {
+            navigateToFirstLine(nextBlock, horizontalPos);
+          }
+        } else {
+          // No next block - move cursor to end of current block
+          const range = document.createRange();
+          range.selectNodeContents(elementRef.current);
+          range.collapse(false);
+          const selection = window.getSelection();
+          selection?.removeAllRanges();
+          selection?.addRange(range);
         }
-      } else {
-        // No next block - move cursor to end of current block
-        const range = document.createRange();
-        range.selectNodeContents(elementRef.current);
-        range.collapse(false);
-        const selection = window.getSelection();
-        selection?.removeAllRanges();
-        selection?.addRange(range);
       }
-    }
-  }, [blockId, state, elementRef]);
+    },
+    [blockId, state, elementRef],
+  );
 
   const navigationCommands = useMemo(
     () => [
       {
         key: 'ArrowUp',
         condition: () => {
-          return (
-            !isSlashInputMode && // Prevent navigation when slash dropdown is open
-            elementRef.current ? isCursorAtFirstLine(elementRef.current) : false
-          );
+          return !isSlashInputMode && // Prevent navigation when slash dropdown is open
+            elementRef.current
+            ? isCursorAtFirstLine(elementRef.current)
+            : false;
         },
         handler: handleArrowUp,
       },
@@ -104,10 +110,10 @@ export const useBlockNavigation = ({
         key: 'ArrowUp',
         modifiers: metaModifier, // Cmd+ArrowUp on Mac
         condition: () => {
-          return (
-            !isSlashInputMode && // Prevent navigation when slash dropdown is open
-            elementRef.current ? isCursorAtFirstLine(elementRef.current) : false
-          );
+          return !isSlashInputMode && // Prevent navigation when slash dropdown is open
+            elementRef.current
+            ? isCursorAtFirstLine(elementRef.current)
+            : false;
         },
         handler: handleArrowUp,
       },
@@ -115,20 +121,20 @@ export const useBlockNavigation = ({
         key: 'ArrowUp',
         modifiers: ctrlModifier, // Ctrl+ArrowUp on Windows/Linux
         condition: () => {
-          return (
-            !isSlashInputMode && // Prevent navigation when slash dropdown is open
-            elementRef.current ? isCursorAtFirstLine(elementRef.current) : false
-          );
+          return !isSlashInputMode && // Prevent navigation when slash dropdown is open
+            elementRef.current
+            ? isCursorAtFirstLine(elementRef.current)
+            : false;
         },
         handler: handleArrowUp,
       },
       {
         key: 'ArrowDown',
         condition: () => {
-          return (
-            !isSlashInputMode && // Prevent navigation when slash dropdown is open
-            elementRef.current ? isCursorAtLastLine(elementRef.current) : false
-          );
+          return !isSlashInputMode && // Prevent navigation when slash dropdown is open
+            elementRef.current
+            ? isCursorAtLastLine(elementRef.current)
+            : false;
         },
         handler: handleArrowDown,
       },
@@ -136,10 +142,10 @@ export const useBlockNavigation = ({
         key: 'ArrowDown',
         modifiers: metaModifier, // Cmd+ArrowDown on Mac
         condition: () => {
-          return (
-            !isSlashInputMode && // Prevent navigation when slash dropdown is open
-            elementRef.current ? isCursorAtLastLine(elementRef.current) : false
-          );
+          return !isSlashInputMode && // Prevent navigation when slash dropdown is open
+            elementRef.current
+            ? isCursorAtLastLine(elementRef.current)
+            : false;
         },
         handler: handleArrowDown,
       },
@@ -147,10 +153,10 @@ export const useBlockNavigation = ({
         key: 'ArrowDown',
         modifiers: ctrlModifier, // Ctrl+ArrowDown on Windows/Linux
         condition: () => {
-          return (
-            !isSlashInputMode && // Prevent navigation when slash dropdown is open
-            elementRef.current ? isCursorAtLastLine(elementRef.current) : false
-          );
+          return !isSlashInputMode && // Prevent navigation when slash dropdown is open
+            elementRef.current
+            ? isCursorAtLastLine(elementRef.current)
+            : false;
         },
         handler: handleArrowDown,
       },

@@ -8,6 +8,10 @@ export type EditorAction =
     }
   | { type: 'UPDATE_BLOCK_CONTENT'; payload: { id: number; value: string } }
   | {
+      type: 'UPDATE_BLOCK_FIELD';
+      payload: { id: number; fieldId: string; value: string };
+    }
+  | {
       type: 'UPDATE_BLOCK_REQUIRED';
       payload: { id: number; required: boolean };
     }

@@ -111,11 +111,41 @@ export const updateBlockInState = (
   const existingBlock = state.blockMap[blockId];
   if (!existingBlock) return state;
 
+  const updatedBlock = { ...existingBlock, ...updates } as Block;
+
   return {
     ...state,
     blockMap: {
       ...state.blockMap,
-      [blockId]: { ...existingBlock, ...updates },
+      [blockId]: updatedBlock,
+    },
+  };
+};
+
+/**
+ * Update specific block properties in state
+ */
+export const updateBlockPropertiesInState = (
+  state: EditorState,
+  blockId: number,
+  propertyUpdates: Record<string, any>,
+): EditorState => {
+  const existingBlock = state.blockMap[blockId];
+  if (!existingBlock) return state;
+
+  const updatedBlock: Block = {
+    ...existingBlock,
+    properties: {
+      ...existingBlock.properties,
+      ...propertyUpdates,
+    },
+  } as Block;
+
+  return {
+    ...state,
+    blockMap: {
+      ...state.blockMap,
+      [blockId]: updatedBlock,
     },
   };
 };

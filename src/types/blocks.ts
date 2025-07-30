@@ -82,3 +82,7 @@ export interface BlockComponentProps {
   children?: React.ReactNode;
   className?: string;
 }
+
+export interface BlockHandle {
+  focus: () => void;
+}

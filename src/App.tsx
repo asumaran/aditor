@@ -15,7 +15,7 @@ import {
   getPreviousBlockId,
   getNextBlockId,
 } from '@/lib/editorUtils';
-import type { Block, Option, TextBlockProperties, HeadingBlockProperties } from '@/types';
+import type { Block, Option, TextBlockProperties, HeadingBlockProperties, ShortAnswerBlockProperties, MultipleChoiceBlockProperties, MultiselectBlockProperties } from '@/types';
 
 const INITIAL_BLOCKS: readonly Block[] = [createTextBlock()] as const;
 
@@ -72,11 +72,28 @@ const EditorContent: FC = () => {
   const handleCreateBlockAfter = useCallback(
     (
       afterBlockId: Block['id'],
-      options?: { initialContent?: string; cursorAtStart?: boolean },
+      options?: { initialContent?: string; cursorAtStart?: boolean; blockType?: string },
     ) => {
-      const { initialContent = '', cursorAtStart = false } = options || {};
+      const { initialContent = '', cursorAtStart = false, blockType = 'text' } = options || {};
 
-      const newBlock = createTextBlock(initialContent);
+      let newBlock: Block;
+      switch (blockType) {
+        case 'heading':
+          newBlock = createHeadingBlock(initialContent);
+          break;
+        case 'short_answer':
+          newBlock = createShortAnswerBlock(initialContent);
+          break;
+        case 'multiple_choice':
+          newBlock = createMultipleChoiceBlock(initialContent);
+          break;
+        case 'multiselect':
+          newBlock = createMultiselectBlock(initialContent);
+          break;
+        default:
+          newBlock = createTextBlock(initialContent);
+      }
+
       dispatch({
         type: 'INSERT_BLOCK_AFTER',
         payload: { afterBlockId, newBlock },
@@ -108,6 +125,70 @@ const EditorContent: FC = () => {
       if (previousBlockId) {
         setFocusBlockId(previousBlockId);
       }
+    },
+    [state, dispatch],
+  );
+
+  const handleChangeBlockType = useCallback(
+    (blockId: Block['id'], newType: string) => {
+      // Find the block to replace
+      const currentBlock = state.blockMap[blockId];
+      if (!currentBlock) return;
+
+      /**
+       * CONTENT PRESERVATION LOGIC
+       * 
+       * When changing block types via slash commands, we should only preserve content
+       * if the original block had meaningful content. Since slash commands only work
+       * when blocks are empty (cursor at position 0), we should create new blocks
+       * empty rather than preserving slash command text.
+       * 
+       * For block type changes, we always create the new block empty since this
+       * operation happens when the original block was empty.
+       */
+      
+      // Create new block of the specified type - always empty for slash command conversions
+      let newBlock: Block;
+      switch (newType) {
+        case 'text':
+          newBlock = createTextBlock('');
+          break;
+        case 'heading':
+          newBlock = createHeadingBlock('');
+          break;
+        case 'short_answer':
+          newBlock = createShortAnswerBlock('');
+          break;
+        case 'multiple_choice':
+          newBlock = createMultipleChoiceBlock('');
+          break;
+        case 'multiselect':
+          newBlock = createMultiselectBlock('');
+          break;
+        default:
+          return; // Invalid block type
+      }
+
+      // Find the previous block to maintain position
+      const previousBlockId = getPreviousBlockId(state, blockId);
+
+      // Remove the old block
+      dispatch({ type: 'REMOVE_BLOCK', payload: { id: blockId } });
+
+      // Insert new block at the same position
+      if (previousBlockId) {
+        dispatch({
+          type: 'INSERT_BLOCK_AFTER',
+          payload: { afterBlockId: previousBlockId, newBlock },
+        });
+      } else {
+        // If there's no previous block, this was the first block
+        // Add it as the first block
+        dispatch({ type: 'ADD_BLOCK', payload: newBlock });
+      }
+
+      // Set focus to the new block
+      setFocusBlockId(newBlock.id);
     },
     [state, dispatch],
   );
@@ -303,6 +384,7 @@ const EditorContent: FC = () => {
                     onRequiredChange={handleRequiredChange}
                     onBlockClick={handleBlockClick}
                     onCreateBlockAfter={handleCreateBlockAfter}
+                    onChangeBlockType={handleChangeBlockType}
                     onDeleteBlock={handleDeleteBlockAndFocusPrevious}
                     onMergeWithPrevious={handleMergeWithPrevious}
                     onNavigateToPrevious={handleNavigateToPrevious}

@@ -23,9 +23,11 @@ interface TextBlockProps extends BlockComponentProps {
   onCreateBlockAfter?: (options?: {
     initialContent?: string;
     cursorAtStart?: boolean;
+    blockType?: string;
   }) => number;
   onDeleteBlock?: () => void;
   onMergeWithPrevious?: (currentContent: string) => void;
+  onChangeBlockType?: (blockId: number, newType: string) => void;
   blockId?: number;
 }
 
@@ -41,6 +43,7 @@ export const TextBlock: FC<TextBlockProps> = ({
   onCreateBlockAfter,
   onDeleteBlock,
   onMergeWithPrevious,
+  onChangeBlockType,
   blockId,
 }) => {
   const { state } = useEditor();
@@ -93,6 +96,16 @@ export const TextBlock: FC<TextBlockProps> = ({
     elementRef,
     currentValue,
     onChange,
+    blockType: 'text',
+    blockId,
+    onCreateBlockAfter: (type: string) => {
+      onCreateBlockAfter?.({ blockType: type });
+    },
+    onChangeBlockType: (type: string) => {
+      if (blockId) {
+        onChangeBlockType?.(blockId, type);
+      }
+    },
   });
 
   const { navigationCommands } = useBlockNavigation({

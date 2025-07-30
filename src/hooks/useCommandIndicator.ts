@@ -498,5 +498,6 @@ export const useCommandIndicator = ({
     commandCommands,
     isCommandMode,
     selectedIndex,
+    originalContent, // Expose original content for decision making
   };
 };

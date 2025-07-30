@@ -8,6 +8,10 @@ import {
   navigateToFirstLine,
 } from '@/lib/utils';
 import { getPreviousBlockId, getNextBlockId } from '@/lib/editorUtils';
+import type { Modifier } from '@/hooks/useBlockCommands';
+
+const metaModifier: Modifier[] = ['meta'];
+const ctrlModifier: Modifier[] = ['ctrl'];
 
 interface UseBlockNavigationProps {
   blockId?: number;
@@ -98,7 +102,7 @@ export const useBlockNavigation = ({
       },
       {
         key: 'ArrowUp',
-        modifiers: ['meta'] as const, // Cmd+ArrowUp on Mac
+        modifiers: metaModifier, // Cmd+ArrowUp on Mac
         condition: () => {
           return (
             !isSlashInputMode && // Prevent navigation when slash dropdown is open
@@ -109,7 +113,7 @@ export const useBlockNavigation = ({
       },
       {
         key: 'ArrowUp',
-        modifiers: ['ctrl'] as const, // Ctrl+ArrowUp on Windows/Linux
+        modifiers: ctrlModifier, // Ctrl+ArrowUp on Windows/Linux
         condition: () => {
           return (
             !isSlashInputMode && // Prevent navigation when slash dropdown is open
@@ -130,7 +134,7 @@ export const useBlockNavigation = ({
       },
       {
         key: 'ArrowDown',
-        modifiers: ['meta'] as const, // Cmd+ArrowDown on Mac
+        modifiers: metaModifier, // Cmd+ArrowDown on Mac
         condition: () => {
           return (
             !isSlashInputMode && // Prevent navigation when slash dropdown is open
@@ -141,7 +145,7 @@ export const useBlockNavigation = ({
       },
       {
         key: 'ArrowDown',
-        modifiers: ['ctrl'] as const, // Ctrl+ArrowDown on Windows/Linux
+        modifiers: ctrlModifier, // Ctrl+ArrowDown on Windows/Linux
         condition: () => {
           return (
             !isSlashInputMode && // Prevent navigation when slash dropdown is open

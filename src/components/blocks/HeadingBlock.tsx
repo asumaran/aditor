@@ -24,7 +24,9 @@ interface HeadingBlockProps extends BlockComponentProps {
   onCreateBlockAfter?: (options?: {
     initialContent?: string;
     cursorAtStart?: boolean;
+    blockType?: string;
   }) => number;
+  onChangeBlockType?: (blockId: number, newType: string) => void;
   onDeleteBlock?: () => void;
   onMergeWithPrevious?: (currentContent: string) => void;
 }
@@ -40,6 +42,7 @@ export const HeadingBlock: FC<HeadingBlockProps> = ({
   cursorAtStart = false,
   blockId,
   onCreateBlockAfter,
+  onChangeBlockType,
   onDeleteBlock,
   onMergeWithPrevious,
 }) => {
@@ -93,6 +96,16 @@ export const HeadingBlock: FC<HeadingBlockProps> = ({
     elementRef,
     currentValue,
     onChange,
+    blockType: 'heading',
+    blockId,
+    onCreateBlockAfter: (type: string) => {
+      onCreateBlockAfter?.({ blockType: type });
+    },
+    onChangeBlockType: (type: string) => {
+      if (blockId) {
+        onChangeBlockType?.(blockId, type);
+      }
+    },
   });
 
   const { navigationCommands } = useBlockNavigation({
@@ -189,7 +202,7 @@ export const HeadingBlock: FC<HeadingBlockProps> = ({
           !currentValue && !isSlashInputMode && 'text-gray-400',
           !currentValue &&
             !isSlashInputMode &&
-            'focus:after:content-[attr(data-placeholder)]',
+            'after:content-[attr(data-placeholder)]',
           className,
         )}
         data-placeholder={placeholder}

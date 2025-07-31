@@ -60,29 +60,30 @@ export const MultiselectBlock: FC<MultiselectBlockProps> = ({
 
   return (
     <div className={cn('space-y-2', className)}>
-      <div className='flex items-center'>
-        <div
-          ref={elementRef as React.RefObject<HTMLDivElement>}
-          contentEditable
-          suppressContentEditableWarning
-          onInput={handleInput}
-          onCompositionStart={handleCompositionStart}
-          onCompositionEnd={handleCompositionEnd}
-          onBlur={handleBlur}
-          onClick={handleClickWithStopPropagation}
-          onKeyDown={handleKeyDown}
-          className={cn(
-            'min-h-[1.5rem] w-fit cursor-text rounded p-1 font-bold focus:ring-1 focus:ring-blue-500 focus:outline-none',
-            !currentValue && 'text-gray-400',
-          )}
-          data-placeholder='Select label'
-        />
-        {required && (
-          <span className='ml-1 text-red-500' aria-label='Required field'>
-            *
-          </span>
+      <div
+        ref={elementRef as React.RefObject<HTMLDivElement>}
+        contentEditable
+        suppressContentEditableWarning
+        onInput={handleInput}
+        onCompositionStart={handleCompositionStart}
+        onCompositionEnd={handleCompositionEnd}
+        onBlur={handleBlur}
+        onClick={handleClickWithStopPropagation}
+        onKeyDown={handleKeyDown}
+        className={cn(
+          'my-[10px] min-h-[1em] w-fit max-w-full cursor-text rounded-md px-[10px] text-[24px] leading-[30px] font-bold break-words whitespace-break-spaces text-[rgb(50,48,44)] caret-[rgb(50,48,44)] focus:outline-none',
+          // Empty state - use before for placeholder with webkit-text-fill-color
+          !currentValue &&
+            'empty:[-webkit-text-fill-color:rgba(70,68,64,0.45)] empty:before:content-[attr(data-placeholder)]',
+          // After pseudo-element for required asterisk
+          required &&
+            'after:font-normal after:text-[rgba(70,68,64,0.45)] after:content-["*"]',
         )}
-      </div>
+        data-placeholder='Question name'
+        role='textbox'
+        aria-label='Start typing to edit text'
+        tabIndex={0}
+      />
       <Select>
         <SelectTrigger
           className='w-full'

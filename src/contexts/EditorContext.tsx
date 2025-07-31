@@ -8,6 +8,7 @@ import {
   updateBlockPropertiesInState,
   getBlockById,
 } from '@/lib/editorUtils';
+import { createTextBlock, createHeadingBlock } from '@/lib/blockFactory';
 
 const editorReducer = (
   state: EditorState,
@@ -133,6 +134,30 @@ const editorReducer = (
 
     case 'REMOVE_BLOCK':
       return removeBlockFromState(state, action.payload.id);
+
+    case 'CHANGE_BLOCK_TYPE': {
+      const { id, newType } = action.payload;
+      const block = getBlockById(state, id);
+      if (!block) return state;
+
+      // For slash commands, we always create empty blocks
+      // This action is primarily used for slash command conversions
+      const newBlock = (() => {
+        switch (newType) {
+          case 'text':
+            return { ...createTextBlock(''), id };
+          case 'heading':
+            return { ...createHeadingBlock(''), id };
+          default:
+            return block;
+        }
+      })();
+
+      return {
+        ...state,
+        blockMap: { ...state.blockMap, [id]: newBlock },
+      };
+    }
 
     default:
       return state;

@@ -25,4 +25,5 @@ export type EditorAction =
       type: 'UPDATE_OPTION';
       payload: { blockId: number; optionId: number; text: string };
     }
-  | { type: 'REMOVE_BLOCK'; payload: { id: number } };
+  | { type: 'REMOVE_BLOCK'; payload: { id: number } }
+  | { type: 'CHANGE_BLOCK_TYPE'; payload: { id: number; newType: string } };

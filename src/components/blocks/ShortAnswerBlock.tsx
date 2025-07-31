@@ -104,7 +104,7 @@ export const ShortAnswerBlock = forwardRef<BlockHandle, ShortAnswerBlockProps>(
             'block w-fit max-w-full cursor-text text-[24px] font-bold break-words text-[rgb(50,48,44)] caret-[rgb(50,48,44)] focus:outline-none',
             // IMPORTANT: leading-[30px] is hardcoded in utils.ts for form block detection
             // DO NOT CHANGE without updating isCursorAtLastLine() form block detection
-            'leading-[30px] p-0 mb-[10px]',
+            'mb-[10px] p-0 leading-[30px]',
             // Border and background for visual consistency
             'rounded-md border-0 bg-transparent',
             // Empty state - use before for placeholder with webkit-text-fill-color

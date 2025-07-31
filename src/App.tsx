@@ -30,7 +30,9 @@ const EditorContent: FC = () => {
   const [cursorAtStartBlockIds, setCursorAtStartBlockIds] = useState<
     Set<number>
   >(new Set());
-  const [lastFocusedBlockId, setLastFocusedBlockId] = useState<number | null>(null);
+  const [lastFocusedBlockId, setLastFocusedBlockId] = useState<number | null>(
+    null,
+  );
 
   // Clear focus block ID after it's been applied
   useEffect(() => {
@@ -168,8 +170,11 @@ const EditorContent: FC = () => {
   const handleChangeBlockType = useCallback(
     (blockId: Block['id'], newType: string) => {
       // Use the existing CHANGE_BLOCK_TYPE action which handles this properly
-      dispatch({ type: 'CHANGE_BLOCK_TYPE', payload: { id: blockId, newType } });
-      
+      dispatch({
+        type: 'CHANGE_BLOCK_TYPE',
+        payload: { id: blockId, newType },
+      });
+
       // Set focus to the same block (which now has the new type)
       setFocusBlockId(blockId);
     },
@@ -301,43 +306,60 @@ const EditorContent: FC = () => {
   const addTextBlock = useCallback(() => {
     console.log('DEBUG addTextBlock:', {
       lastFocusedBlockId,
-      blockExists: lastFocusedBlockId ? !!state.blockMap[lastFocusedBlockId] : false
+      blockExists: lastFocusedBlockId
+        ? !!state.blockMap[lastFocusedBlockId]
+        : false,
     });
-    
+
     if (lastFocusedBlockId) {
       const block = state.blockMap[lastFocusedBlockId];
       const isEmpty = !block.properties.title?.trim();
-      
+
       if ((block.type === 'text' || block.type === 'heading') && isEmpty) {
         // Replace empty text/heading block
-        dispatch({ type: 'CHANGE_BLOCK_TYPE', payload: { id: lastFocusedBlockId, newType: 'text' } });
+        dispatch({
+          type: 'CHANGE_BLOCK_TYPE',
+          payload: { id: lastFocusedBlockId, newType: 'text' },
+        });
         setFocusBlockId(lastFocusedBlockId);
       } else {
         // Insert after current block
         const newBlock = createTextBlock('');
-        dispatch({ type: 'INSERT_BLOCK_AFTER', payload: { afterBlockId: lastFocusedBlockId, newBlock } });
+        dispatch({
+          type: 'INSERT_BLOCK_AFTER',
+          payload: { afterBlockId: lastFocusedBlockId, newBlock },
+        });
         setFocusBlockId(newBlock.id);
       }
     } else {
       // No focus - handle last block
       const blocks = getOrderedBlocks(state);
       const lastBlock = blocks[blocks.length - 1];
-      
+
       if (!lastBlock) {
         const newBlock = createTextBlock('');
         dispatch({ type: 'ADD_BLOCK', payload: newBlock });
         setFocusBlockId(newBlock.id);
       } else {
         const isEmpty = !lastBlock.properties.title?.trim();
-        
-        if ((lastBlock.type === 'text' || lastBlock.type === 'heading') && isEmpty) {
+
+        if (
+          (lastBlock.type === 'text' || lastBlock.type === 'heading') &&
+          isEmpty
+        ) {
           // Replace empty last block
-          dispatch({ type: 'CHANGE_BLOCK_TYPE', payload: { id: lastBlock.id, newType: 'text' } });
+          dispatch({
+            type: 'CHANGE_BLOCK_TYPE',
+            payload: { id: lastBlock.id, newType: 'text' },
+          });
           setFocusBlockId(lastBlock.id);
         } else {
           // Insert after last block
           const newBlock = createTextBlock('');
-          dispatch({ type: 'INSERT_BLOCK_AFTER', payload: { afterBlockId: lastBlock.id, newBlock } });
+          dispatch({
+            type: 'INSERT_BLOCK_AFTER',
+            payload: { afterBlockId: lastBlock.id, newBlock },
+          });
           setFocusBlockId(newBlock.id);
         }
       }
@@ -347,43 +369,60 @@ const EditorContent: FC = () => {
   const addHeadingBlock = useCallback(() => {
     console.log('DEBUG addHeadingBlock:', {
       lastFocusedBlockId,
-      blockExists: lastFocusedBlockId ? !!state.blockMap[lastFocusedBlockId] : false
+      blockExists: lastFocusedBlockId
+        ? !!state.blockMap[lastFocusedBlockId]
+        : false,
     });
-    
+
     if (lastFocusedBlockId) {
       const block = state.blockMap[lastFocusedBlockId];
       const isEmpty = !block.properties.title?.trim();
-      
+
       if ((block.type === 'text' || block.type === 'heading') && isEmpty) {
         // Replace empty text/heading block
-        dispatch({ type: 'CHANGE_BLOCK_TYPE', payload: { id: lastFocusedBlockId, newType: 'heading' } });
+        dispatch({
+          type: 'CHANGE_BLOCK_TYPE',
+          payload: { id: lastFocusedBlockId, newType: 'heading' },
+        });
         setFocusBlockId(lastFocusedBlockId);
       } else {
         // Insert after current block
         const newBlock = createHeadingBlock('');
-        dispatch({ type: 'INSERT_BLOCK_AFTER', payload: { afterBlockId: lastFocusedBlockId, newBlock } });
+        dispatch({
+          type: 'INSERT_BLOCK_AFTER',
+          payload: { afterBlockId: lastFocusedBlockId, newBlock },
+        });
         setFocusBlockId(newBlock.id);
       }
     } else {
       // No focus - handle last block
       const blocks = getOrderedBlocks(state);
       const lastBlock = blocks[blocks.length - 1];
-      
+
       if (!lastBlock) {
         const newBlock = createHeadingBlock('');
         dispatch({ type: 'ADD_BLOCK', payload: newBlock });
         setFocusBlockId(newBlock.id);
       } else {
         const isEmpty = !lastBlock.properties.title?.trim();
-        
-        if ((lastBlock.type === 'text' || lastBlock.type === 'heading') && isEmpty) {
+
+        if (
+          (lastBlock.type === 'text' || lastBlock.type === 'heading') &&
+          isEmpty
+        ) {
           // Replace empty last block
-          dispatch({ type: 'CHANGE_BLOCK_TYPE', payload: { id: lastBlock.id, newType: 'heading' } });
+          dispatch({
+            type: 'CHANGE_BLOCK_TYPE',
+            payload: { id: lastBlock.id, newType: 'heading' },
+          });
           setFocusBlockId(lastBlock.id);
         } else {
           // Insert after last block
           const newBlock = createHeadingBlock('');
-          dispatch({ type: 'INSERT_BLOCK_AFTER', payload: { afterBlockId: lastBlock.id, newBlock } });
+          dispatch({
+            type: 'INSERT_BLOCK_AFTER',
+            payload: { afterBlockId: lastBlock.id, newBlock },
+          });
           setFocusBlockId(newBlock.id);
         }
       }
@@ -393,13 +432,18 @@ const EditorContent: FC = () => {
   const addShortAnswerBlock = useCallback(() => {
     console.log('DEBUG addShortAnswerBlock:', {
       lastFocusedBlockId,
-      blockExists: lastFocusedBlockId ? !!state.blockMap[lastFocusedBlockId] : false
+      blockExists: lastFocusedBlockId
+        ? !!state.blockMap[lastFocusedBlockId]
+        : false,
     });
-    
+
     if (lastFocusedBlockId) {
       // Always insert after focused block (never replace for form blocks)
       const newBlock = createShortAnswerBlock('Sample Short Answer Question');
-      dispatch({ type: 'INSERT_BLOCK_AFTER', payload: { afterBlockId: lastFocusedBlockId, newBlock } });
+      dispatch({
+        type: 'INSERT_BLOCK_AFTER',
+        payload: { afterBlockId: lastFocusedBlockId, newBlock },
+      });
       setFocusBlockId(newBlock.id);
     } else {
       // No focus - insert at end
@@ -412,13 +456,18 @@ const EditorContent: FC = () => {
   const addMultipleChoiceBlock = useCallback(() => {
     console.log('DEBUG addMultipleChoiceBlock:', {
       lastFocusedBlockId,
-      blockExists: lastFocusedBlockId ? !!state.blockMap[lastFocusedBlockId] : false
+      blockExists: lastFocusedBlockId
+        ? !!state.blockMap[lastFocusedBlockId]
+        : false,
     });
-    
+
     if (lastFocusedBlockId) {
       // Always insert after focused block (never replace for form blocks)
       const newBlock = createMultipleChoiceBlock('Question');
-      dispatch({ type: 'INSERT_BLOCK_AFTER', payload: { afterBlockId: lastFocusedBlockId, newBlock } });
+      dispatch({
+        type: 'INSERT_BLOCK_AFTER',
+        payload: { afterBlockId: lastFocusedBlockId, newBlock },
+      });
       setFocusBlockId(newBlock.id);
     } else {
       // No focus - insert at end
@@ -431,13 +480,18 @@ const EditorContent: FC = () => {
   const addMultiselectBlock = useCallback(() => {
     console.log('DEBUG addMultiselectBlock:', {
       lastFocusedBlockId,
-      blockExists: lastFocusedBlockId ? !!state.blockMap[lastFocusedBlockId] : false
+      blockExists: lastFocusedBlockId
+        ? !!state.blockMap[lastFocusedBlockId]
+        : false,
     });
-    
+
     if (lastFocusedBlockId) {
       // Always insert after focused block (never replace for form blocks)
       const newBlock = createMultiselectBlock('Select label');
-      dispatch({ type: 'INSERT_BLOCK_AFTER', payload: { afterBlockId: lastFocusedBlockId, newBlock } });
+      dispatch({
+        type: 'INSERT_BLOCK_AFTER',
+        payload: { afterBlockId: lastFocusedBlockId, newBlock },
+      });
       setFocusBlockId(newBlock.id);
     } else {
       // No focus - insert at end

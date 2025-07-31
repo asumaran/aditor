@@ -58,7 +58,7 @@ export const ShortAnswerBlock = forwardRef<BlockHandle, ShortAnswerBlockProps>(
           elementRef.current?.focus();
         },
       }),
-      [],
+      [elementRef],
     );
 
     return (
@@ -66,29 +66,27 @@ export const ShortAnswerBlock = forwardRef<BlockHandle, ShortAnswerBlockProps>(
         className={cn('w-full space-y-2', className)}
         data-block-id={blockId}
       >
-        <div className='flex w-full items-center'>
-          <div
-            ref={elementRef as React.RefObject<HTMLDivElement>}
-            contentEditable
-            suppressContentEditableWarning
-            onInput={handleInput}
-            onCompositionStart={handleCompositionStart}
-            onCompositionEnd={handleCompositionEnd}
-            onBlur={handleBlur}
-            onClick={handleClickWithStopPropagation}
-            className={cn(
-              'min-h-[1.5rem] w-fit cursor-text rounded p-1 font-bold focus:ring-1 focus:ring-blue-500 focus:outline-none',
-              !currentValue && 'text-gray-400',
-              !currentValue && 'after:content-[attr(data-placeholder)]',
-            )}
-            data-placeholder='Question label'
-          />
-          {required && (
-            <span className='ml-1 text-red-500' aria-label='Required field'>
-              *
-            </span>
+        <div
+          ref={elementRef as React.RefObject<HTMLDivElement>}
+          contentEditable
+          suppressContentEditableWarning
+          onInput={handleInput}
+          onCompositionStart={handleCompositionStart}
+          onCompositionEnd={handleCompositionEnd}
+          onBlur={handleBlur}
+          onClick={handleClickWithStopPropagation}
+          className={cn(
+            'my-[10px] min-h-[1em] w-fit max-w-full cursor-text rounded-md px-[10px] text-[24px] leading-[30px] font-bold break-words whitespace-break-spaces caret-[rgb(50,48,44)] text-[rgb(50,48,44)] focus:outline-none',
+            // Empty state - use before for placeholder with webkit-text-fill-color
+            !currentValue && 'empty:before:content-[attr(data-placeholder)] empty:[-webkit-text-fill-color:rgba(70,68,64,0.45)]',
+            // After pseudo-element for required asterisk
+            required && 'after:content-["*"] after:text-[rgba(70,68,64,0.45)] after:font-normal',
           )}
-        </div>
+          data-placeholder='Question name'
+          role='textbox'
+          aria-label='Start typing to edit text'
+          tabIndex={0}
+        />
         <input
           type='text'
           placeholder='Short answer text'

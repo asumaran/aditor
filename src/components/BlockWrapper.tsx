@@ -120,7 +120,7 @@ export const BlockWrapper: FC<BlockWrapperProps> = ({
           onMouseLeave={handleMouseLeave}
           onClick={handleClick}
           className={cn(
-            'relative m-0 w-full rounded-xl border border-[rgba(35,131,226,0.35)] bg-white p-3 shadow-[rgba(35,131,226,0.35)_0px_0px_0px_0px,rgba(35,131,226,0.35)_0px_0px_0px_0.5px_inset] transition-shadow',
+            'relative m-0 mb-6 w-full rounded-xl border border-[rgba(35,131,226,0.35)] bg-white p-3 shadow-[rgba(35,131,226,0.35)_0px_0px_0px_0px,rgba(35,131,226,0.35)_0px_0px_0px_0.5px_inset] transition-shadow',
             'hover:cursor-pointer',
             (isHovered || isPopoverOpen) &&
               'shadow-[0_0_0_2px_rgb(59_130_246_/_0.5)]', // Blue shadow on hover or when popover is open

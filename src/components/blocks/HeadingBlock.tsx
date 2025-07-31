@@ -187,27 +187,29 @@ export const HeadingBlock: FC<HeadingBlockProps> = ({
 
   const renderContent = () => {
     return (
-      <h2
-        ref={elementRef as React.RefObject<HTMLHeadingElement>}
-        contentEditable
-        suppressContentEditableWarning
-        onInput={handleInput}
-        onCompositionStart={handleCompositionStart}
-        onCompositionEnd={handleCompositionEnd}
-        onKeyDown={handleKeyDown}
-        onBlur={handleSlashBlur}
-        data-block-id={blockId}
-        className={cn(
-          'm-0 w-full max-w-full px-[2px] pt-[3px] pb-[3px] text-3xl leading-[1.3] font-semibold break-words whitespace-break-spaces',
-          'focus:outline-none',
-          !currentValue && !isSlashInputMode && 'text-gray-400',
-          !currentValue &&
-            !isSlashInputMode &&
-            'after:content-[attr(data-placeholder)]',
-          className,
-        )}
-        data-placeholder={placeholder}
-      />
+      <div className='mt-8 mb-1 w-full'>
+        <h2
+          ref={elementRef as React.RefObject<HTMLHeadingElement>}
+          contentEditable
+          suppressContentEditableWarning
+          onInput={handleInput}
+          onCompositionStart={handleCompositionStart}
+          onCompositionEnd={handleCompositionEnd}
+          onKeyDown={handleKeyDown}
+          onBlur={handleSlashBlur}
+          data-block-id={blockId}
+          className={cn(
+            'm-0 w-full max-w-full px-[2px] pt-[3px] pb-[3px] text-3xl leading-[1.3] font-semibold break-words whitespace-break-spaces',
+            'focus:outline-none',
+            !currentValue && !isSlashInputMode && 'text-gray-400',
+            !currentValue &&
+              !isSlashInputMode &&
+              'after:content-[attr(data-placeholder)]',
+            className,
+          )}
+          data-placeholder={placeholder}
+        />
+      </div>
     );
   };
 

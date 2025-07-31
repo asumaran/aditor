@@ -33,8 +33,9 @@ export const BlockWrapper: FC<BlockWrapperProps> = ({
 }) => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [currentView, setCurrentView] = useState<PopoverView>('menu');
-  const { isHovered, handleMouseEnter, handleMouseLeave } =
-    useBlockInteraction();
+  const { isHovered, handleMouseEnter, handleMouseLeave } = useBlockInteraction(
+    { onBlockClick },
+  );
 
   const isFormBlock =
     blockType &&
@@ -44,6 +45,7 @@ export const BlockWrapper: FC<BlockWrapperProps> = ({
     blockType === 'multiple_choice' || blockType === 'multiselect';
 
   const handleClick = () => {
+    console.log('BlockWrapper handleClick:', { isFormBlock, blockType });
     if (isFormBlock) {
       setCurrentView('menu');
       setIsPopoverOpen(true);
@@ -97,11 +99,19 @@ export const BlockWrapper: FC<BlockWrapperProps> = ({
         onMouseLeave={handleMouseLeave}
         onClick={handleClick}
         className={cn(
-          'relative w-full rounded-md p-2 transition-all duration-200',
-          'hover:cursor-pointer',
-          isHovered && 'shadow-[0_0_0_2px_rgb(59_130_246_/_0.5)]', // Blue shadow on hover
+          // Base classes - always applied
+          'relative w-full rounded-md p-2 transition-all hover:cursor-pointer',
+          // Border - always the same width
+          'border-[0.5px] border-[rgba(35,131,226,0.35)]',
           className,
         )}
+        style={{
+          // Dynamic box-shadow based on state (no click state for non-form blocks)
+          boxShadow: isHovered
+            ? 'rgba(35, 131, 226, 0.35) 0px 0px 0px 1px, rgba(35, 131, 226, 0.35) 0px 0px 0px 1px inset'
+            : 'rgba(35, 131, 226, 0.35) 0px 0px 0px 0px, rgba(35, 131, 226, 0.35) 0px 0px 0px 0px inset',
+          transition: 'all 0.2s',
+        }}
       >
         {children}
       </div>
@@ -120,12 +130,25 @@ export const BlockWrapper: FC<BlockWrapperProps> = ({
           onMouseLeave={handleMouseLeave}
           onClick={handleClick}
           className={cn(
-            'relative m-0 mb-6 w-full rounded-xl border border-[rgba(35,131,226,0.35)] bg-white p-3 shadow-[rgba(35,131,226,0.35)_0px_0px_0px_0px,rgba(35,131,226,0.35)_0px_0px_0px_0.5px_inset] transition-shadow',
-            'hover:cursor-pointer',
-            (isHovered || isPopoverOpen) &&
-              'shadow-[0_0_0_2px_rgb(59_130_246_/_0.5)]', // Blue shadow on hover or when popover is open
+            // Base classes - always applied
+            'relative m-0 mb-6 w-full rounded-xl bg-white p-3 transition-all hover:cursor-pointer',
+            // Border - always the same width
+            'border-[0.5px] border-[rgba(35,131,226,0.35)]',
             className,
           )}
+          style={{
+            // Dynamic box-shadow based on state
+            boxShadow: isPopoverOpen
+              ? '0 0 0 1px rgb(35,131,226), inset 0 0 0 1px rgb(35,131,226)'
+              : isHovered
+                ? 'rgba(35, 131, 226, 0.35) 0px 0px 0px 1px, rgba(35, 131, 226, 0.35) 0px 0px 0px 1px inset'
+                : 'rgba(35, 131, 226, 0.35) 0px 0px 0px 0px, rgba(35, 131, 226, 0.35) 0px 0px 0px 0px inset',
+            // Border color changes when clicked/open
+            borderColor: isPopoverOpen
+              ? 'rgb(35,131,226)'
+              : 'rgba(35,131,226,0.35)',
+            transition: 'all 0.2s',
+          }}
         >
           {children}
         </div>

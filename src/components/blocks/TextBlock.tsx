@@ -97,7 +97,6 @@ export const TextBlock: FC<TextBlockProps> = ({
     currentValue,
     onChange,
     blockType: 'text',
-    blockId,
     onCreateBlockAfter: (type: string) => {
       onCreateBlockAfter?.({ blockType: type });
     },

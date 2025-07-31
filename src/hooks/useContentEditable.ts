@@ -57,6 +57,30 @@ export const useContentEditable = ({
         target.textContent = '';
       }
 
+      // Clean up trailing newlines when backspacing
+      // This happens when deleting the last line in multi-line text
+      if (
+        newValue.endsWith('\n') &&
+        !newValue.includes('\n', newValue.length - 2)
+      ) {
+        // Only one newline at the end, remove it
+        newValue = newValue.slice(0, -1);
+        // Update the DOM to reflect the cleaned value
+        const selection = window.getSelection();
+        const range = selection?.getRangeAt(0);
+
+        target.textContent = newValue;
+
+        // Restore cursor position
+        if (selection && range && newValue.length > 0) {
+          const newRange = document.createRange();
+          newRange.selectNodeContents(target);
+          newRange.collapse(false); // Move to end
+          selection.removeAllRanges();
+          selection.addRange(newRange);
+        }
+      }
+
       setCurrentValue(newValue);
       onChange(newValue);
     },

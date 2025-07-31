@@ -52,18 +52,33 @@ export const isCursorAtFirstLine = (editableElement: HTMLElement): boolean => {
   try {
     const range = selection.getRangeAt(0);
 
-    // Get the current cursor position as a character offset from start
+    // Get cursor position
     const preRange = document.createRange();
     preRange.selectNodeContents(editableElement);
     preRange.setEnd(range.startContainer, range.startOffset);
     const cursorPosition = preRange.toString().length;
 
-    // Find the last newline before cursor position
+    // Check if there's a newline before cursor position
     const textBeforeCursor = content.substring(0, cursorPosition);
     const lastNewlineBeforeCursor = textBeforeCursor.lastIndexOf('\n');
 
-    // If no newline found, we're on the first line
-    return lastNewlineBeforeCursor === -1;
+    // If there's a newline before cursor, we're not on first line
+    if (lastNewlineBeforeCursor !== -1) {
+      return false;
+    }
+
+    // No newline before cursor - we're on the first line
+    // Now check if we need to navigate based on visual position
+    const rect = range.getBoundingClientRect();
+    const elementRect = editableElement.getBoundingClientRect();
+
+    // For wrapped text, only return true if cursor is visually at the top
+    if (rect.top > elementRect.top + 10) {
+      // Cursor is visually below the first line due to wrapping
+      return false;
+    }
+
+    return true;
   } catch {
     return false;
   }
@@ -92,42 +107,33 @@ export const isCursorAtLastLine = (editableElement: HTMLElement): boolean => {
   try {
     const range = selection.getRangeAt(0);
 
-    // Get the text content and split into lines
-    const lines = content.split('\n');
-
-    // Get cursor position as character offset
+    // Get cursor position
     const preRange = document.createRange();
     preRange.selectNodeContents(editableElement);
     preRange.setEnd(range.startContainer, range.startOffset);
-    const cursorOffset = preRange.toString().length;
+    const cursorPosition = preRange.toString().length;
 
-    // Find which line the cursor is on
-    let currentLine = 0;
-    let charCount = 0;
+    // Check if there's a newline after cursor position
+    const textAfterCursor = content.substring(cursorPosition);
+    const hasNewlineAfter = textAfterCursor.includes('\n');
 
-    for (let i = 0; i < lines.length; i++) {
-      const lineLength = lines[i].length;
-      const nextCharCount =
-        charCount + lineLength + (i < lines.length - 1 ? 1 : 0);
-
-      if (cursorOffset <= charCount + lineLength) {
-        currentLine = i;
-        break;
-      }
-      charCount = nextCharCount;
+    // If there's a newline after cursor, we're not on last line
+    if (hasNewlineAfter) {
+      return false;
     }
 
-    // The last actual line with content
-    let lastLineWithContent = lines.length - 1;
+    // No newline after cursor - we're on the last line
+    // Now check if we need to navigate based on visual position
+    const rect = range.getBoundingClientRect();
+    const elementRect = editableElement.getBoundingClientRect();
 
-    // If content ends with \n, there's an empty line at the end that we should ignore
-    if (content.endsWith('\n') && lines[lines.length - 1] === '') {
-      lastLineWithContent = lines.length - 2;
+    // For wrapped text, only return true if cursor is visually at the bottom
+    if (rect.bottom < elementRect.bottom - 10) {
+      // Cursor is visually above the last line due to wrapping
+      return false;
     }
 
-    const isLastLine = currentLine >= lastLineWithContent;
-
-    return isLastLine;
+    return true;
   } catch {
     return false;
   }

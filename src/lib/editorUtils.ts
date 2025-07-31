@@ -128,7 +128,7 @@ export const updateBlockInState = (
 export const updateBlockPropertiesInState = (
   state: EditorState,
   blockId: number,
-  propertyUpdates: Record<string, any>,
+  propertyUpdates: Record<string, unknown>,
 ): EditorState => {
   const existingBlock = state.blockMap[blockId];
   if (!existingBlock) return state;

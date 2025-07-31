@@ -1,8 +1,10 @@
-import { type FC, useCallback, useRef, useEffect } from 'react';
+import { type FC, useCallback, useRef, useEffect, useMemo } from 'react';
 import {
   useContentEditable,
   useStopPropagation,
   useBlockOptions,
+  useBlockCommands,
+  useBlockNavigation,
 } from '@/hooks';
 import { cn, generateId } from '@/lib/utils';
 import type { BlockComponentProps, Option } from '@/types';
@@ -15,6 +17,8 @@ interface MultipleChoiceBlockProps extends BlockComponentProps {
   required?: boolean;
   blockId: number;
   className?: string;
+  onNavigateToPrevious?: (blockId: number) => void;
+  onNavigateToNext?: (blockId: number) => void;
 }
 
 interface OptionItemProps {
@@ -141,6 +145,18 @@ export const MultipleChoiceBlock: FC<MultipleChoiceBlockProps> = ({
     addOption();
   }, [addOption]);
 
+  // Navigation commands
+  const { navigationCommands } = useBlockNavigation({
+    blockId,
+    elementRef,
+    isSlashInputMode: false,
+  });
+
+  // Command configuration
+  const commands = useMemo(() => [...navigationCommands], [navigationCommands]);
+
+  const { handleKeyDown } = useBlockCommands({ commands });
+
   return (
     <div className={cn('space-y-3', className)}>
       <div className='flex items-center'>
@@ -153,6 +169,7 @@ export const MultipleChoiceBlock: FC<MultipleChoiceBlockProps> = ({
           onCompositionEnd={handleCompositionEnd}
           onBlur={handleBlur}
           onClick={handleClickWithStopPropagation}
+          onKeyDown={handleKeyDown}
           className={cn(
             'min-h-[1.5rem] w-fit cursor-text rounded p-1 font-bold focus:ring-1 focus:ring-blue-500 focus:outline-none',
             !currentValue && 'text-gray-400',

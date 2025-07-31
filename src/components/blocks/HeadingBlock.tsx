@@ -97,7 +97,6 @@ export const HeadingBlock: FC<HeadingBlockProps> = ({
     currentValue,
     onChange,
     blockType: 'heading',
-    blockId,
     onCreateBlockAfter: (type: string) => {
       onCreateBlockAfter?.({ blockType: type });
     },

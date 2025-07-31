@@ -18,7 +18,6 @@ interface UseSlashCommandsProps {
   currentValue: string;
   onChange: (value: string) => void;
   blockType?: string;
-  blockId?: number;
   onCreateBlockAfter?: (type: string) => void;
   onChangeBlockType?: (type: string) => void;
 }
@@ -28,7 +27,6 @@ export const useSlashCommands = ({
   currentValue,
   onChange,
   blockType = 'text',
-  blockId: _blockId,
   onCreateBlockAfter,
   onChangeBlockType,
 }: UseSlashCommandsProps) => {

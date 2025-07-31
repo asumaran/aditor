@@ -1,5 +1,10 @@
-import { type FC, forwardRef, useImperativeHandle } from 'react';
-import { useContentEditable, useStopPropagation } from '@/hooks';
+import { forwardRef, useImperativeHandle, useMemo } from 'react';
+import {
+  useContentEditable,
+  useStopPropagation,
+  useBlockCommands,
+  useBlockNavigation,
+} from '@/hooks';
 import { cn } from '@/lib/utils';
 import type { BlockComponentProps, BlockHandle } from '@/types';
 import type { FieldChangeHandler } from '@/types/editables';
@@ -12,6 +17,8 @@ interface ShortAnswerBlockProps extends BlockComponentProps {
   className?: string;
   blockId?: number;
   autoFocus?: boolean;
+  onNavigateToPrevious?: (blockId: number) => void;
+  onNavigateToNext?: (blockId: number) => void;
 }
 
 export const ShortAnswerBlock = forwardRef<BlockHandle, ShortAnswerBlockProps>(
@@ -49,6 +56,21 @@ export const ShortAnswerBlock = forwardRef<BlockHandle, ShortAnswerBlockProps>(
     const handleClickWithStopPropagation = useStopPropagation();
     const handleInputClickWithStopPropagation = useStopPropagation();
 
+    // Navigation commands
+    const { navigationCommands } = useBlockNavigation({
+      blockId,
+      elementRef,
+      isSlashInputMode: false,
+    });
+
+    // Command configuration
+    const commands = useMemo(
+      () => [...navigationCommands],
+      [navigationCommands],
+    );
+
+    const { handleKeyDown } = useBlockCommands({ commands });
+
     // Expose focus method to parent
     useImperativeHandle(
       ref,
@@ -75,12 +97,15 @@ export const ShortAnswerBlock = forwardRef<BlockHandle, ShortAnswerBlockProps>(
           onCompositionEnd={handleCompositionEnd}
           onBlur={handleBlur}
           onClick={handleClickWithStopPropagation}
+          onKeyDown={handleKeyDown}
           className={cn(
-            'my-[10px] min-h-[1em] w-fit max-w-full cursor-text rounded-md px-[10px] text-[24px] leading-[30px] font-bold break-words whitespace-break-spaces caret-[rgb(50,48,44)] text-[rgb(50,48,44)] focus:outline-none',
+            'my-[10px] min-h-[1em] w-fit max-w-full cursor-text rounded-md px-[10px] text-[24px] leading-[30px] font-bold break-words whitespace-break-spaces text-[rgb(50,48,44)] caret-[rgb(50,48,44)] focus:outline-none',
             // Empty state - use before for placeholder with webkit-text-fill-color
-            !currentValue && 'empty:before:content-[attr(data-placeholder)] empty:[-webkit-text-fill-color:rgba(70,68,64,0.45)]',
+            !currentValue &&
+              'empty:[-webkit-text-fill-color:rgba(70,68,64,0.45)] empty:before:content-[attr(data-placeholder)]',
             // After pseudo-element for required asterisk
-            required && 'after:content-["*"] after:text-[rgba(70,68,64,0.45)] after:font-normal',
+            required &&
+              'after:font-normal after:text-[rgba(70,68,64,0.45)] after:content-["*"]',
           )}
           data-placeholder='Question name'
           role='textbox'

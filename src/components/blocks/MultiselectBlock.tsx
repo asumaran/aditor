@@ -1,5 +1,10 @@
-import { type FC } from 'react';
-import { useContentEditable, useStopPropagation } from '@/hooks';
+import { type FC, useMemo } from 'react';
+import {
+  useContentEditable,
+  useStopPropagation,
+  useBlockCommands,
+  useBlockNavigation,
+} from '@/hooks';
 import { cn } from '@/lib/utils';
 import {
   Select,
@@ -16,6 +21,9 @@ interface MultiselectBlockProps extends BlockComponentProps {
   options: readonly Option[];
   required?: boolean;
   className?: string;
+  blockId?: number;
+  onNavigateToPrevious?: (blockId: number) => void;
+  onNavigateToNext?: (blockId: number) => void;
 }
 
 export const MultiselectBlock: FC<MultiselectBlockProps> = ({
@@ -24,6 +32,7 @@ export const MultiselectBlock: FC<MultiselectBlockProps> = ({
   options,
   required = false,
   className,
+  blockId,
 }) => {
   const {
     elementRef,
@@ -37,6 +46,18 @@ export const MultiselectBlock: FC<MultiselectBlockProps> = ({
   const handleClickWithStopPropagation = useStopPropagation();
   const handleSelectClickWithStopPropagation = useStopPropagation();
 
+  // Navigation commands
+  const { navigationCommands } = useBlockNavigation({
+    blockId,
+    elementRef,
+    isSlashInputMode: false,
+  });
+
+  // Command configuration
+  const commands = useMemo(() => [...navigationCommands], [navigationCommands]);
+
+  const { handleKeyDown } = useBlockCommands({ commands });
+
   return (
     <div className={cn('space-y-2', className)}>
       <div className='flex items-center'>
@@ -49,6 +70,7 @@ export const MultiselectBlock: FC<MultiselectBlockProps> = ({
           onCompositionEnd={handleCompositionEnd}
           onBlur={handleBlur}
           onClick={handleClickWithStopPropagation}
+          onKeyDown={handleKeyDown}
           className={cn(
             'min-h-[1.5rem] w-fit cursor-text rounded p-1 font-bold focus:ring-1 focus:ring-blue-500 focus:outline-none',
             !currentValue && 'text-gray-400',

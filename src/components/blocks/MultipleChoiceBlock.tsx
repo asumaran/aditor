@@ -206,7 +206,7 @@ export const MultipleChoiceBlock = forwardRef<
           onClick={handleClickWithStopPropagation}
           onKeyDown={handleKeyDown}
           className={cn(
-            'min-h-[1em] w-fit max-w-full cursor-text rounded-md text-[24px] leading-[30px] font-bold break-words whitespace-break-spaces text-[rgb(50,48,44)] caret-[rgb(50,48,44)] focus:outline-none',
+            'min-h-[1em] w-fit max-w-full cursor-text rounded-md text-[24px] leading-[30px] font-bold break-words whitespace-break-spaces text-[rgb(50,48,44)] caret-[rgb(50,48,44)] focus:outline-none mb-[10px]',
             // Empty state - use before for placeholder with webkit-text-fill-color
             !currentValue &&
               'empty:[-webkit-text-fill-color:rgba(70,68,64,0.45)] empty:before:content-[attr(data-placeholder)]',

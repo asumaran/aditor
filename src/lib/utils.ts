@@ -1,6 +1,48 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
+/**
+ * ARROW KEY NAVIGATION SYSTEM DOCUMENTATION
+ * 
+ * This file contains critical functions for arrow key navigation between blocks.
+ * The system handles both explicit line breaks (\n) and visual line wrapping.
+ * 
+ * KEY CONCEPTS:
+ * 1. Visual Lines vs Text Lines
+ *    - Text lines: Separated by \n characters
+ *    - Visual lines: Created by CSS word-wrap/line-wrap
+ * 
+ * 2. Horizontal Position Preservation
+ *    - Cursor position is measured from start of current visual line
+ *    - Position is preserved when navigating between blocks
+ *    - If target line is shorter, cursor goes to end of line
+ * 
+ * 3. Block Types
+ *    - TextBlock: contentEditable is the block element itself
+ *    - FormBlock: contentEditable is nested inside the block (found via querySelector)
+ * 
+ * CRITICAL FUNCTIONS:
+ * - isCursorAtFirstLine: Determines if ArrowUp should navigate to previous block
+ * - isCursorAtLastLine: Determines if ArrowDown should navigate to next block
+ * - getCursorHorizontalPosition: Gets cursor position within current visual line
+ * - setCursorAtHorizontalPosition: Places cursor at specific position in line
+ * - navigateToLastLine: Positions cursor in last line when navigating up
+ * - navigateToFirstLine: Positions cursor in first line when navigating down
+ * 
+ * KNOWN EDGE CASES:
+ * 1. Empty lines created with Shift+Enter
+ * 2. Long wrapped text in form labels
+ * 3. Cursor at very end of content
+ * 4. Single character lines
+ * 5. Mixed explicit and visual line breaks
+ * 
+ * MAINTENANCE NOTES:
+ * - Visual detection uses getBoundingClientRect() which can be expensive
+ * - Form block labels have standardized 30px line-height
+ * - Thresholds are carefully tuned - changing them may break navigation
+ * - Debug logs should be removed before production
+ */
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
@@ -32,6 +74,15 @@ export const validateRequired = <T>(
 /**
  * Check if cursor should navigate to previous block on ArrowUp
  * This detects if pressing ArrowUp would navigate to previous block
+ * 
+ * EDGE CASES HANDLED:
+ * 1. Empty elements - Always returns true (nowhere to go up)
+ * 2. Explicit line breaks (\n) - Checks if there's a \n before cursor position
+ * 3. Visual line wrapping - Uses getBoundingClientRect() to detect if cursor is visually on first line
+ * 4. Mixed content - Handles both explicit \n and visual wrapping in same element
+ * 
+ * IMPORTANT: The visual detection uses lineHeight * 0.5 threshold to avoid false positives
+ * when cursor is near but not exactly at the top of the element.
  */
 export const isCursorAtFirstLine = (editableElement: HTMLElement): boolean => {
   const selection = window.getSelection();
@@ -90,6 +141,21 @@ export const isCursorAtFirstLine = (editableElement: HTMLElement): boolean => {
 /**
  * Check if cursor is at the last line of a contentEditable element
  * This detects if pressing ArrowDown would navigate to next block
+ * 
+ * EDGE CASES HANDLED:
+ * 1. Empty elements - Always returns true (nowhere to go down)
+ * 2. Content ending with \n - Special handling for cursor on empty line after final newline
+ * 3. Empty lines in middle - Correctly detects if empty line is truly the last line
+ * 4. Visual line wrapping - Complex detection using CSS line-height and visual positioning
+ * 5. Form block labels - Special handling for standardized 30px line-height in form labels
+ * 6. Different line-height units - Handles px, em, rem, unitless, and 'normal' values
+ * 
+ * THRESHOLDS:
+ * - Multiple lines: Uses strict 0.6 * lineHeight to avoid premature navigation
+ * - Single line: Uses more generous 0.9 * lineHeight for better UX
+ * - Form labels: Automatically detects and uses exact 30px line-height
+ * 
+ * WARNING: The debug console.log at line 119 should be removed in production
  */
 export const isCursorAtLastLine = (editableElement: HTMLElement): boolean => {
   const selection = window.getSelection();
@@ -116,15 +182,6 @@ export const isCursorAtLastLine = (editableElement: HTMLElement): boolean => {
     preRange.setEnd(range.startContainer, range.startOffset);
     const cursorOffset = preRange.toString().length;
 
-    // DEBUG: Add console log to understand what's happening
-    console.log('DEBUG isCursorAtLastLine:', {
-      content: JSON.stringify(content),
-      cursorOffset,
-      contentLength: content.length,
-      endsWithNewline: content.endsWith('\n'),
-      textAfterCursor: JSON.stringify(content.substring(cursorOffset)),
-      cursorAtEnd: cursorOffset === content.length,
-    });
 
     // Check if there's a newline after cursor position (explicit line breaks)
     const textAfterCursor = content.substring(cursorOffset);
@@ -205,6 +262,22 @@ export const isCursorAtLastLine = (editableElement: HTMLElement): boolean => {
 /**
  * Get the horizontal position of the cursor for navigation
  * Returns character count from start of current visual line
+ * 
+ * EDGE CASES HANDLED:
+ * 1. Explicit line breaks (\n) - Returns position from last \n character
+ * 2. Visual line wrapping - Walks backwards to find visual line start using getBoundingClientRect()
+ * 3. Single line content - Returns absolute cursor position (lineStartOffset = 0)
+ * 4. Cursor at start - Returns 0 immediately
+ * 5. Invalid DOM positions - Catches and continues iteration
+ * 
+ * ALGORITHM:
+ * 1. First checks for explicit \n characters (fast path)
+ * 2. If no \n found, uses visual detection by comparing Y coordinates
+ * 3. Walks backwards character by character until finding different Y position
+ * 4. Returns character count from detected line start to cursor
+ * 
+ * PERFORMANCE: O(n) where n is characters from line start to cursor
+ * For long wrapped lines, this could be slow but is necessary for accuracy
  */
 export const getCursorHorizontalPosition = (
   editableElement: HTMLElement,
@@ -284,6 +357,23 @@ export const getCursorHorizontalPosition = (
 
 /**
  * Set cursor position at a specific horizontal offset in the target element
+ * 
+ * EDGE CASES HANDLED:
+ * 1. Empty elements - Places cursor at start and returns immediately
+ * 2. Position 0 - Special fast path that goes directly to element start
+ * 3. Line breaks (\n) - Resets position counter at each newline
+ * 4. Position beyond line end - Uses last valid position in the line
+ * 5. preferEnd parameter - When true, stops at line end if position exceeds it
+ * 6. Multiple text nodes - Uses TreeWalker to handle complex DOM structures
+ * 
+ * ALGORITHM:
+ * 1. Special case for position 0 (common case optimization)
+ * 2. Walks through all text nodes counting characters
+ * 3. Resets counter at each \n to handle line-based positioning
+ * 4. Places cursor at exact position or last valid position
+ * 
+ * IMPORTANT: This function assumes horizontalPosition is relative to current line,
+ * not absolute position in the entire text content.
  */
 export const setCursorAtHorizontalPosition = (
   targetElement: HTMLElement,
@@ -414,6 +504,24 @@ const setCursorAtPosition = (element: HTMLElement, position: number): void => {
 
 /**
  * Navigate to last line of target element and set cursor at horizontal position
+ * 
+ * EDGE CASES HANDLED:
+ * 1. Empty elements - Places cursor at start
+ * 2. TextBlock vs FormBlock - Detects contentEditable location differently
+ * 3. Single character content - Fallback to avoid index errors
+ * 4. Visual line wrapping - Uses smart detection by placing cursor at last char first
+ * 5. Cursor at very end issue - Avoids false "empty line" detection
+ * 
+ * CRITICAL ALGORITHM:
+ * 1. Focus element first (important for cross-block navigation)
+ * 2. Place cursor at last character (not after it) to avoid end-of-text issues
+ * 3. Use getCursorHorizontalPosition() to measure line length
+ * 4. Calculate line start position and place cursor
+ * 
+ * BUG PREVENTION:
+ * - Placing cursor after last char can make it think it's on a new empty line
+ * - That's why we place at last char and add 1 to line length
+ * - This ensures accurate line detection for wrapped text
  */
 export const navigateToLastLine = (
   targetBlock: HTMLElement,
@@ -496,6 +604,19 @@ export const navigateToLastLine = (
 
 /**
  * Navigate to first line of target element and set cursor at horizontal position
+ * 
+ * EDGE CASES HANDLED:
+ * 1. Empty elements - Places cursor at start
+ * 2. TextBlock vs FormBlock - Same detection pattern as navigateToLastLine
+ * 3. Content with \n - Finds first line boundary correctly
+ * 4. Position beyond first line - Clamps to line length
+ * 
+ * SIMPLER THAN navigateToLastLine:
+ * - No complex visual detection needed
+ * - Just finds first \n or uses entire content length
+ * - Direct calculation without cursor pre-positioning
+ * 
+ * USAGE: Called when navigating down from a block to the next block
  */
 export const navigateToFirstLine = (
   targetBlock: HTMLElement,

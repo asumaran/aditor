@@ -79,8 +79,15 @@ const editorReducer = (
         return state;
       }
 
+      // Apply current sort order to the options
+      const sortedOptions = block.properties.sortOrder === 'asc'
+        ? [...action.payload.options].sort((a, b) => a.text.localeCompare(b.text))
+        : block.properties.sortOrder === 'desc'
+        ? [...action.payload.options].sort((a, b) => b.text.localeCompare(a.text))
+        : action.payload.options; // For 'manual', keep the order as provided
+
       return updateBlockPropertiesInState(state, action.payload.id, {
-        options: action.payload.options,
+        options: sortedOptions,
       });
     }
 
@@ -93,23 +100,23 @@ const editorReducer = (
         return state;
       }
 
-      // For manual mode, add new option at the beginning (as it was before)
-      // For sorted modes, add at end and then sort
-      let newOptions;
-      if (block.properties.sortOrder === 'manual') {
-        newOptions = [action.payload.option, ...block.properties.options];
-      } else {
-        newOptions = [...block.properties.options, action.payload.option];
-      }
+      // For all modes, add new option at the end first
+      const newOptions = [...block.properties.options, action.payload.option];
 
       // Apply current sort order to the new options array
-      let sortedOptions = newOptions;
+      let sortedOptions;
       if (block.properties.sortOrder === 'asc') {
-        sortedOptions = newOptions.sort((a, b) => a.text.localeCompare(b.text));
+        sortedOptions = [...newOptions].sort((a, b) =>
+          a.text.localeCompare(b.text),
+        );
       } else if (block.properties.sortOrder === 'desc') {
-        sortedOptions = newOptions.sort((a, b) => b.text.localeCompare(a.text));
+        sortedOptions = [...newOptions].sort((a, b) =>
+          b.text.localeCompare(a.text),
+        );
+      } else {
+        // For 'manual', keep the current order (new option at the end)
+        sortedOptions = newOptions;
       }
-      // For 'manual', newOptions already has the correct order
 
       return updateBlockPropertiesInState(state, action.payload.blockId, {
         options: sortedOptions,

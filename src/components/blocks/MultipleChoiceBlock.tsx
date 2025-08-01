@@ -2,10 +2,10 @@ import {
   type FC,
   useCallback,
   useRef,
-  useEffect,
   useMemo,
   forwardRef,
   useImperativeHandle,
+  useState,
 } from 'react';
 import {
   useContentEditable,
@@ -14,14 +14,13 @@ import {
   useBlockCommands,
   useBlockNavigation,
 } from '@/hooks';
-import { cn, generateId } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import type { BlockComponentProps, Option, BlockHandle } from '@/types';
 
 interface MultipleChoiceBlockProps extends BlockComponentProps {
   value: string;
   onChange: (value: string) => void;
   options: readonly Option[];
-  onOptionsChange: (options: readonly Option[]) => void;
   required?: boolean;
   blockId: number;
   className?: string;
@@ -35,7 +34,6 @@ interface OptionItemProps {
   onChange: (optionId: number, text: string) => void;
   onEnterPress: () => void;
   onRemove: (optionId: number) => void;
-  shouldFocus?: boolean;
   blockId: number;
 }
 
@@ -44,21 +42,13 @@ const OptionItem: FC<OptionItemProps> = ({
   onChange,
   onEnterPress,
   onRemove,
-  shouldFocus,
-  blockId,
 }) => {
-  const blockOptions = useBlockOptions(blockId!);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (shouldFocus && inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [shouldFocus]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
+      // Always call onEnterPress to show new option input
       onEnterPress();
     }
   };
@@ -72,7 +62,6 @@ const OptionItem: FC<OptionItemProps> = ({
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newText = e.target.value;
     onChange(option.id, newText);
-    blockOptions.updateOption(option.id, newText);
   };
 
   const handleClick = useStopPropagation();
@@ -109,7 +98,6 @@ export const MultipleChoiceBlock = forwardRef<
       value,
       onChange,
       options,
-      onOptionsChange,
       required = false,
       blockId,
       className,
@@ -117,6 +105,9 @@ export const MultipleChoiceBlock = forwardRef<
     },
     ref,
   ) => {
+    const [showNewOption, setShowNewOption] = useState(false);
+    const [newOptionText, setNewOptionText] = useState('');
+    const newOptionRef = useRef<HTMLInputElement>(null);
     const {
       elementRef,
       handleInput,
@@ -132,13 +123,16 @@ export const MultipleChoiceBlock = forwardRef<
 
     const handleClickWithStopPropagation = useStopPropagation();
 
+    const blockOptions = useBlockOptions(blockId);
+
     const addOption = useCallback(() => {
-      const newOption: Option = {
-        id: generateId(),
-        text: '',
-      };
-      onOptionsChange([...options, newOption]);
-    }, [options, onOptionsChange]);
+      setShowNewOption(true);
+      setNewOptionText('');
+      // Focus the new option input after render
+      setTimeout(() => {
+        newOptionRef.current?.focus();
+      }, 0);
+    }, []);
 
     const handleAddOptionClick = useStopPropagation(() => {
       addOption();
@@ -146,23 +140,48 @@ export const MultipleChoiceBlock = forwardRef<
 
     const updateOption = useCallback(
       (optionId: number, text: string) => {
-        onOptionsChange(
-          options.map((option) =>
-            option.id === optionId ? { ...option, text } : option,
-          ),
-        );
+        blockOptions.updateOption(optionId, text);
       },
-      [options, onOptionsChange],
+      [blockOptions],
     );
 
     const removeOption = useCallback(
       (optionId: number) => {
-        onOptionsChange(options.filter((option) => option.id !== optionId));
+        blockOptions.removeOption(optionId);
       },
-      [options, onOptionsChange],
+      [blockOptions],
     );
 
+    const handleNewOptionKeyDown = useCallback(
+      (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          if (newOptionText.trim()) {
+            // Add the option through the store (will apply sorting)
+            blockOptions.addOption(newOptionText.trim());
+            // Reset and show input again for next option
+            setNewOptionText('');
+            newOptionRef.current?.focus();
+          }
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          setShowNewOption(false);
+          setNewOptionText('');
+        }
+      },
+      [newOptionText, blockOptions],
+    );
+
+    const handleNewOptionBlur = useCallback(() => {
+      if (newOptionText.trim()) {
+        blockOptions.addOption(newOptionText.trim());
+      }
+      setShowNewOption(false);
+      setNewOptionText('');
+    }, [newOptionText, blockOptions]);
+
     const handleEnterPress = useCallback(() => {
+      // Show the new option input and focus it
       addOption();
     }, [addOption]);
 
@@ -221,25 +240,47 @@ export const MultipleChoiceBlock = forwardRef<
         />
 
         <div className='space-y-2'>
-          {options.map((option, index) => (
+          {options.map((option) => (
             <OptionItem
               key={option.id}
               option={option}
               onChange={updateOption}
               onEnterPress={handleEnterPress}
               onRemove={removeOption}
-              shouldFocus={index === options.length - 1 && option.text === ''}
               blockId={blockId}
             />
           ))}
 
-          <button
-            type='button'
-            onClick={handleAddOptionClick}
-            className='text-sm font-medium text-blue-600 hover:text-blue-800'
-          >
-            Add option
-          </button>
+          {showNewOption && (
+            <div className='flex items-center space-x-2'>
+              <input
+                type='radio'
+                name='multiple-choice-preview'
+                className='h-4 w-4 text-blue-600'
+                disabled
+              />
+              <input
+                ref={newOptionRef}
+                type='text'
+                value={newOptionText}
+                onChange={(e) => setNewOptionText(e.target.value)}
+                onKeyDown={handleNewOptionKeyDown}
+                onBlur={handleNewOptionBlur}
+                className='flex-1 cursor-text rounded border-none p-1 outline-none focus:bg-gray-50'
+                placeholder='Option text'
+              />
+            </div>
+          )}
+
+          {!showNewOption && (
+            <button
+              type='button'
+              onClick={handleAddOptionClick}
+              className='text-sm font-medium text-blue-600 hover:text-blue-800'
+            >
+              Add option
+            </button>
+          )}
         </div>
       </div>
     );

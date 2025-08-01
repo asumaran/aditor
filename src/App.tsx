@@ -33,13 +33,13 @@ const EditorContent: FC = () => {
   const [lastFocusedBlockId, setLastFocusedBlockId] = useState<number | null>(
     null,
   );
-  
+
   // Helper to focus a block imperatively via DOM
   const focusBlockImperatively = useCallback((blockId: number) => {
     // Find the contentEditable element and trigger the imperativo focus method
     setTimeout(() => {
       const element = document.querySelector(
-        `[data-block-id="${blockId}"]`
+        `[data-block-id="${blockId}"]`,
       ) as HTMLElement;
       if (element) {
         element.focus();
@@ -337,9 +337,10 @@ const EditorContent: FC = () => {
 
     if (lastFocusedBlockId) {
       const block = state.blockMap[lastFocusedBlockId];
-      const blockTitle = (block.type === 'text' || block.type === 'heading') 
-        ? block.properties.title 
-        : '';
+      const blockTitle =
+        block.type === 'text' || block.type === 'heading'
+          ? block.properties.title
+          : '';
       const isEmpty = shouldReplaceBlock(blockTitle || '');
 
       if ((block.type === 'text' || block.type === 'heading') && isEmpty) {
@@ -368,9 +369,10 @@ const EditorContent: FC = () => {
         dispatch({ type: 'ADD_BLOCK', payload: newBlock });
         setFocusBlockId(newBlock.id);
       } else {
-        const lastBlockTitle = (lastBlock.type === 'text' || lastBlock.type === 'heading') 
-          ? lastBlock.properties.title 
-          : '';
+        const lastBlockTitle =
+          lastBlock.type === 'text' || lastBlock.type === 'heading'
+            ? lastBlock.properties.title
+            : '';
         const isEmpty = shouldReplaceBlock(lastBlockTitle || '');
 
         if (
@@ -404,9 +406,10 @@ const EditorContent: FC = () => {
 
     if (lastFocusedBlockId) {
       const block = state.blockMap[lastFocusedBlockId];
-      const blockTitle = (block.type === 'text' || block.type === 'heading') 
-        ? block.properties.title 
-        : '';
+      const blockTitle =
+        block.type === 'text' || block.type === 'heading'
+          ? block.properties.title
+          : '';
       const isEmpty = shouldReplaceBlock(blockTitle || '');
 
       if ((block.type === 'text' || block.type === 'heading') && isEmpty) {
@@ -435,9 +438,10 @@ const EditorContent: FC = () => {
         dispatch({ type: 'ADD_BLOCK', payload: newBlock });
         setFocusBlockId(newBlock.id);
       } else {
-        const lastBlockTitle = (lastBlock.type === 'text' || lastBlock.type === 'heading') 
-          ? lastBlock.properties.title 
-          : '';
+        const lastBlockTitle =
+          lastBlock.type === 'text' || lastBlock.type === 'heading'
+            ? lastBlock.properties.title
+            : '';
         const isEmpty = shouldReplaceBlock(lastBlockTitle || '');
 
         if (
@@ -478,7 +482,7 @@ const EditorContent: FC = () => {
       dispatch({ type: 'ADD_BLOCK', payload: newBlock });
       setFocusBlockId(newBlock.id);
     }
-  }, [state, dispatch, lastFocusedBlockId]);
+  }, [dispatch, lastFocusedBlockId]);
 
   const addMultipleChoiceBlock = useCallback(() => {
     if (lastFocusedBlockId) {
@@ -495,7 +499,7 @@ const EditorContent: FC = () => {
       dispatch({ type: 'ADD_BLOCK', payload: newBlock });
       setFocusBlockId(newBlock.id);
     }
-  }, [state, dispatch, lastFocusedBlockId]);
+  }, [dispatch, lastFocusedBlockId]);
 
   const addMultiselectBlock = useCallback(() => {
     if (lastFocusedBlockId) {
@@ -512,7 +516,7 @@ const EditorContent: FC = () => {
       dispatch({ type: 'ADD_BLOCK', payload: newBlock });
       setFocusBlockId(newBlock.id);
     }
-  }, [state, dispatch, lastFocusedBlockId]);
+  }, [dispatch, lastFocusedBlockId]);
 
   return (
     <main>

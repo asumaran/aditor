@@ -1,5 +1,23 @@
 import { useState, useRef, useEffect, type FC } from 'react';
 import { ArrowLeft, X, Trash2, GripVertical, ArrowDownUp } from 'lucide-react';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import { restrictToFirstScrollableAncestor } from '@dnd-kit/modifiers';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { useBlockOptions } from '@/hooks';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -32,7 +50,42 @@ export const OptionsView: FC<OptionsViewProps> = ({
   const [isAddingOption, setIsAddingOption] = useState(false);
   const [newOptionText, setNewOptionText] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
-  const { addOption, removeOption, updateOption } = useBlockOptions(blockId);
+  const { addOption, removeOption, updateOption, reorderOptions } =
+    useBlockOptions(blockId);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = options.findIndex(
+        (option) => option.id.toString() === active.id,
+      );
+      const newIndex = options.findIndex(
+        (option) => option.id.toString() === over.id,
+      );
+
+      if (oldIndex !== -1 && newIndex !== -1) {
+        const newOptions = arrayMove([...options], oldIndex, newIndex);
+        reorderOptions(newOptions);
+
+        // Switch to manual mode when user manually sorts
+        if (sortOrder !== 'manual') {
+          onSortOrderChange('manual');
+        }
+      }
+    }
+  };
 
   useEffect(() => {
     if (isAddingOption && inputRef.current) {
@@ -137,21 +190,33 @@ export const OptionsView: FC<OptionsViewProps> = ({
         </div>
 
         {/* Options List */}
-        <div className='max-h-[32rem] overflow-y-auto p-2'>
-          {options.map((option) => (
-            <OptionItem
-              key={option.id}
-              option={option}
-              onChange={handleOptionChange}
-              onRemove={handleRemoveOption}
-            />
-          ))}
-          {options.length === 0 && (
-            <div className='px-2 py-8 text-center text-sm text-gray-500'>
-              No options yet.
-            </div>
-          )}
-        </div>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+          modifiers={[restrictToFirstScrollableAncestor]}
+        >
+          <div className='max-h-[25rem] overflow-y-auto p-2'>
+            <SortableContext
+              items={options.map((option) => option.id.toString())}
+              strategy={verticalListSortingStrategy}
+            >
+              {options.map((option) => (
+                <SortableOptionItem
+                  key={option.id}
+                  option={option}
+                  onChange={handleOptionChange}
+                  onRemove={handleRemoveOption}
+                />
+              ))}
+            </SortableContext>
+            {options.length === 0 && (
+              <div className='px-2 py-8 text-center text-sm text-gray-500'>
+                No options yet.
+              </div>
+            )}
+          </div>
+        </DndContext>
       </div>
     </div>
   );
@@ -163,7 +228,46 @@ interface OptionItemProps {
   onRemove: (optionId: number) => void;
 }
 
-const OptionItem: FC<OptionItemProps> = ({ option, onChange, onRemove }) => {
+type SortableOptionItemProps = OptionItemProps;
+
+const SortableOptionItem: FC<SortableOptionItemProps> = ({
+  option,
+  onChange,
+  onRemove,
+}) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: option.id.toString() });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <OptionItem
+        option={option}
+        onChange={onChange}
+        onRemove={onRemove}
+        dragHandleProps={{ ...attributes, ...listeners }}
+      />
+    </div>
+  );
+};
+
+const OptionItem: FC<OptionItemProps & { dragHandleProps?: Record<string, unknown> }> = ({
+  option,
+  onChange,
+  onRemove,
+  dragHandleProps,
+}) => {
   const [isEditing, setIsEditing] = useState(false);
   const [text, setText] = useState(option.text);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -193,7 +297,7 @@ const OptionItem: FC<OptionItemProps> = ({ option, onChange, onRemove }) => {
 
   return (
     <div className='group flex items-center rounded px-1 py-0.5 hover:bg-gray-100'>
-      <div className='cursor-grab'>
+      <div className='cursor-grab touch-none' {...dragHandleProps}>
         <GripVertical className='h-4 w-4 text-gray-400' />
       </div>
       <div className='flex-1'>

@@ -27,4 +27,7 @@ export type EditorAction =
     }
   | { type: 'REMOVE_BLOCK'; payload: { id: number } }
   | { type: 'CHANGE_BLOCK_TYPE'; payload: { id: number; newType: string } }
-  | { type: 'UPDATE_SORT_ORDER'; payload: { id: number; sortOrder: 'manual' | 'asc' | 'desc' } };
+  | {
+      type: 'UPDATE_SORT_ORDER';
+      payload: { id: number; sortOrder: 'manual' | 'asc' | 'desc' };
+    };

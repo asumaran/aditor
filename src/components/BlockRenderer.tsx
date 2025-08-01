@@ -12,7 +12,10 @@ interface BlockRendererProps {
   onOptionsChange?: (id: Block['id'], options: readonly Option[]) => void;
   onBlockClick?: (blockId: Block['id']) => void;
   onRequiredChange?: (blockId: Block['id'], required: boolean) => void;
-  onSortOrderChange?: (blockId: Block['id'], sortOrder: 'manual' | 'asc' | 'desc') => void;
+  onSortOrderChange?: (
+    blockId: Block['id'],
+    sortOrder: 'manual' | 'asc' | 'desc',
+  ) => void;
   onCreateBlockAfter?: (
     afterBlockId: Block['id'],
     options?: {
@@ -218,7 +221,9 @@ export const BlockRenderer: FC<BlockRendererProps> = ({
         sortOrder={getBlockSortOrder(block)}
         onRequiredChange={handleRequiredChange}
         onSortOrderChange={handleSortOrderChange}
-        onDeleteBlock={onDeleteBlock ? () => onDeleteBlock(block.id) : undefined}
+        onDeleteBlock={
+          onDeleteBlock ? () => onDeleteBlock(block.id) : undefined
+        }
         className={className}
       >
         {content}

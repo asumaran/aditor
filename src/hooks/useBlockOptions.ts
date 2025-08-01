@@ -40,9 +40,20 @@ export const useBlockOptions = (blockId: number) => {
     [dispatch, blockId],
   );
 
+  const reorderOptions = useCallback(
+    (newOptions: readonly Option[]) => {
+      dispatch({
+        type: 'UPDATE_BLOCK_OPTIONS',
+        payload: { id: blockId, options: newOptions },
+      });
+    },
+    [dispatch, blockId],
+  );
+
   return {
     addOption,
     removeOption,
     updateOption,
+    reorderOptions,
   };
 };

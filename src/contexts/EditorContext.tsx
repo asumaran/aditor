@@ -101,7 +101,7 @@ const editorReducer = (
       } else {
         newOptions = [...block.properties.options, action.payload.option];
       }
-      
+
       // Apply current sort order to the new options array
       let sortedOptions = newOptions;
       if (block.properties.sortOrder === 'asc') {
@@ -188,7 +188,7 @@ const editorReducer = (
       }
 
       // Sort options based on the selected order
-      let sortedOptions = [...block.properties.options];
+      const sortedOptions = [...block.properties.options];
       if (sortOrder === 'asc') {
         sortedOptions.sort((a, b) => a.text.localeCompare(b.text));
       } else if (sortOrder === 'desc') {

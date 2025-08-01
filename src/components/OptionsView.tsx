@@ -1,5 +1,12 @@
 import { useState, useRef, useEffect, type FC } from 'react';
-import { ArrowLeft, X, Trash2, GripVertical, ArrowDownUp } from 'lucide-react';
+import {
+  ArrowLeft,
+  X,
+  Trash2,
+  GripVertical,
+  ArrowDownUp,
+  Plus,
+} from 'lucide-react';
 import {
   DndContext,
   closestCenter,
@@ -111,6 +118,10 @@ export const OptionsView: FC<OptionsViewProps> = ({
     }
   };
 
+  const handleShowInput = () => {
+    setIsAddingOption(true);
+  };
+
   const handleOptionChange = (optionId: number, text: string) => {
     updateOption(optionId, text);
   };
@@ -164,29 +175,35 @@ export const OptionsView: FC<OptionsViewProps> = ({
           </div>
         </div>
 
-        {/* Add Option Input */}
-        <div className='flex-shrink-0 px-4 py-2'>
-          <h3 className='mb-2 text-xs font-bold text-[rgb(115,114,110)]'>
-            Options
-          </h3>
-          <div className='flex items-center gap-2'>
-            <Input
-              ref={inputRef}
-              type='text'
-              value={newOptionText}
-              onChange={(e) => setNewOptionText(e.target.value)}
-              onKeyDown={handleKeyDown}
-              autoFocus
-              onBlur={() => {
-                if (!newOptionText.trim()) {
-                  setIsAddingOption(false);
-                  setNewOptionText('');
-                }
-              }}
-              placeholder='Type a new option…'
-              className='rounded-sm'
-            />
+        {/* Add Option Section */}
+        <div className='flex-shrink-0 px-4 py-2 pb-0'>
+          <div className='mb-2 flex min-h-6 items-center justify-between'>
+            <h3 className='text-xs font-bold text-[rgb(115,114,110)]'>
+              Options
+            </h3>
+            {!isAddingOption && (
+              <button
+                onClick={handleShowInput}
+                className='flex h-6 w-6 items-center justify-center rounded hover:bg-gray-100'
+              >
+                <Plus className='h-4 w-4 text-gray-600' />
+              </button>
+            )}
           </div>
+          {isAddingOption && (
+            <div className='flex items-center gap-2'>
+              <Input
+                ref={inputRef}
+                type='text'
+                value={newOptionText}
+                onChange={(e) => setNewOptionText(e.target.value)}
+                onKeyDown={handleKeyDown}
+                autoFocus
+                placeholder='Type a new option…'
+                className='rounded-sm'
+              />
+            </div>
+          )}
         </div>
 
         {/* Options List */}
@@ -196,7 +213,7 @@ export const OptionsView: FC<OptionsViewProps> = ({
           onDragEnd={handleDragEnd}
           modifiers={[restrictToFirstScrollableAncestor]}
         >
-          <div className='max-h-[25rem] overflow-y-auto p-2'>
+          <div className='max-h-[25rem] overflow-y-auto p-2 pt-1'>
             <SortableContext
               items={options.map((option) => option.id.toString())}
               strategy={verticalListSortingStrategy}
@@ -262,12 +279,9 @@ const SortableOptionItem: FC<SortableOptionItemProps> = ({
   );
 };
 
-const OptionItem: FC<OptionItemProps & { dragHandleProps?: Record<string, unknown> }> = ({
-  option,
-  onChange,
-  onRemove,
-  dragHandleProps,
-}) => {
+const OptionItem: FC<
+  OptionItemProps & { dragHandleProps?: Record<string, unknown> }
+> = ({ option, onChange, onRemove, dragHandleProps }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [text, setText] = useState(option.text);
   const inputRef = useRef<HTMLInputElement>(null);

@@ -17,7 +17,11 @@ export type EditorAction =
     }
   | {
       type: 'UPDATE_BLOCK_OPTIONS';
-      payload: { id: number; options: readonly Option[] };
+      payload: {
+        id: number;
+        options: readonly Option[];
+        preserveOrder?: boolean;
+      };
     }
   | { type: 'ADD_OPTION'; payload: { blockId: number; option: Option } }
   | { type: 'REMOVE_OPTION'; payload: { blockId: number; optionId: number } }

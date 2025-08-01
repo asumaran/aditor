@@ -22,7 +22,6 @@ interface BlockWrapperProps {
   sortOrder?: 'manual' | 'asc' | 'desc';
   onRequiredChange?: (required: boolean) => void;
   onDeleteBlock?: () => void;
-  onSortOrderChange?: (sortOrder: 'manual' | 'asc' | 'desc') => void;
 }
 
 export const BlockWrapper: FC<BlockWrapperProps> = ({
@@ -36,7 +35,6 @@ export const BlockWrapper: FC<BlockWrapperProps> = ({
   sortOrder = 'manual',
   onRequiredChange,
   onDeleteBlock,
-  onSortOrderChange,
 }) => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [currentView, setCurrentView] = useState<PopoverView>('menu');
@@ -52,7 +50,6 @@ export const BlockWrapper: FC<BlockWrapperProps> = ({
     blockType === 'multiple_choice' || blockType === 'multiselect';
 
   const handleClick = () => {
-    console.log('BlockWrapper handleClick:', { isFormBlock, blockType });
     if (isFormBlock) {
       setCurrentView('menu');
       setIsPopoverOpen(true);
@@ -241,7 +238,6 @@ export const BlockWrapper: FC<BlockWrapperProps> = ({
             onBack={handleBackToMenu}
             onClose={handleClosePopover}
             sortOrder={sortOrder}
-            onSortOrderChange={onSortOrderChange || (() => {})}
           />
         )}
       </PopoverContent>

@@ -43,7 +43,6 @@ interface OptionsViewProps {
   onBack: () => void;
   onClose?: () => void;
   sortOrder: 'manual' | 'asc' | 'desc';
-  onSortOrderChange: (sortOrder: 'manual' | 'asc' | 'desc') => void;
 }
 
 export const OptionsView: FC<OptionsViewProps> = ({
@@ -52,13 +51,17 @@ export const OptionsView: FC<OptionsViewProps> = ({
   onBack,
   onClose,
   sortOrder,
-  onSortOrderChange,
 }) => {
   const [isAddingOption, setIsAddingOption] = useState(false);
   const [newOptionText, setNewOptionText] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
-  const { addOption, removeOption, updateOption, reorderOptions } =
-    useBlockOptions(blockId);
+  const {
+    addOption,
+    removeOption,
+    updateOption,
+    reorderOptions,
+    changeSortOrder,
+  } = useBlockOptions(blockId);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -84,11 +87,11 @@ export const OptionsView: FC<OptionsViewProps> = ({
 
       if (oldIndex !== -1 && newIndex !== -1) {
         const newOptions = arrayMove([...options], oldIndex, newIndex);
-        reorderOptions(newOptions);
+        reorderOptions(newOptions, true); // preserveOrder = true
 
         // Switch to manual mode when user manually sorts
         if (sortOrder !== 'manual') {
-          onSortOrderChange('manual');
+          changeSortOrder('manual');
         }
       }
     }
@@ -162,7 +165,12 @@ export const OptionsView: FC<OptionsViewProps> = ({
                 Sort
               </label>
             </div>
-            <Select value={sortOrder} onValueChange={onSortOrderChange}>
+            <Select
+              value={sortOrder}
+              onValueChange={(value) => {
+                changeSortOrder(value as 'manual' | 'asc' | 'desc');
+              }}
+            >
               <SelectTrigger id='sort-select' size='sm'>
                 <SelectValue />
               </SelectTrigger>

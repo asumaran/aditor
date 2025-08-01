@@ -8,6 +8,25 @@ import {
   useState,
 } from 'react';
 import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import { restrictToFirstScrollableAncestor } from '@dnd-kit/modifiers';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { GripVertical } from 'lucide-react';
+import {
   useContentEditable,
   useStopPropagation,
   useBlockOptions,
@@ -25,6 +44,7 @@ interface MultipleChoiceBlockProps extends BlockComponentProps {
   blockId: number;
   className?: string;
   autoFocus?: boolean;
+  sortOrder?: 'manual' | 'asc' | 'desc';
   onNavigateToPrevious?: (blockId: number) => void;
   onNavigateToNext?: (blockId: number) => void;
 }
@@ -35,6 +55,8 @@ interface OptionItemProps {
   onEnterPress: () => void;
   onRemove: (optionId: number) => void;
   blockId: number;
+  isDraggable?: boolean;
+  dragHandleProps?: Record<string, unknown>;
 }
 
 const OptionItem: FC<OptionItemProps> = ({
@@ -42,8 +64,11 @@ const OptionItem: FC<OptionItemProps> = ({
   onChange,
   onEnterPress,
   onRemove,
+  isDraggable = false,
+  dragHandleProps,
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
+  const [isHovered, setIsHovered] = useState(false);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
@@ -67,23 +92,69 @@ const OptionItem: FC<OptionItemProps> = ({
   const handleClick = useStopPropagation();
 
   return (
-    <div className='flex items-center space-x-2'>
-      <input
-        type='radio'
-        name='multiple-choice-preview'
-        className='h-4 w-4 text-blue-600'
-        disabled
-      />
-      <input
-        ref={inputRef}
-        type='text'
-        value={option.text}
-        onChange={handleChange}
-        onKeyDown={handleKeyDown}
-        onBlur={handleBlur}
-        onClick={handleClick}
-        className='flex-1 cursor-text rounded border-none p-1 outline-none focus:bg-gray-50'
-        placeholder='Option text'
+    <div
+      className='flex items-center'
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {isDraggable && (
+        <div
+          className={cn(
+            'cursor-grab touch-none px-1 transition-opacity',
+            isHovered ? 'opacity-100' : 'opacity-0',
+          )}
+          {...dragHandleProps}
+        >
+          <GripVertical className='h-4 w-4 text-gray-400' />
+        </div>
+      )}
+      <div className='flex flex-1 items-center space-x-2'>
+        <input
+          type='radio'
+          name='multiple-choice-preview'
+          className='h-4 w-4 text-blue-600'
+          disabled
+        />
+        <input
+          ref={inputRef}
+          type='text'
+          value={option.text}
+          onChange={handleChange}
+          onKeyDown={handleKeyDown}
+          onBlur={handleBlur}
+          onClick={handleClick}
+          className='flex-1 cursor-text rounded border-none p-1 outline-none focus:bg-gray-50'
+          placeholder='Option text'
+        />
+      </div>
+    </div>
+  );
+};
+
+type SortableOptionItemProps = Omit<OptionItemProps, 'dragHandleProps'>;
+
+const SortableOptionItem: FC<SortableOptionItemProps> = (props) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: props.option.id.toString() });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <OptionItem
+        {...props}
+        isDraggable={true}
+        dragHandleProps={{ ...attributes, ...listeners }}
       />
     </div>
   );
@@ -102,12 +173,24 @@ export const MultipleChoiceBlock = forwardRef<
       blockId,
       className,
       autoFocus = false,
+      sortOrder = 'manual',
     },
     ref,
   ) => {
     const [showNewOption, setShowNewOption] = useState(false);
     const [newOptionText, setNewOptionText] = useState('');
     const newOptionRef = useRef<HTMLInputElement>(null);
+
+    const sensors = useSensors(
+      useSensor(PointerSensor, {
+        activationConstraint: {
+          distance: 8,
+        },
+      }),
+      useSensor(KeyboardSensor, {
+        coordinateGetter: sortableKeyboardCoordinates,
+      }),
+    );
     const {
       elementRef,
       handleInput,
@@ -124,6 +207,32 @@ export const MultipleChoiceBlock = forwardRef<
     const handleClickWithStopPropagation = useStopPropagation();
 
     const blockOptions = useBlockOptions(blockId);
+
+    const handleDragEnd = useCallback(
+      (event: DragEndEvent) => {
+        const { active, over } = event;
+
+        if (over && active.id !== over.id) {
+          const oldIndex = options.findIndex(
+            (option) => option.id.toString() === active.id,
+          );
+          const newIndex = options.findIndex(
+            (option) => option.id.toString() === over.id,
+          );
+
+          if (oldIndex !== -1 && newIndex !== -1) {
+            const newOptions = arrayMove([...options], oldIndex, newIndex);
+            blockOptions.reorderOptions(newOptions, true); // preserveOrder = true
+
+            // Switch to manual mode when user manually sorts
+            if (sortOrder !== 'manual') {
+              blockOptions.changeSortOrder('manual');
+            }
+          }
+        }
+      },
+      [options, blockOptions, sortOrder],
+    );
 
     const addOption = useCallback(() => {
       setShowNewOption(true);
@@ -239,49 +348,61 @@ export const MultipleChoiceBlock = forwardRef<
           tabIndex={0}
         />
 
-        <div className='space-y-2'>
-          {options.map((option) => (
-            <OptionItem
-              key={option.id}
-              option={option}
-              onChange={updateOption}
-              onEnterPress={handleEnterPress}
-              onRemove={removeOption}
-              blockId={blockId}
-            />
-          ))}
-
-          {showNewOption && (
-            <div className='flex items-center space-x-2'>
-              <input
-                type='radio'
-                name='multiple-choice-preview'
-                className='h-4 w-4 text-blue-600'
-                disabled
-              />
-              <input
-                ref={newOptionRef}
-                type='text'
-                value={newOptionText}
-                onChange={(e) => setNewOptionText(e.target.value)}
-                onKeyDown={handleNewOptionKeyDown}
-                onBlur={handleNewOptionBlur}
-                className='flex-1 cursor-text rounded border-none p-1 outline-none focus:bg-gray-50'
-                placeholder='Option text'
-              />
-            </div>
-          )}
-
-          {!showNewOption && (
-            <button
-              type='button'
-              onClick={handleAddOptionClick}
-              className='text-sm font-medium text-blue-600 hover:text-blue-800'
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+          modifiers={[restrictToFirstScrollableAncestor]}
+        >
+          <div className='space-y-2'>
+            <SortableContext
+              items={options.map((option) => option.id.toString())}
+              strategy={verticalListSortingStrategy}
             >
-              Add option
-            </button>
-          )}
-        </div>
+              {options.map((option) => (
+                <SortableOptionItem
+                  key={option.id}
+                  option={option}
+                  onChange={updateOption}
+                  onEnterPress={handleEnterPress}
+                  onRemove={removeOption}
+                  blockId={blockId}
+                />
+              ))}
+            </SortableContext>
+
+            {showNewOption && (
+              <div className='flex items-center space-x-2'>
+                <input
+                  type='radio'
+                  name='multiple-choice-preview'
+                  className='h-4 w-4 text-blue-600'
+                  disabled
+                />
+                <input
+                  ref={newOptionRef}
+                  type='text'
+                  value={newOptionText}
+                  onChange={(e) => setNewOptionText(e.target.value)}
+                  onKeyDown={handleNewOptionKeyDown}
+                  onBlur={handleNewOptionBlur}
+                  className='flex-1 cursor-text rounded border-none p-1 outline-none focus:bg-gray-50'
+                  placeholder='Option text'
+                />
+              </div>
+            )}
+
+            {!showNewOption && (
+              <button
+                type='button'
+                onClick={handleAddOptionClick}
+                className='text-sm font-medium text-blue-600 hover:text-blue-800'
+              >
+                Add option
+              </button>
+            )}
+          </div>
+        </DndContext>
       </div>
     );
   },

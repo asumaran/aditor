@@ -41,10 +41,20 @@ export const useBlockOptions = (blockId: number) => {
   );
 
   const reorderOptions = useCallback(
-    (newOptions: readonly Option[]) => {
+    (newOptions: readonly Option[], preserveOrder = false) => {
       dispatch({
         type: 'UPDATE_BLOCK_OPTIONS',
-        payload: { id: blockId, options: newOptions },
+        payload: { id: blockId, options: newOptions, preserveOrder },
+      });
+    },
+    [dispatch, blockId],
+  );
+
+  const changeSortOrder = useCallback(
+    (sortOrder: 'manual' | 'asc' | 'desc') => {
+      dispatch({
+        type: 'UPDATE_SORT_ORDER',
+        payload: { id: blockId, sortOrder },
       });
     },
     [dispatch, blockId],
@@ -55,5 +65,6 @@ export const useBlockOptions = (blockId: number) => {
     removeOption,
     updateOption,
     reorderOptions,
+    changeSortOrder,
   };
 };

@@ -114,13 +114,6 @@ const EditorContent: FC = () => {
     [dispatch],
   );
 
-  const handleSortOrderChange = useCallback(
-    (id: Block['id'], sortOrder: 'manual' | 'asc' | 'desc') => {
-      dispatch({ type: 'UPDATE_SORT_ORDER', payload: { id, sortOrder } });
-    },
-    [dispatch],
-  );
-
   const handleBlockClick = useCallback((blockId: Block['id']) => {
     console.log('Block clicked:', blockId);
   }, []);
@@ -567,7 +560,6 @@ const EditorContent: FC = () => {
                     onFieldChange={handleFieldChange}
                     onOptionsChange={handleOptionsChange}
                     onRequiredChange={handleRequiredChange}
-                    onSortOrderChange={handleSortOrderChange}
                     onBlockClick={handleBlockClick}
                     onCreateBlockAfter={handleCreateBlockAfter}
                     onChangeBlockType={handleChangeBlockType}

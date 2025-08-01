@@ -79,12 +79,18 @@ const editorReducer = (
         return state;
       }
 
-      // Apply current sort order to the options
-      const sortedOptions = block.properties.sortOrder === 'asc'
-        ? [...action.payload.options].sort((a, b) => a.text.localeCompare(b.text))
-        : block.properties.sortOrder === 'desc'
-        ? [...action.payload.options].sort((a, b) => b.text.localeCompare(a.text))
-        : action.payload.options; // For 'manual', keep the order as provided
+      // If preserveOrder is true (drag & drop), don't apply sorting
+      const sortedOptions = action.payload.preserveOrder
+        ? action.payload.options
+        : block.properties.sortOrder === 'asc'
+          ? [...action.payload.options].sort((a, b) =>
+              a.text.localeCompare(b.text),
+            )
+          : block.properties.sortOrder === 'desc'
+            ? [...action.payload.options].sort((a, b) =>
+                b.text.localeCompare(a.text),
+              )
+            : action.payload.options; // For 'manual', keep the order as provided
 
       return updateBlockPropertiesInState(state, action.payload.id, {
         options: sortedOptions,

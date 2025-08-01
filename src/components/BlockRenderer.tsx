@@ -12,6 +12,7 @@ interface BlockRendererProps {
   onOptionsChange?: (id: Block['id'], options: readonly Option[]) => void;
   onBlockClick?: (blockId: Block['id']) => void;
   onRequiredChange?: (blockId: Block['id'], required: boolean) => void;
+  onSortOrderChange?: (blockId: Block['id'], sortOrder: 'manual' | 'asc' | 'desc') => void;
   onCreateBlockAfter?: (
     afterBlockId: Block['id'],
     options?: {
@@ -70,6 +71,17 @@ const getBlockOptions = (block: Block): readonly Option[] => {
   }
 };
 
+const getBlockSortOrder = (block: Block): 'manual' | 'asc' | 'desc' => {
+  switch (block.type) {
+    case 'multiple_choice':
+      return block.properties.sortOrder;
+    case 'multiselect':
+      return block.properties.sortOrder;
+    default:
+      return 'manual';
+  }
+};
+
 export const BlockRenderer: FC<BlockRendererProps> = ({
   block,
   onChange,
@@ -77,6 +89,7 @@ export const BlockRenderer: FC<BlockRendererProps> = ({
   onOptionsChange,
   onBlockClick,
   onRequiredChange,
+  onSortOrderChange,
   onCreateBlockAfter,
   onChangeBlockType,
   onDeleteBlock,
@@ -120,6 +133,12 @@ export const BlockRenderer: FC<BlockRendererProps> = ({
   const handleRequiredChange = (required: boolean) => {
     if (onRequiredChange) {
       onRequiredChange(block.id, required);
+    }
+  };
+
+  const handleSortOrderChange = (sortOrder: 'manual' | 'asc' | 'desc') => {
+    if (onSortOrderChange) {
+      onSortOrderChange(block.id, sortOrder);
     }
   };
 
@@ -196,7 +215,10 @@ export const BlockRenderer: FC<BlockRendererProps> = ({
         blockId={block.id}
         required={getBlockRequired(block)}
         options={getBlockOptions(block)}
+        sortOrder={getBlockSortOrder(block)}
         onRequiredChange={handleRequiredChange}
+        onSortOrderChange={handleSortOrderChange}
+        onDeleteBlock={onDeleteBlock ? () => onDeleteBlock(block.id) : undefined}
         className={className}
       >
         {content}

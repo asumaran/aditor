@@ -59,9 +59,12 @@ export const useContentEditable = ({
 
       // Clean up trailing newlines when backspacing
       // This happens when deleting the last line in multi-line text
+      // Only apply this cleanup in very specific cases to avoid interfering with normal backspace
       if (
         newValue.endsWith('\n') &&
-        !newValue.includes('\n', newValue.length - 2)
+        newValue.length > 1 && // Must have content before the newline
+        // Only if there's exactly one trailing newline and the previous char is not a newline
+        newValue[newValue.length - 2] !== '\n'
       ) {
         // Only one newline at the end, remove it
         newValue = newValue.slice(0, -1);

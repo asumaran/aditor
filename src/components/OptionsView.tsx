@@ -1,19 +1,33 @@
 import { useState, useRef, useEffect, type FC } from 'react';
-import { ArrowLeft, Plus, X } from 'lucide-react';
+import { ArrowLeft, X, Trash2, GripVertical, ArrowDownUp } from 'lucide-react';
 import { useBlockOptions } from '@/hooks';
 import { cn } from '@/lib/utils';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import type { Option } from '@/types';
 
 interface OptionsViewProps {
   blockId: number;
   options: readonly Option[];
   onBack: () => void;
+  onClose?: () => void;
+  sortOrder: 'manual' | 'asc' | 'desc';
+  onSortOrderChange: (sortOrder: 'manual' | 'asc' | 'desc') => void;
 }
 
 export const OptionsView: FC<OptionsViewProps> = ({
   blockId,
   options,
   onBack,
+  onClose,
+  sortOrder,
+  onSortOrderChange,
 }) => {
   const [isAddingOption, setIsAddingOption] = useState(false);
   const [newOptionText, setNewOptionText] = useState('');
@@ -25,10 +39,6 @@ export const OptionsView: FC<OptionsViewProps> = ({
       inputRef.current.focus();
     }
   }, [isAddingOption]);
-
-  const handleAddClick = () => {
-    setIsAddingOption(true);
-  };
 
   const handleAddOption = () => {
     if (newOptionText.trim()) {
@@ -59,50 +69,75 @@ export const OptionsView: FC<OptionsViewProps> = ({
   return (
     <div className='flex h-full w-full flex-col p-0'>
       {/* Header */}
-      <div className='flex flex-shrink-0 items-center justify-between border-b p-4'>
+      <div className='flex items-center justify-between px-4 py-2 pt-3 pb-1'>
         <div className='flex items-center gap-2'>
           <button
             onClick={onBack}
-            className='hover:bg-accent rounded-sm p-1 transition-colors'
+            className='cursor-pointer rounded-sm transition-colors'
           >
-            <ArrowLeft className='h-4 w-4' />
+            <ArrowLeft className='h-4 w-4 text-gray-600' />
           </button>
-          <span className='font-medium'>Options</span>
+          <h3 className='text-sm font-semibold text-gray-900'>Edit options</h3>
         </div>
         <button
-          onClick={handleAddClick}
-          disabled={isAddingOption}
-          className='hover:bg-accent rounded-sm p-1 transition-colors disabled:opacity-50'
+          onClick={onClose}
+          className='flex h-[18px] w-[18px] flex-shrink-0 cursor-pointer items-center justify-center rounded-full bg-[rgba(55,53,47,0.06)] transition-[background] duration-[20ms] ease-in select-none hover:bg-[rgba(55,53,47,0.16)]'
         >
-          <Plus className='h-4 w-4' />
+          <X className='h-3 w-3 text-gray-500' />
         </button>
       </div>
 
       {/* Content */}
       <div className='flex min-h-0 flex-col'>
+        {/* Sort Section */}
+        <div className='flex-shrink-0 px-4 pt-2 pb-0'>
+          <div className='flex items-center justify-between pb-2'>
+            <div className='flex items-center gap-2'>
+              <ArrowDownUp className='h-4 w-4 text-gray-600' />
+              <label htmlFor='sort-select' className='text-sm text-gray-900'>
+                Sort
+              </label>
+            </div>
+            <Select value={sortOrder} onValueChange={onSortOrderChange}>
+              <SelectTrigger id='sort-select' size='sm'>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value='manual'>Manual</SelectItem>
+                <SelectItem value='asc'>A to Z</SelectItem>
+                <SelectItem value='desc'>Z to A</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
         {/* Add Option Input */}
-        {isAddingOption && (
-          <div className='flex-shrink-0 border-b p-4'>
-            <input
+        <div className='flex-shrink-0 px-4 py-2'>
+          <h3 className='mb-2 text-xs font-bold text-[rgb(115,114,110)]'>
+            Options
+          </h3>
+          <div className='flex items-center gap-2'>
+            <Input
               ref={inputRef}
               type='text'
               value={newOptionText}
               onChange={(e) => setNewOptionText(e.target.value)}
               onKeyDown={handleKeyDown}
+              autoFocus
               onBlur={() => {
                 if (!newOptionText.trim()) {
                   setIsAddingOption(false);
                   setNewOptionText('');
                 }
               }}
-              placeholder='Option text'
-              className='w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none'
+              placeholder='Type a new option…'
+              className='rounded-sm'
             />
           </div>
-        )}
+        </div>
 
         {/* Options List */}
-        <div className='max-h-[32rem] overflow-y-auto py-2'>
+        <div className='max-h-[32rem] overflow-y-auto p-2'>
           {options.map((option) => (
             <OptionItem
               key={option.id}
@@ -111,9 +146,9 @@ export const OptionsView: FC<OptionsViewProps> = ({
               onRemove={handleRemoveOption}
             />
           ))}
-          {options.length === 0 && !isAddingOption && (
-            <div className='px-4 py-8 text-center text-sm text-gray-500'>
-              No options yet. Click + to add one.
+          {options.length === 0 && (
+            <div className='px-2 py-8 text-center text-sm text-gray-500'>
+              No options yet.
             </div>
           )}
         </div>
@@ -157,17 +192,20 @@ const OptionItem: FC<OptionItemProps> = ({ option, onChange, onRemove }) => {
   };
 
   return (
-    <div className='hover:bg-accent group flex items-center gap-2 px-4 py-2'>
+    <div className='group flex items-center rounded px-1 py-0.5 hover:bg-gray-100'>
+      <div className='cursor-grab'>
+        <GripVertical className='h-4 w-4 text-gray-400' />
+      </div>
       <div className='flex-1'>
         {isEditing ? (
-          <input
+          <Input
             ref={inputRef}
             type='text'
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={handleKeyDown}
             onBlur={handleSave}
-            className='w-full rounded border border-gray-300 px-2 py-1 text-sm focus:ring-1 focus:ring-blue-500 focus:outline-none'
+            className='h-7 rounded-sm px-2 py-1 text-sm'
           />
         ) : (
           <span
@@ -183,9 +221,9 @@ const OptionItem: FC<OptionItemProps> = ({ option, onChange, onRemove }) => {
       </div>
       <button
         onClick={() => onRemove(option.id)}
-        className='rounded p-1 opacity-0 transition-all group-hover:opacity-100 hover:bg-red-100 hover:text-red-600'
+        className='rounded p-1 text-red-600 opacity-0 transition-all group-hover:opacity-100 hover:bg-red-100'
       >
-        <X className='h-3 w-3' />
+        <Trash2 className='h-3 w-3' />
       </button>
     </div>
   );

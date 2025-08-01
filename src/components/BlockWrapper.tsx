@@ -7,6 +7,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Switch } from '@/components/ui/switch';
+import { Database, Trash2, Asterisk, X } from 'lucide-react';
 import { OptionsView } from './OptionsView';
 import type { BlockType, PopoverView, Option } from '@/types';
 
@@ -18,7 +19,10 @@ interface BlockWrapperProps {
   blockId?: number;
   required?: boolean;
   options?: readonly Option[];
+  sortOrder?: 'manual' | 'asc' | 'desc';
   onRequiredChange?: (required: boolean) => void;
+  onDeleteBlock?: () => void;
+  onSortOrderChange?: (sortOrder: 'manual' | 'asc' | 'desc') => void;
 }
 
 export const BlockWrapper: FC<BlockWrapperProps> = ({
@@ -29,7 +33,10 @@ export const BlockWrapper: FC<BlockWrapperProps> = ({
   blockId,
   required = false,
   options = [],
+  sortOrder = 'manual',
   onRequiredChange,
+  onDeleteBlock,
+  onSortOrderChange,
 }) => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [currentView, setCurrentView] = useState<PopoverView>('menu');
@@ -63,6 +70,15 @@ export const BlockWrapper: FC<BlockWrapperProps> = ({
 
   const handleBackToMenu = useCallback(() => {
     setCurrentView('menu');
+  }, []);
+
+  const handleDeleteClick = useCallback(() => {
+    setIsPopoverOpen(false);
+    onDeleteBlock?.();
+  }, [onDeleteBlock]);
+
+  const handleClosePopover = useCallback(() => {
+    setIsPopoverOpen(false);
   }, []);
 
   const handlePopoverOpenChange = useCallback((open: boolean) => {
@@ -157,37 +173,75 @@ export const BlockWrapper: FC<BlockWrapperProps> = ({
         side='right'
         align='start'
         alignOffset={-2}
-        className='max-h-[min(80vh,40rem)] w-80 p-0'
+        className='max-h-[min(80vh,40rem)] w-70 p-0'
         onEscapeKeyDown={handleEscapeKeyDown}
       >
         {currentView === 'menu' ? (
-          <div className='py-2'>
-            <div
-              className='hover:bg-accent flex items-center justify-between px-4 py-2 hover:cursor-pointer'
-              onClick={handleRequiredToggle}
-            >
-              <span className='text-sm font-medium'>Required</span>
-              <Switch
-                checked={required}
-                onCheckedChange={onRequiredChange}
-                onClick={(e) => e.stopPropagation()}
-              />
-            </div>
-            {hasOptionsSupport && (
-              <div
-                className='hover:bg-accent flex items-center justify-between px-4 py-2 hover:cursor-pointer'
-                onClick={handleOptionsClick}
+          <div>
+            {/* Header */}
+            <div className='flex items-center justify-between px-4 py-2 pt-3 pb-1'>
+              <h3 className='text-sm font-semibold text-gray-900'>
+                Question options
+              </h3>
+              <button
+                onClick={handleClosePopover}
+                className='flex h-[18px] w-[18px] flex-shrink-0 cursor-pointer items-center justify-center rounded-full bg-[rgba(55,53,47,0.06)] transition-[background] duration-[20ms] ease-in select-none hover:bg-[rgba(55,53,47,0.16)]'
               >
-                <span className='text-sm font-medium'>Options</span>
-                <span className='text-xs text-gray-500'>{options.length}</span>
+                <X className='h-3 w-3 text-gray-500' />
+              </button>
+            </div>
+
+            {/* Menu Items */}
+            <div className='p-2'>
+              <div
+                className='flex items-center justify-between rounded-sm px-2 py-1 hover:cursor-pointer hover:bg-gray-100'
+                onClick={handleRequiredToggle}
+              >
+                <div className='flex items-center gap-3'>
+                  <Asterisk className='h-4 w-4 text-gray-600' />
+                  <span className='text-sm text-gray-900'>Required</span>
+                </div>
+                <Switch
+                  checked={required}
+                  onCheckedChange={onRequiredChange}
+                  onClick={(e) => e.stopPropagation()}
+                />
               </div>
-            )}
+
+              {hasOptionsSupport && (
+                <div
+                  className='flex items-center justify-between rounded-sm px-2 py-1 hover:cursor-pointer hover:bg-gray-100'
+                  onClick={handleOptionsClick}
+                >
+                  <div className='flex items-center gap-3'>
+                    <Database className='h-4 w-4 text-gray-600' />
+                    <span className='text-sm text-gray-900'>Edit options</span>
+                  </div>
+                  <span className='text-xs text-gray-500'>
+                    {options.length}
+                  </span>
+                </div>
+              )}
+
+              <div
+                className='flex items-center justify-between rounded-sm px-2 py-1 hover:cursor-pointer hover:bg-red-50'
+                onClick={handleDeleteClick}
+              >
+                <div className='flex items-center gap-3'>
+                  <Trash2 className='h-4 w-4 text-red-600' />
+                  <span className='text-sm text-red-600'>Delete question</span>
+                </div>
+              </div>
+            </div>
           </div>
         ) : (
           <OptionsView
             blockId={blockId!}
             options={options}
             onBack={handleBackToMenu}
+            onClose={handleClosePopover}
+            sortOrder={sortOrder}
+            onSortOrderChange={onSortOrderChange || (() => {})}
           />
         )}
       </PopoverContent>

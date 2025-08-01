@@ -14,6 +14,7 @@ export type {
   MultipleChoiceBlock,
   MultiselectBlock,
   BlockComponentProps,
+  BlockHandle,
 } from './blocks';
 export type { PopoverView, PopoverState } from './popover';
 export type { EditorAction } from './editor';

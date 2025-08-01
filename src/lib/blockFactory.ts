@@ -16,9 +16,7 @@ export const createTextBlock = (title: string = ''): TextBlock => ({
   },
 });
 
-export const createHeadingBlock = (
-  title: string = 'New heading block',
-): HeadingBlock => ({
+export const createHeadingBlock = (title: string = ''): HeadingBlock => ({
   id: generateId(),
   type: 'heading' as const,
   properties: {
@@ -46,6 +44,7 @@ export const createMultipleChoiceBlock = (
     label,
     options: createDefaultOptions(),
     required: false,
+    sortOrder: 'manual',
   },
 });
 
@@ -58,5 +57,6 @@ export const createMultiselectBlock = (
     label,
     options: createDefaultOptions(),
     required: false,
+    sortOrder: 'manual',
   },
 });

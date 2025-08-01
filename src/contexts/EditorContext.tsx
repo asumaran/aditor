@@ -93,8 +93,26 @@ const editorReducer = (
         return state;
       }
 
+      // For manual mode, add new option at the beginning (as it was before)
+      // For sorted modes, add at end and then sort
+      let newOptions;
+      if (block.properties.sortOrder === 'manual') {
+        newOptions = [action.payload.option, ...block.properties.options];
+      } else {
+        newOptions = [...block.properties.options, action.payload.option];
+      }
+      
+      // Apply current sort order to the new options array
+      let sortedOptions = newOptions;
+      if (block.properties.sortOrder === 'asc') {
+        sortedOptions = newOptions.sort((a, b) => a.text.localeCompare(b.text));
+      } else if (block.properties.sortOrder === 'desc') {
+        sortedOptions = newOptions.sort((a, b) => b.text.localeCompare(a.text));
+      }
+      // For 'manual', newOptions already has the correct order
+
       return updateBlockPropertiesInState(state, action.payload.blockId, {
-        options: [action.payload.option, ...block.properties.options],
+        options: sortedOptions,
       });
     }
 
@@ -157,6 +175,31 @@ const editorReducer = (
         ...state,
         blockMap: { ...state.blockMap, [id]: newBlock },
       };
+    }
+
+    case 'UPDATE_SORT_ORDER': {
+      const { id, sortOrder } = action.payload;
+      const block = getBlockById(state, id);
+      if (
+        !block ||
+        (block.type !== 'multiple_choice' && block.type !== 'multiselect')
+      ) {
+        return state;
+      }
+
+      // Sort options based on the selected order
+      let sortedOptions = [...block.properties.options];
+      if (sortOrder === 'asc') {
+        sortedOptions.sort((a, b) => a.text.localeCompare(b.text));
+      } else if (sortOrder === 'desc') {
+        sortedOptions.sort((a, b) => b.text.localeCompare(a.text));
+      }
+      // For 'manual', keep the current order
+
+      return updateBlockPropertiesInState(state, id, {
+        sortOrder,
+        options: sortedOptions,
+      });
     }
 
     default:

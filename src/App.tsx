@@ -33,21 +33,40 @@ const EditorContent: FC = () => {
   const [lastFocusedBlockId, setLastFocusedBlockId] = useState<number | null>(
     null,
   );
+  
+  // Helper to focus a block imperatively via DOM
+  const focusBlockImperatively = useCallback((blockId: number) => {
+    // Find the contentEditable element and trigger the imperativo focus method
+    setTimeout(() => {
+      const element = document.querySelector(
+        `[data-block-id="${blockId}"]`
+      ) as HTMLElement;
+      if (element) {
+        element.focus();
+        // Move cursor to end using the same logic as moveCursorToEnd
+        const range = document.createRange();
+        range.selectNodeContents(element);
+        range.collapse(false);
+        const selection = window.getSelection();
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+      }
+    }, 0);
+  }, []);
 
   // Clear focus block ID after it's been applied
   useEffect(() => {
     if (focusBlockId) {
-      // Clear on next tick to ensure React has applied the focus
-      Promise.resolve().then(() => {
-        setFocusBlockId(null);
-        setCursorAtStartBlockIds((prev) => {
-          const newSet = new Set(prev);
-          newSet.delete(focusBlockId);
-          return newSet;
-        });
+      focusBlockImperatively(focusBlockId);
+      // Clear focus block ID immediately
+      setFocusBlockId(null);
+      setCursorAtStartBlockIds((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(focusBlockId);
+        return newSet;
       });
     }
-  }, [focusBlockId]);
+  }, [focusBlockId, focusBlockImperatively]);
 
   // Handle click-to-focus functionality
   useClickToFocus('mouse-listener');
@@ -91,6 +110,13 @@ const EditorContent: FC = () => {
   const handleRequiredChange = useCallback(
     (id: Block['id'], required: boolean) => {
       dispatch({ type: 'UPDATE_BLOCK_REQUIRED', payload: { id, required } });
+    },
+    [dispatch],
+  );
+
+  const handleSortOrderChange = useCallback(
+    (id: Block['id'], sortOrder: 'manual' | 'asc' | 'desc') => {
+      dispatch({ type: 'UPDATE_SORT_ORDER', payload: { id, sortOrder } });
     },
     [dispatch],
   );
@@ -304,16 +330,17 @@ const EditorContent: FC = () => {
   );
 
   const addTextBlock = useCallback(() => {
-    console.log('DEBUG addTextBlock:', {
-      lastFocusedBlockId,
-      blockExists: lastFocusedBlockId
-        ? !!state.blockMap[lastFocusedBlockId]
-        : false,
-    });
+    // Check if block should be replaced by sidebar buttons (only "" or "\n")
+    const shouldReplaceBlock = (content: string) => {
+      return content === '' || content === '\n';
+    };
 
     if (lastFocusedBlockId) {
       const block = state.blockMap[lastFocusedBlockId];
-      const isEmpty = !block.properties.title?.trim();
+      const blockTitle = (block.type === 'text' || block.type === 'heading') 
+        ? block.properties.title 
+        : '';
+      const isEmpty = shouldReplaceBlock(blockTitle || '');
 
       if ((block.type === 'text' || block.type === 'heading') && isEmpty) {
         // Replace empty text/heading block
@@ -341,13 +368,16 @@ const EditorContent: FC = () => {
         dispatch({ type: 'ADD_BLOCK', payload: newBlock });
         setFocusBlockId(newBlock.id);
       } else {
-        const isEmpty = !lastBlock.properties.title?.trim();
+        const lastBlockTitle = (lastBlock.type === 'text' || lastBlock.type === 'heading') 
+          ? lastBlock.properties.title 
+          : '';
+        const isEmpty = shouldReplaceBlock(lastBlockTitle || '');
 
         if (
           (lastBlock.type === 'text' || lastBlock.type === 'heading') &&
           isEmpty
         ) {
-          // Replace empty last block
+          // Replace empty text/heading block
           dispatch({
             type: 'CHANGE_BLOCK_TYPE',
             payload: { id: lastBlock.id, newType: 'text' },
@@ -367,16 +397,17 @@ const EditorContent: FC = () => {
   }, [state, dispatch, lastFocusedBlockId]);
 
   const addHeadingBlock = useCallback(() => {
-    console.log('DEBUG addHeadingBlock:', {
-      lastFocusedBlockId,
-      blockExists: lastFocusedBlockId
-        ? !!state.blockMap[lastFocusedBlockId]
-        : false,
-    });
+    // Check if block should be replaced by sidebar buttons (only "" or "\n")
+    const shouldReplaceBlock = (content: string) => {
+      return content === '' || content === '\n';
+    };
 
     if (lastFocusedBlockId) {
       const block = state.blockMap[lastFocusedBlockId];
-      const isEmpty = !block.properties.title?.trim();
+      const blockTitle = (block.type === 'text' || block.type === 'heading') 
+        ? block.properties.title 
+        : '';
+      const isEmpty = shouldReplaceBlock(blockTitle || '');
 
       if ((block.type === 'text' || block.type === 'heading') && isEmpty) {
         // Replace empty text/heading block
@@ -404,7 +435,10 @@ const EditorContent: FC = () => {
         dispatch({ type: 'ADD_BLOCK', payload: newBlock });
         setFocusBlockId(newBlock.id);
       } else {
-        const isEmpty = !lastBlock.properties.title?.trim();
+        const lastBlockTitle = (lastBlock.type === 'text' || lastBlock.type === 'heading') 
+          ? lastBlock.properties.title 
+          : '';
+        const isEmpty = shouldReplaceBlock(lastBlockTitle || '');
 
         if (
           (lastBlock.type === 'text' || lastBlock.type === 'heading') &&
@@ -430,13 +464,6 @@ const EditorContent: FC = () => {
   }, [state, dispatch, lastFocusedBlockId]);
 
   const addShortAnswerBlock = useCallback(() => {
-    console.log('DEBUG addShortAnswerBlock:', {
-      lastFocusedBlockId,
-      blockExists: lastFocusedBlockId
-        ? !!state.blockMap[lastFocusedBlockId]
-        : false,
-    });
-
     if (lastFocusedBlockId) {
       // Always insert after focused block (never replace for form blocks)
       const newBlock = createShortAnswerBlock('Sample Short Answer Question');
@@ -454,13 +481,6 @@ const EditorContent: FC = () => {
   }, [state, dispatch, lastFocusedBlockId]);
 
   const addMultipleChoiceBlock = useCallback(() => {
-    console.log('DEBUG addMultipleChoiceBlock:', {
-      lastFocusedBlockId,
-      blockExists: lastFocusedBlockId
-        ? !!state.blockMap[lastFocusedBlockId]
-        : false,
-    });
-
     if (lastFocusedBlockId) {
       // Always insert after focused block (never replace for form blocks)
       const newBlock = createMultipleChoiceBlock('Question');
@@ -478,13 +498,6 @@ const EditorContent: FC = () => {
   }, [state, dispatch, lastFocusedBlockId]);
 
   const addMultiselectBlock = useCallback(() => {
-    console.log('DEBUG addMultiselectBlock:', {
-      lastFocusedBlockId,
-      blockExists: lastFocusedBlockId
-        ? !!state.blockMap[lastFocusedBlockId]
-        : false,
-    });
-
     if (lastFocusedBlockId) {
       // Always insert after focused block (never replace for form blocks)
       const newBlock = createMultiselectBlock('Select label');
@@ -530,14 +543,15 @@ const EditorContent: FC = () => {
               aria-label='Content blocks'
             >
               {getOrderedBlocks(state).map((block, index) => {
-                // Auto-focus if it's the first text block AND the only block,
+                // Auto-focus if it's the first block AND the only block,
                 // OR if it's a newly created block that should be focused
                 const orderedBlocks = getOrderedBlocks(state);
                 const shouldAutoFocus =
+                  focusBlockId === block.id ||
                   (index === 0 &&
                     block.type === 'text' &&
-                    orderedBlocks.length === 1) ||
-                  focusBlockId === block.id;
+                    orderedBlocks.length === 1 &&
+                    !focusBlockId);
 
                 const shouldCursorAtStart = cursorAtStartBlockIds.has(block.id);
 
@@ -549,6 +563,7 @@ const EditorContent: FC = () => {
                     onFieldChange={handleFieldChange}
                     onOptionsChange={handleOptionsChange}
                     onRequiredChange={handleRequiredChange}
+                    onSortOrderChange={handleSortOrderChange}
                     onBlockClick={handleBlockClick}
                     onCreateBlockAfter={handleCreateBlockAfter}
                     onChangeBlockType={handleChangeBlockType}

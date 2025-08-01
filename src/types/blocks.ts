@@ -27,12 +27,14 @@ export interface MultipleChoiceBlockProperties {
   label: string;
   options: readonly Option[];
   required: boolean;
+  sortOrder: 'manual' | 'asc' | 'desc';
 }
 
 export interface MultiselectBlockProperties {
   label: string;
   options: readonly Option[];
   required: boolean;
+  sortOrder: 'manual' | 'asc' | 'desc';
 }
 
 export type BlockProperties =

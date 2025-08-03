@@ -215,6 +215,13 @@ const editorReducer = (
       });
     }
 
+    case 'REORDER_BLOCKS': {
+      return {
+        ...state,
+        blocks: action.payload.blockIds,
+      };
+    }
+
     default:
       return state;
   }

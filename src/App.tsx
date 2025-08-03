@@ -1,4 +1,18 @@
 import { type FC, useCallback, useState, useEffect } from 'react';
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+  DragOverlay,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  arrayMove,
+} from '@dnd-kit/sortable';
 import { Button } from '@/components/ui/button';
 import { BlockRenderer } from '@/components';
 import { EditorProvider } from '@/contexts';
@@ -32,6 +46,15 @@ const EditorContent: FC = () => {
   >(new Set());
   const [lastFocusedBlockId, setLastFocusedBlockId] = useState<number | null>(
     null,
+  );
+  const [activeBlockId, setActiveBlockId] = useState<number | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
   );
 
   // Helper to focus a block imperatively via DOM
@@ -511,6 +534,43 @@ const EditorContent: FC = () => {
     }
   }, [dispatch, lastFocusedBlockId]);
 
+  const handleDragStart = useCallback(
+    (event: { active: { id: string | number } }) => {
+      setActiveBlockId(Number(event.active.id));
+    },
+    [],
+  );
+
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event;
+      setActiveBlockId(null);
+
+      if (over && active.id !== over.id) {
+        const orderedBlocks = getOrderedBlocks(state);
+        const oldIndex = orderedBlocks.findIndex(
+          (block) => block.id.toString() === active.id,
+        );
+        const newIndex = orderedBlocks.findIndex(
+          (block) => block.id.toString() === over.id,
+        );
+
+        if (oldIndex !== -1 && newIndex !== -1) {
+          const reorderedBlockIds = arrayMove(
+            orderedBlocks.map((block) => block.id),
+            oldIndex,
+            newIndex,
+          );
+          dispatch({
+            type: 'REORDER_BLOCKS',
+            payload: { blockIds: reorderedBlockIds },
+          });
+        }
+      }
+    },
+    [state, dispatch],
+  );
+
   return (
     <main>
       <div className='flex min-h-[calc(100vh-200px)] shadow-xl shadow-gray-900'>
@@ -533,46 +593,75 @@ const EditorContent: FC = () => {
             </Button>
           </div>
         </div>
-        <div className='grow bg-white p-5' id='mouse-listener'>
-          <div className='m-auto w-[600px]'>
-            <section
-              className='flex w-full max-w-full shrink-0 grow flex-col items-start text-base leading-[1.5]'
-              aria-label='Content blocks'
+        <div className='main-container grow bg-white py-5' id='mouse-listener'>
+          <div id='form-container' className='m-auto w-[600px]'>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+              // modifiers={[restrictToVerticalAxis]}
             >
-              {getOrderedBlocks(state).map((block, index) => {
-                // Auto-focus if it's the first block AND the only block,
-                // OR if it's a newly created block that should be focused
-                const orderedBlocks = getOrderedBlocks(state);
-                const shouldAutoFocus =
-                  focusBlockId === block.id ||
-                  (index === 0 &&
-                    block.type === 'text' &&
-                    orderedBlocks.length === 1 &&
-                    !focusBlockId);
+              <SortableContext
+                items={getOrderedBlocks(state).map((block) =>
+                  block.id.toString(),
+                )}
+                strategy={verticalListSortingStrategy}
+              >
+                {getOrderedBlocks(state).map((block, index) => {
+                  // Auto-focus if it's the first block AND the only block,
+                  // OR if it's a newly created block that should be focused
+                  const orderedBlocks = getOrderedBlocks(state);
+                  const shouldAutoFocus =
+                    focusBlockId === block.id ||
+                    (index === 0 &&
+                      block.type === 'text' &&
+                      orderedBlocks.length === 1 &&
+                      !focusBlockId);
 
-                const shouldCursorAtStart = cursorAtStartBlockIds.has(block.id);
+                  const shouldCursorAtStart = cursorAtStartBlockIds.has(
+                    block.id,
+                  );
 
-                return (
-                  <BlockRenderer
-                    key={block.id}
-                    block={block}
-                    onChange={handleBlockChange}
-                    onFieldChange={handleFieldChange}
-                    onOptionsChange={handleOptionsChange}
-                    onRequiredChange={handleRequiredChange}
-                    onBlockClick={handleBlockClick}
-                    onCreateBlockAfter={handleCreateBlockAfter}
-                    onChangeBlockType={handleChangeBlockType}
-                    onDeleteBlock={handleDeleteBlockAndFocusPrevious}
-                    onMergeWithPrevious={handleMergeWithPrevious}
-                    onNavigateToPrevious={handleNavigateToPrevious}
-                    onNavigateToNext={handleNavigateToNext}
-                    autoFocus={shouldAutoFocus}
-                    cursorAtStart={shouldCursorAtStart}
-                  />
-                );
-              })}
-            </section>
+                  return (
+                    <BlockRenderer
+                      key={block.id}
+                      block={block}
+                      onChange={handleBlockChange}
+                      onFieldChange={handleFieldChange}
+                      onOptionsChange={handleOptionsChange}
+                      onRequiredChange={handleRequiredChange}
+                      onBlockClick={handleBlockClick}
+                      onCreateBlockAfter={handleCreateBlockAfter}
+                      onChangeBlockType={handleChangeBlockType}
+                      onDeleteBlock={handleDeleteBlockAndFocusPrevious}
+                      onMergeWithPrevious={handleMergeWithPrevious}
+                      onNavigateToPrevious={handleNavigateToPrevious}
+                      onNavigateToNext={handleNavigateToNext}
+                      autoFocus={shouldAutoFocus}
+                      cursorAtStart={shouldCursorAtStart}
+                    />
+                  );
+                })}
+              </SortableContext>
+              <DragOverlay dropAnimation={null}>
+                {activeBlockId ? (
+                  // Apply opacity to the component during drag
+                  <div className='opacity-50'>
+                    <BlockRenderer
+                      block={state.blockMap[activeBlockId]}
+                      onChange={() => {}}
+                      onFieldChange={() => {}}
+                      onOptionsChange={() => {}}
+                      onRequiredChange={() => {}}
+                      onBlockClick={() => {}}
+                      autoFocus={false}
+                      cursorAtStart={false}
+                    />
+                  </div>
+                ) : null}
+              </DragOverlay>
+            </DndContext>
           </div>
         </div>
       </div>

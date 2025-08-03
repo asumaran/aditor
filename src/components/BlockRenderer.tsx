@@ -1,6 +1,7 @@
 import { type FC } from 'react';
 import { ErrorBoundary } from './ErrorBoundary';
 import { BlockWrapper } from './BlockWrapper';
+import { SortableBlockWrapper } from './SortableBlockWrapper';
 import { getBlockComponent } from '@/lib/componentRegistry';
 import type { Block, Option } from '@/types';
 import type { FieldChangeHandler } from '@/types/editables';
@@ -200,25 +201,27 @@ export const BlockRenderer: FC<BlockRendererProps> = ({
     </ErrorBoundary>
   );
 
-  if (isFormBlock) {
-    return (
-      <BlockWrapper
-        onBlockClick={handleBlockClick}
-        blockType={block.type}
-        blockId={block.id}
-        required={getBlockRequired(block)}
-        options={getBlockOptions(block)}
-        sortOrder={getBlockSortOrder(block)}
-        onRequiredChange={handleRequiredChange}
-        onDeleteBlock={
-          onDeleteBlock ? () => onDeleteBlock(block.id) : undefined
-        }
-        className={className}
-      >
-        {content}
-      </BlockWrapper>
-    );
-  }
+  const wrappedContent = isFormBlock ? (
+    <BlockWrapper
+      onBlockClick={handleBlockClick}
+      blockType={block.type}
+      blockId={block.id}
+      required={getBlockRequired(block)}
+      options={getBlockOptions(block)}
+      sortOrder={getBlockSortOrder(block)}
+      onRequiredChange={handleRequiredChange}
+      onDeleteBlock={onDeleteBlock ? () => onDeleteBlock(block.id) : undefined}
+      className={className}
+    >
+      {content}
+    </BlockWrapper>
+  ) : (
+    <div className={className}>{content}</div>
+  );
 
-  return <>{content}</>;
+  return (
+    <SortableBlockWrapper blockId={block.id}>
+      {wrappedContent}
+    </SortableBlockWrapper>
+  );
 };

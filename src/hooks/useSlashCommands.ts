@@ -90,7 +90,15 @@ export const useSlashCommands = ({
         console.log(
           'Case 2: Empty text block selecting different type - change block type',
         );
-        onChangeBlockType?.(selectedType);
+        
+        // Only use onChangeBlockType for text/heading conversions
+        // Form blocks need to be created with onCreateBlockAfter
+        if (selectedType === 'text' || selectedType === 'heading') {
+          onChangeBlockType?.(selectedType);
+        } else {
+          // For form blocks, create new block after current (then delete current)
+          onCreateBlockAfter?.(selectedType);
+        }
         return;
       }
 

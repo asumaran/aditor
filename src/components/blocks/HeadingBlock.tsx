@@ -98,7 +98,9 @@ export const HeadingBlock: FC<HeadingBlockProps> = ({
     onChange,
     blockType: 'heading',
     onCreateBlockAfter: (type: string) => {
-      onCreateBlockAfter?.({ blockType: type });
+      if (onCreateBlockAfter) {
+        onCreateBlockAfter({ blockType: type });
+      }
     },
     onChangeBlockType: (type: string) => {
       if (blockId) {
@@ -115,6 +117,8 @@ export const HeadingBlock: FC<HeadingBlockProps> = ({
 
   const commands = useMemo(
     () => [
+      // Slash commands have highest priority (must come first)
+      ...slashCommands,
       {
         key: 'Enter',
         /**
@@ -168,7 +172,6 @@ export const HeadingBlock: FC<HeadingBlockProps> = ({
           }
         },
       },
-      ...slashCommands,
       ...navigationCommands,
     ],
     [

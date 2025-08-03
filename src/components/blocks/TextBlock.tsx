@@ -98,7 +98,12 @@ export const TextBlock: FC<TextBlockProps> = ({
     onChange,
     blockType: 'text',
     onCreateBlockAfter: (type: string) => {
-      onCreateBlockAfter?.({ blockType: type });
+      console.log('TextBlock slash command: creating block type', type, 'after block', blockId);
+      if (onCreateBlockAfter) {
+        onCreateBlockAfter({ blockType: type });
+      } else {
+        console.error('TextBlock: no onCreateBlockAfter available');
+      }
     },
     onChangeBlockType: (type: string) => {
       if (blockId) {
@@ -115,6 +120,8 @@ export const TextBlock: FC<TextBlockProps> = ({
 
   const commands = useMemo(
     () => [
+      // Slash commands have highest priority (must come first)
+      ...slashCommands,
       {
         key: 'Enter',
         /**
@@ -168,7 +175,6 @@ export const TextBlock: FC<TextBlockProps> = ({
           }
         },
       },
-      ...slashCommands,
       ...navigationCommands,
     ],
     [

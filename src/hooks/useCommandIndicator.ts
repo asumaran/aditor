@@ -188,10 +188,15 @@ export const useCommandIndicator = ({
       // Exit command mode without keeping content
       exitCommandMode(false);
 
+      // Blur the current element to ensure focus transfers to new block
+      if (elementRef.current) {
+        elementRef.current.blur();
+      }
+
       // Notify parent
       onCommandSelect?.(command);
     },
-    [exitCommandMode, onCommandSelect],
+    [exitCommandMode, onCommandSelect, elementRef],
   );
 
   // Handle navigation with arrow keys

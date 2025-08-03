@@ -66,19 +66,28 @@ const EditorContent: FC = () => {
         `[data-block-id="${blockId}"]`,
       ) as HTMLElement;
       if (element) {
-        element.focus();
+        // Try to find a focusable element within the block
+        const focusableElement = element.querySelector(
+          '[contenteditable="true"], input, textarea'
+        ) as HTMLElement;
         
-        // Check if this block should have cursor at start
-        const shouldCursorAtStart = cursorAtStartBlockIds.has(blockId);
+        const targetElement = focusableElement || element;
+        targetElement.focus();
         
-        const range = document.createRange();
-        range.selectNodeContents(element);
-        range.collapse(shouldCursorAtStart); // true = start, false = end
-        const selection = window.getSelection();
-        selection?.removeAllRanges();
-        selection?.addRange(range);
-        
-        console.log('focusBlockImperatively: positioned cursor at', shouldCursorAtStart ? 'start' : 'end', 'for block', blockId);
+        // Only position cursor for contenteditable elements
+        if (focusableElement && focusableElement.contentEditable === 'true') {
+          // Check if this block should have cursor at start
+          const shouldCursorAtStart = cursorAtStartBlockIds.has(blockId);
+          
+          const range = document.createRange();
+          range.selectNodeContents(focusableElement);
+          range.collapse(shouldCursorAtStart); // true = start, false = end
+          const selection = window.getSelection();
+          selection?.removeAllRanges();
+          selection?.addRange(range);
+          
+          console.log('focusBlockImperatively: positioned cursor at', shouldCursorAtStart ? 'start' : 'end', 'for block', blockId);
+        }
       }
     }, 0);
   }, [cursorAtStartBlockIds]);
@@ -195,6 +204,7 @@ const EditorContent: FC = () => {
         blockType?: string;
       },
     ) => {
+      console.log('handleCreateBlockAfter called:', { afterBlockId, options });
       const {
         initialContent = '',
         cursorAtStart = false,
@@ -223,6 +233,7 @@ const EditorContent: FC = () => {
         type: 'INSERT_BLOCK_AFTER',
         payload: { afterBlockId, newBlock },
       });
+      console.log('Setting focus to new block:', newBlock.id, 'type:', newBlock.type);
       setFocusBlockId(newBlock.id);
 
       // Set cursor position based on context

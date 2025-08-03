@@ -39,10 +39,10 @@ export const useClickToFocus = (containerId: string) => {
 
       if (closestBlock !== null) {
         const block = closestBlock;
-        // Find the primary editable element within the block
-        const primaryEditable = block.querySelector(
-          '[contenteditable="true"]',
-        ) as HTMLElement | null;
+        // The block itself should be contenteditable
+        const primaryEditable = block.hasAttribute('contenteditable') 
+          ? block as HTMLElement
+          : block.querySelector('[contenteditable="true"]') as HTMLElement | null;
         const focusTarget = primaryEditable || block;
 
         focusTarget.focus();

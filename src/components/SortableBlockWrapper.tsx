@@ -37,7 +37,7 @@ export const SortableBlockWrapper: FC<SortableBlockWrapperProps> = ({
       ref={setNodeRef}
       style={style}
       className='group relative'
-      data-no-dnd-animation
+      data-sortable-id={blockId}
     >
       {/* Drop indicator - top */}
       {showAbove && (

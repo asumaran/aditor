@@ -13,9 +13,11 @@ export const useContentEditable = ({
   onChange,
   autoFocus = false,
   cursorAtStart = false,
+  blockId,
 }: UseContentEditableProps) => {
   const elementRef = useRef<HTMLElement>(null);
   const isComposingRef = useRef(false);
+  const autoFocusHandledRef = useRef(false);
   const [currentValue, setCurrentValue] = useState(value);
 
   const moveCursorToEnd = useCallback(() => {
@@ -33,7 +35,16 @@ export const useContentEditable = ({
 
   const moveCursorToStart = useCallback(() => {
     const element = elementRef.current;
-    if (!element) return;
+    if (!element) {
+      console.log('moveCursorToStart: no element');
+      return;
+    }
+
+    console.log('moveCursorToStart: element content before:', {
+      textContent: element.textContent,
+      innerHTML: element.innerHTML,
+      childNodes: element.childNodes.length
+    });
 
     const range = document.createRange();
     range.selectNodeContents(element);
@@ -42,6 +53,21 @@ export const useContentEditable = ({
     const selection = window.getSelection();
     selection?.removeAllRanges();
     selection?.addRange(range);
+    
+    // Verify cursor position immediately and after timeout
+    const immediateSelection = window.getSelection();
+    if (immediateSelection?.rangeCount) {
+      const immediateRange = immediateSelection.getRangeAt(0);
+      console.log('moveCursorToStart: immediate offset', immediateRange.startOffset);
+    }
+    
+    setTimeout(() => {
+      const newSelection = window.getSelection();
+      if (newSelection?.rangeCount) {
+        const newRange = newSelection.getRangeAt(0);
+        console.log('moveCursorToStart: final offset', newRange.startOffset);
+      }
+    }, 0);
   }, []);
 
   const handleInput = useCallback(
@@ -111,35 +137,42 @@ export const useContentEditable = ({
 
   useEffect(() => {
     const element = elementRef.current;
-    if (!element || element.textContent === value) return;
+    if (!element) return;
 
-    // Simple update - just set the content
-    element.textContent = value;
-    setCurrentValue(value);
+    // Only update content if it's different
+    if (element.textContent !== value) {
+      element.textContent = value;
+      setCurrentValue(value);
 
-    // Normal cursor positioning
-    if (cursorAtStart) {
-      moveCursorToStart();
-    } else {
-      moveCursorToEnd();
-    }
-  }, [value, moveCursorToEnd, moveCursorToStart, cursorAtStart]);
-
-  // Handle autoFocus
-  useEffect(() => {
-    if (autoFocus && elementRef.current) {
-      // Force focus with a small delay to ensure DOM is ready
-      // Use Promise to avoid setTimeout
-      Promise.resolve().then(() => {
-        elementRef.current?.focus();
+      // For autofocus blocks, focus first, then position cursor in the next frame
+      if (autoFocus && !autoFocusHandledRef.current) {
+        autoFocusHandledRef.current = true;
+        element.focus();
+        
+        // Position cursor after focus is complete
+        requestAnimationFrame(() => {
+          if (cursorAtStart) {
+            console.log('useContentEditable: moving cursor to start (autofocus)', { blockId, value, cursorAtStart });
+            moveCursorToStart();
+          } else {
+            console.log('useContentEditable: moving cursor to end (autofocus)', { blockId, value, cursorAtStart });
+            moveCursorToEnd();
+          }
+        });
+      } else {
+        // For non-autofocus blocks, position cursor immediately
         if (cursorAtStart) {
+          console.log('useContentEditable: moving cursor to start', { blockId, value, cursorAtStart });
           moveCursorToStart();
         } else {
+          console.log('useContentEditable: moving cursor to end', { blockId, value, cursorAtStart });
           moveCursorToEnd();
         }
-      });
+      }
     }
-  }, [autoFocus, moveCursorToEnd, moveCursorToStart, cursorAtStart]);
+  }, [value, moveCursorToEnd, moveCursorToStart, cursorAtStart, autoFocus]);
+
+  // Handle autoFocus - removed since it's now handled in the content effect
 
   return {
     elementRef,

@@ -66,16 +66,21 @@ const EditorContent: FC = () => {
       ) as HTMLElement;
       if (element) {
         element.focus();
-        // Move cursor to end using the same logic as moveCursorToEnd
+        
+        // Check if this block should have cursor at start
+        const shouldCursorAtStart = cursorAtStartBlockIds.has(blockId);
+        
         const range = document.createRange();
         range.selectNodeContents(element);
-        range.collapse(false);
+        range.collapse(shouldCursorAtStart); // true = start, false = end
         const selection = window.getSelection();
         selection?.removeAllRanges();
         selection?.addRange(range);
+        
+        console.log('focusBlockImperatively: positioned cursor at', shouldCursorAtStart ? 'start' : 'end', 'for block', blockId);
       }
     }, 0);
-  }, []);
+  }, [cursorAtStartBlockIds]);
 
   // Clear focus block ID after it's been applied
   useEffect(() => {
@@ -83,11 +88,14 @@ const EditorContent: FC = () => {
       focusBlockImperatively(focusBlockId);
       // Clear focus block ID immediately
       setFocusBlockId(null);
-      setCursorAtStartBlockIds((prev) => {
-        const newSet = new Set(prev);
-        newSet.delete(focusBlockId);
-        return newSet;
-      });
+      // Clear cursorAtStart after component has had time to process it
+      setTimeout(() => {
+        setCursorAtStartBlockIds((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(focusBlockId);
+          return newSet;
+        });
+      }, 10);
     }
   }, [focusBlockId, focusBlockImperatively]);
 
@@ -182,6 +190,7 @@ const EditorContent: FC = () => {
 
       // Set cursor position based on context
       if (cursorAtStart) {
+        console.log('Adding block to cursorAtStartBlockIds:', newBlock.id);
         setCursorAtStartBlockIds((prev) => new Set(prev).add(newBlock.id));
       }
 
@@ -257,8 +266,8 @@ const EditorContent: FC = () => {
         payload: { id: previousBlockId, value: mergedContent },
       });
 
-      // Focus the block
-      setFocusBlockId(previousBlockId);
+      // Don't use setFocusBlockId for merge - it interferes with cursor positioning
+      // Instead, handle focus and cursor positioning manually
 
       // Handle cursor positioning outside of React
       requestAnimationFrame(() => {
@@ -273,6 +282,8 @@ const EditorContent: FC = () => {
         const selection = window.getSelection();
         if (!selection) return;
 
+        console.log('handleMergeWithPrevious: positioning cursor at junction point', junctionPoint);
+
         const range = document.createRange();
         const walker = document.createTreeWalker(
           element,
@@ -286,10 +297,12 @@ const EditorContent: FC = () => {
         while ((node = walker.nextNode())) {
           const nodeLength = node.textContent?.length || 0;
           if (currentOffset + nodeLength >= junctionPoint) {
-            range.setStart(node, junctionPoint - currentOffset);
+            const finalOffset = junctionPoint - currentOffset;
+            range.setStart(node, finalOffset);
             range.collapse(true);
             selection.removeAllRanges();
             selection.addRange(range);
+            console.log('handleMergeWithPrevious: cursor positioned at offset', finalOffset, 'in text node');
             return;
           }
           currentOffset += nodeLength;
@@ -622,6 +635,10 @@ const EditorContent: FC = () => {
                   const shouldCursorAtStart = cursorAtStartBlockIds.has(
                     block.id,
                   );
+                  
+                  if (shouldCursorAtStart) {
+                    console.log('Block should have cursor at start:', block.id);
+                  }
 
                   return (
                     <BlockRenderer

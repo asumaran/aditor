@@ -30,12 +30,12 @@ export const useBlockCreation = ({
 
       // If after content is exactly one newline, create empty block
       const cleanAfter = after === '\n' ? '' : after;
-      const shouldCursorAtStart = cleanAfter.length > 0;
-
+      
       // Create new block with content after cursor
+      // Always position cursor at start of new block
       return onCreateBlockAfter({
         initialContent: cleanAfter,
-        cursorAtStart: shouldCursorAtStart,
+        cursorAtStart: true,
       });
     },
     [onCreateBlockAfter, onChange],

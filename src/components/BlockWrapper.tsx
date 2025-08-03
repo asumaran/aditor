@@ -45,9 +45,6 @@ export const BlockWrapper: FC<BlockWrapperProps> = ({
     blockType &&
     ['short_answer', 'multiple_choice', 'multiselect'].includes(blockType);
 
-  const hasOptionsSupport =
-    blockType === 'multiple_choice' || blockType === 'multiselect';
-
   const handleClick = () => {
     if (isFormBlock) {
       setCurrentView('menu');

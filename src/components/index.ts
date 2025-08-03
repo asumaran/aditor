@@ -5,3 +5,4 @@ export { SortableBlockWrapper } from './SortableBlockWrapper';
 export { OptionsView } from './OptionsView';
 export { SlashCommandDropdown } from './SlashCommandDropdown';
 export { CommandIndicator } from './CommandIndicator';
+export * from './menu';

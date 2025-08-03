@@ -48,6 +48,7 @@ const EditorContent: FC = () => {
     null,
   );
   const [activeBlockId, setActiveBlockId] = useState<number | null>(null);
+  const [dragHandlesVisible, setDragHandlesVisible] = useState(true);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -102,7 +103,7 @@ const EditorContent: FC = () => {
   // Handle click-to-focus functionality
   useClickToFocus('mouse-listener');
 
-  // Track last focused block
+  // Track last focused block and hide drag handles when user starts typing
   useEffect(() => {
     const handleFocusIn = (e: FocusEvent) => {
       const target = e.target as HTMLElement;
@@ -111,10 +112,46 @@ const EditorContent: FC = () => {
         const blockId = parseInt(blockElement.getAttribute('data-block-id')!);
         setLastFocusedBlockId(blockId);
       }
+
+      // Hide drag handles when user focuses on any contenteditable or input
+      if (target.matches('[contenteditable="true"], input, textarea')) {
+        console.log('🔴 HIDING handles - focus on contenteditable');
+        setDragHandlesVisible(false);
+      }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Only hide drag handles when user starts typing if there's a focused contenteditable
+      if (!e.metaKey && !e.ctrlKey && !e.altKey && e.key.length === 1) {
+        const activeElement = document.activeElement;
+        if (activeElement && activeElement.matches('[contenteditable="true"], input, textarea')) {
+          console.log('🔴 HIDING handles - typing in contenteditable');
+          setDragHandlesVisible(false);
+        }
+      }
+    };
+
+    const handleMouseMove = () => {
+      // Show drag handles when user moves mouse (not typing)
+      // Only update if currently hidden to avoid unnecessary re-renders
+      setDragHandlesVisible(prev => {
+        if (!prev) {
+          console.log('🟢 SHOWING handles - mouse move');
+          return true;
+        }
+        return prev;
+      });
     };
 
     document.addEventListener('focusin', handleFocusIn);
-    return () => document.removeEventListener('focusin', handleFocusIn);
+    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('mousemove', handleMouseMove);
+    
+    return () => {
+      document.removeEventListener('focusin', handleFocusIn);
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('mousemove', handleMouseMove);
+    };
   }, []);
 
   const handleBlockChange = useCallback(
@@ -657,6 +694,7 @@ const EditorContent: FC = () => {
                       onNavigateToNext={handleNavigateToNext}
                       autoFocus={shouldAutoFocus}
                       cursorAtStart={shouldCursorAtStart}
+                      dragHandlesVisible={dragHandlesVisible}
                     />
                   );
                 })}

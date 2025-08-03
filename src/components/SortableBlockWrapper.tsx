@@ -6,11 +6,13 @@ import { animateLayoutChanges } from '@/lib/dndConfig';
 interface SortableBlockWrapperProps {
   children: ReactNode;
   blockId: number;
+  dragHandlesVisible?: boolean;
 }
 
 export const SortableBlockWrapper: FC<SortableBlockWrapperProps> = ({
   children,
   blockId,
+  dragHandlesVisible = true,
 }) => {
   const { attributes, listeners, setNodeRef, isOver, index, over, active } =
     useSortable({
@@ -45,13 +47,15 @@ export const SortableBlockWrapper: FC<SortableBlockWrapperProps> = ({
       )}
 
       {/* Drag Handle - positioned absolutely to not affect layout */}
-      <div
-        className='absolute top-1 left-[-24px] flex h-6 w-6 cursor-grab items-center justify-center opacity-0 transition-opacity duration-200 group-hover:opacity-100 active:cursor-grabbing'
-        {...attributes}
-        {...listeners}
-      >
-        <GripVertical className='h-4 w-4 text-gray-400 hover:text-gray-600' />
-      </div>
+      {dragHandlesVisible && (
+        <div
+          className='absolute top-1 left-[-24px] flex h-6 w-6 cursor-grab items-center justify-center opacity-0 transition-opacity duration-200 group-hover:opacity-100 active:cursor-grabbing'
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical className='h-4 w-4 text-gray-400 hover:text-gray-600' />
+        </div>
+      )}
 
       {/* Content */}
       <div>{children}</div>

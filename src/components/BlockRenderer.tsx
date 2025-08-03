@@ -29,6 +29,7 @@ interface BlockRendererProps {
   className?: string;
   autoFocus?: boolean;
   cursorAtStart?: boolean;
+  dragHandlesVisible?: boolean;
 }
 
 const getBlockValue = (block: Block): string => {
@@ -98,6 +99,7 @@ export const BlockRenderer: FC<BlockRendererProps> = ({
   className,
   autoFocus = false,
   cursorAtStart = false,
+  dragHandlesVisible = true,
 }) => {
   const Component = getBlockComponent(block.type);
 
@@ -220,7 +222,7 @@ export const BlockRenderer: FC<BlockRendererProps> = ({
   );
 
   return (
-    <SortableBlockWrapper blockId={block.id}>
+    <SortableBlockWrapper blockId={block.id} dragHandlesVisible={dragHandlesVisible}>
       {wrappedContent}
     </SortableBlockWrapper>
   );

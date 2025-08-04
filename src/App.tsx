@@ -1,4 +1,4 @@
-import { type FC, useCallback, useState, useEffect } from 'react';
+import { type FC, useCallback, useState, useEffect, useRef } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -16,7 +16,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { BlockRenderer } from '@/components';
 import { EditorProvider } from '@/contexts';
-import { useEditor, useClickToFocus } from '@/hooks';
+import { useEditor, useClickToFocus, useGlobalFocusManager } from '@/hooks';
 import {
   createTextBlock,
   createShortAnswerBlock,
@@ -40,15 +40,30 @@ const INITIAL_BLOCKS: readonly Block[] = [createTextBlock()] as const;
 
 const EditorContent: FC = () => {
   const { state, dispatch } = useEditor();
-  const [focusBlockId, setFocusBlockId] = useState<number | null>(null);
-  const [cursorAtStartBlockIds, setCursorAtStartBlockIds] = useState<
-    Set<number>
-  >(new Set());
+  const focusManager = useGlobalFocusManager();
+  
   const [lastFocusedBlockId, setLastFocusedBlockId] = useState<number | null>(
     null,
   );
+  
   const [activeBlockId, setActiveBlockId] = useState<number | null>(null);
   const [dragHandlesVisible, setDragHandlesVisible] = useState(true);
+
+  // Focus the last block on initial mount if there are blocks
+  useEffect(() => {
+    const blocks = getOrderedBlocks(state);
+    if (blocks.length > 0 && !lastFocusedBlockId) {
+      const lastBlock = blocks[blocks.length - 1];
+      // Only focus text blocks on initial load
+      if (lastBlock.type === 'text' || lastBlock.type === 'heading') {
+        focusManager.focusBlock(lastBlock.id, {
+          autoFocus: true,
+          deferred: true, // Wait for DOM to be ready
+        });
+        setLastFocusedBlockId(lastBlock.id);
+      }
+    }
+  }, []); // Only run on mount
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -58,59 +73,91 @@ const EditorContent: FC = () => {
     }),
   );
 
-  // Helper to focus a block imperatively via DOM
-  const focusBlockImperatively = useCallback((blockId: number) => {
-    // Find the contentEditable element and trigger the imperativo focus method
-    setTimeout(() => {
-      const element = document.querySelector(
-        `[data-block-id="${blockId}"]`,
-      ) as HTMLElement;
-      if (element) {
-        // Try to find a focusable element within the block
-        const focusableElement = element.querySelector(
-          '[contenteditable="true"], input, textarea'
-        ) as HTMLElement;
+  // LEGACY SYSTEM REMOVED - Now using only FocusManager
+
+  // Handle click-to-focus functionality with auto text block creation
+  // Use a ref to always have access to the latest state
+  const stateRef = useRef(state);
+  stateRef.current = state;
+  
+  useClickToFocus({
+    containerId: 'mouse-listener',
+    onEmptyAreaClick: (clickY: number) => {
+      console.log('🖱️ onEmptyAreaClick called with clickY:', clickY);
+      // Use the ref to get the current state
+      const currentState = stateRef.current;
+      const blocks = getOrderedBlocks(currentState);
+      console.log('🖱️ Total blocks:', blocks.length);
+      
+      if (blocks.length > 0) {
+        const lastBlock = blocks[blocks.length - 1];
         
-        const targetElement = focusableElement || element;
-        targetElement.focus();
+        // Get the DOM element for the last block to check its position
+        const lastBlockElement = document.querySelector(`[data-block-id="${lastBlock.id}"]`) as HTMLElement;
+        if (!lastBlockElement) {
+          console.log('🖱️ Could not find DOM element for last block');
+          return false;
+        }
         
-        // Only position cursor for contenteditable elements
-        if (focusableElement && focusableElement.contentEditable === 'true') {
-          // Check if this block should have cursor at start
-          const shouldCursorAtStart = cursorAtStartBlockIds.has(blockId);
+        const lastBlockRect = lastBlockElement.getBoundingClientRect();
+        const lastBlockBottom = lastBlockRect.bottom;
+        
+        console.log('🖱️ Click position check:', {
+          clickY,
+          lastBlockBottom,
+          isBelowLastBlock: clickY > lastBlockBottom
+        });
+        
+        // Check if click is below the last block
+        if (clickY <= lastBlockBottom) {
+          console.log('🖱️ Click is not below last block, ignoring');
+          return false;
+        }
+        
+        console.log('🖱️ Last block:', {
+          id: lastBlock.id,
+          type: lastBlock.type,
+          properties: lastBlock.properties,
+          title: (lastBlock.properties as any).title
+        });
+        
+        const lastBlockTitle = (lastBlock.type === 'text' || lastBlock.type === 'heading') 
+          ? lastBlock.properties.title 
+          : '';
+        
+        // Conditions to create new text block:
+        // a) last block is not a text block
+        // b) last block is a text block that is not empty
+        const shouldCreateNewBlock = 
+          lastBlock.type !== 'text' || 
+          (lastBlock.type === 'text' && lastBlockTitle.trim() !== '');
+        
+        console.log('🖱️ Should create new block:', shouldCreateNewBlock, {
+          isTextBlock: lastBlock.type === 'text',
+          content: lastBlockTitle,
+          isEmpty: lastBlockTitle.trim() === ''
+        });
+        
+        if (shouldCreateNewBlock) {
+          console.log('🖱️ Creating new text block on empty area click');
+          const newBlock = createTextBlock('');
+          dispatch({
+            type: 'INSERT_BLOCK_AFTER',
+            payload: { afterBlockId: lastBlock.id, newBlock },
+          });
           
-          const range = document.createRange();
-          range.selectNodeContents(focusableElement);
-          range.collapse(shouldCursorAtStart); // true = start, false = end
-          const selection = window.getSelection();
-          selection?.removeAllRanges();
-          selection?.addRange(range);
+          // Focus the new block
+          focusManager.onBlockCreated(newBlock.id, {
+            autoFocus: true,
+            deferred: true,
+          });
           
-          console.log('focusBlockImperatively: positioned cursor at', shouldCursorAtStart ? 'start' : 'end', 'for block', blockId);
+          return true; // Block was created
         }
       }
-    }, 0);
-  }, [cursorAtStartBlockIds]);
-
-  // Clear focus block ID after it's been applied
-  useEffect(() => {
-    if (focusBlockId) {
-      focusBlockImperatively(focusBlockId);
-      // Clear focus block ID immediately
-      setFocusBlockId(null);
-      // Clear cursorAtStart after component has had time to process it
-      setTimeout(() => {
-        setCursorAtStartBlockIds((prev) => {
-          const newSet = new Set(prev);
-          newSet.delete(focusBlockId);
-          return newSet;
-        });
-      }, 10);
+      return false; // No block was created
     }
-  }, [focusBlockId, focusBlockImperatively]);
-
-  // Handle click-to-focus functionality
-  useClickToFocus('mouse-listener');
+  });
 
   // Track last focused block and hide drag handles when user starts typing
   useEffect(() => {
@@ -202,6 +249,8 @@ const EditorContent: FC = () => {
         initialContent?: string;
         cursorAtStart?: boolean;
         blockType?: string;
+        onFocusTransferred?: () => void;
+        replaceCurrentBlock?: boolean;
       },
     ) => {
       console.log('handleCreateBlockAfter called:', { afterBlockId, options });
@@ -209,7 +258,14 @@ const EditorContent: FC = () => {
         initialContent = '',
         cursorAtStart = false,
         blockType = 'text',
+        onFocusTransferred,
+        replaceCurrentBlock = false,
       } = options || {};
+      
+      // For text/heading blocks created via slash commands with no content,
+      // we want cursor at start
+      const shouldCursorBeAtStart = cursorAtStart || 
+        (blockType === 'text' || blockType === 'heading') && !initialContent;
 
       let newBlock: Block;
       switch (blockType) {
@@ -229,22 +285,65 @@ const EditorContent: FC = () => {
           newBlock = createTextBlock(initialContent);
       }
 
+      // If this is replacing the current block (slash command case), hide the original BEFORE creating new block
+      if (replaceCurrentBlock) {
+        console.log('🎯 App: Hiding original block before creating replacement:', afterBlockId);
+        
+        // Hide the original block immediately to prevent visual jump
+        const originalBlockElement = document.querySelector(`[data-block-id="${afterBlockId}"]`) as HTMLElement;
+        if (originalBlockElement) {
+          originalBlockElement.style.display = 'none';
+        }
+      } else {
+        console.log('🎯 App: Creating new block after current block (no replacement):', afterBlockId);
+      }
+
       dispatch({
         type: 'INSERT_BLOCK_AFTER',
         payload: { afterBlockId, newBlock },
       });
-      console.log('Setting focus to new block:', newBlock.id, 'type:', newBlock.type);
-      setFocusBlockId(newBlock.id);
-
-      // Set cursor position based on context
-      if (cursorAtStart) {
-        console.log('Adding block to cursorAtStartBlockIds:', newBlock.id);
-        setCursorAtStartBlockIds((prev) => new Set(prev).add(newBlock.id));
+      
+      // If there's a callback to execute after focus, set up a one-time listener
+      if (onFocusTransferred) {
+        // Use multiple requestAnimationFrame to wait for focus to complete
+        // This matches FocusManager's deferred timing (double RAF)
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              onFocusTransferred();
+            });
+          });
+        });
+      }
+      
+      // Use FocusManager for new block focus
+      console.log('🎯 App: Calling focusManager.onBlockCreated for slash command block:', {
+        blockId: newBlock.id,
+        blockType,
+        cursorAtStart: shouldCursorBeAtStart,
+        initialContent,
+      });
+      
+      focusManager.onBlockCreated(newBlock.id, {
+        cursorAtStart: shouldCursorBeAtStart,
+        autoFocus: true,
+        deferred: true, // Wait for React render
+        ...(blockType === 'short_answer' || blockType === 'multiple_choice' || blockType === 'multiselect' ? { cursorAtEnd: true } : {}),
+      });
+      
+      // Delete the original block from state after the new block is created and focused
+      if (replaceCurrentBlock) {
+        console.log('🎯 App: Deleting original block from state:', afterBlockId);
+        
+        // Delete it from the state after a small delay to allow focus to complete
+        setTimeout(() => {
+          dispatch({ type: 'REMOVE_BLOCK', payload: { id: afterBlockId } });
+        }, 50);
       }
 
       return newBlock.id;
     },
-    [dispatch],
+    [dispatch, focusManager],
   );
 
   const handleDeleteBlockAndFocusPrevious = useCallback(
@@ -258,26 +357,36 @@ const EditorContent: FC = () => {
       // Delete the block
       dispatch({ type: 'REMOVE_BLOCK', payload: { id: blockId } });
 
-      // Focus the previous block if it exists
+      // Focus the previous block if it exists using FocusManager
       if (previousBlockId) {
-        setFocusBlockId(previousBlockId);
+        focusManager.focusBlockForEvent(previousBlockId, 'block-deleted', {
+          cursorAtEnd: true, // Position cursor at end when focusing after deletion
+          autoFocus: true,
+          deferred: true, // Wait for React to remove the deleted block from DOM
+        });
       }
     },
-    [state, dispatch],
+    [state, dispatch, focusManager],
   );
 
   const handleChangeBlockType = useCallback(
     (blockId: Block['id'], newType: string) => {
+      console.log('🎯 App.handleChangeBlockType called:', { blockId, newType });
+      
       // Use the existing CHANGE_BLOCK_TYPE action which handles this properly
       dispatch({
         type: 'CHANGE_BLOCK_TYPE',
         payload: { id: blockId, newType },
       });
 
-      // Set focus to the same block (which now has the new type)
-      setFocusBlockId(blockId);
+      // Focus the same block (which now has the new type) using FocusManager
+      focusManager.focusBlock(blockId, {
+        autoFocus: true,
+        deferred: true, // Wait for React to update the block type
+        cursorAtStart: true, // Position cursor at start for empty blocks
+      });
     },
-    [dispatch],
+    [dispatch, focusManager],
   );
 
   const handleMergeWithPrevious = useCallback(
@@ -314,96 +423,41 @@ const EditorContent: FC = () => {
         payload: { id: previousBlockId, value: mergedContent },
       });
 
-      // Don't use setFocusBlockId for merge - it interferes with cursor positioning
-      // Instead, handle focus and cursor positioning manually
-
-      // Handle cursor positioning outside of React
-      requestAnimationFrame(() => {
-        const element = document.querySelector(
-          `[data-block-id="${previousBlockId}"]`,
-        ) as HTMLElement;
-        if (!element) return;
-
-        element.focus();
-
-        // Set cursor at junction point using vanilla JS
-        const selection = window.getSelection();
-        if (!selection) return;
-
-        console.log('handleMergeWithPrevious: positioning cursor at junction point', junctionPoint);
-
-        const range = document.createRange();
-        const walker = document.createTreeWalker(
-          element,
-          NodeFilter.SHOW_TEXT,
-          null,
-        );
-
-        let currentOffset = 0;
-        let node: Node | null;
-
-        while ((node = walker.nextNode())) {
-          const nodeLength = node.textContent?.length || 0;
-          if (currentOffset + nodeLength >= junctionPoint) {
-            const finalOffset = junctionPoint - currentOffset;
-            range.setStart(node, finalOffset);
-            range.collapse(true);
-            selection.removeAllRanges();
-            selection.addRange(range);
-            console.log('handleMergeWithPrevious: cursor positioned at offset', finalOffset, 'in text node');
-            return;
-          }
-          currentOffset += nodeLength;
-        }
+      console.log('handleMergeWithPrevious: using FocusManager to position cursor at junction', junctionPoint);
+      
+      // Use FocusManager for merge focus
+      focusManager.onBlockMerged(previousBlockId, junctionPoint, {
+        autoFocus: true,
+        deferred: true, // Wait for React content update
       });
     },
-    [state, dispatch],
+    [state, dispatch, focusManager],
   );
 
   const handleNavigateToPrevious = useCallback(
     (blockId: Block['id']) => {
       const previousBlockId = getPreviousBlockId(state, blockId);
       if (previousBlockId) {
-        // Find the DOM element and focus it directly
-        const element = document.querySelector(
-          `[data-block-id="${previousBlockId}"]`,
-        ) as HTMLElement;
-        if (element) {
-          element.focus();
-          // Move cursor to end
-          const range = document.createRange();
-          range.selectNodeContents(element);
-          range.collapse(false);
-          const selection = window.getSelection();
-          selection?.removeAllRanges();
-          selection?.addRange(range);
-        }
+        focusManager.onNavigation(previousBlockId, {
+          cursorAtEnd: true, // Navigation typically goes to end
+          autoFocus: true,
+        });
       }
     },
-    [state],
+    [state, focusManager],
   );
 
   const handleNavigateToNext = useCallback(
     (blockId: Block['id']) => {
       const nextBlockId = getNextBlockId(state, blockId);
       if (nextBlockId) {
-        // Find the DOM element and focus it directly
-        const element = document.querySelector(
-          `[data-block-id="${nextBlockId}"]`,
-        ) as HTMLElement;
-        if (element) {
-          element.focus();
-          // Move cursor to end
-          const range = document.createRange();
-          range.selectNodeContents(element);
-          range.collapse(false);
-          const selection = window.getSelection();
-          selection?.removeAllRanges();
-          selection?.addRange(range);
-        }
+        focusManager.onNavigation(nextBlockId, {
+          cursorAtEnd: true, // Navigation typically goes to end
+          autoFocus: true,
+        });
       }
     },
-    [state],
+    [state, focusManager],
   );
 
   const addTextBlock = useCallback(() => {
@@ -426,7 +480,10 @@ const EditorContent: FC = () => {
           type: 'CHANGE_BLOCK_TYPE',
           payload: { id: lastFocusedBlockId, newType: 'text' },
         });
-        setFocusBlockId(lastFocusedBlockId);
+        focusManager.focusBlock(lastFocusedBlockId, {
+          autoFocus: true,
+          deferred: true,
+        });
       } else {
         // Insert after current block
         const newBlock = createTextBlock('');
@@ -434,7 +491,10 @@ const EditorContent: FC = () => {
           type: 'INSERT_BLOCK_AFTER',
           payload: { afterBlockId: lastFocusedBlockId, newBlock },
         });
-        setFocusBlockId(newBlock.id);
+        focusManager.onBlockCreated(newBlock.id, {
+          autoFocus: true,
+          deferred: true,
+        });
       }
     } else {
       // No focus - handle last block
@@ -444,7 +504,10 @@ const EditorContent: FC = () => {
       if (!lastBlock) {
         const newBlock = createTextBlock('');
         dispatch({ type: 'ADD_BLOCK', payload: newBlock });
-        setFocusBlockId(newBlock.id);
+        focusManager.onBlockCreated(newBlock.id, {
+          autoFocus: true,
+          deferred: true,
+        });
       } else {
         const lastBlockTitle =
           lastBlock.type === 'text' || lastBlock.type === 'heading'
@@ -461,7 +524,10 @@ const EditorContent: FC = () => {
             type: 'CHANGE_BLOCK_TYPE',
             payload: { id: lastBlock.id, newType: 'text' },
           });
-          setFocusBlockId(lastBlock.id);
+          focusManager.focusBlock(lastBlock.id, {
+            autoFocus: true,
+            deferred: true,
+          });
         } else {
           // Insert after last block
           const newBlock = createTextBlock('');
@@ -469,11 +535,14 @@ const EditorContent: FC = () => {
             type: 'INSERT_BLOCK_AFTER',
             payload: { afterBlockId: lastBlock.id, newBlock },
           });
-          setFocusBlockId(newBlock.id);
+          focusManager.onBlockCreated(newBlock.id, {
+            autoFocus: true,
+            deferred: true,
+          });
         }
       }
     }
-  }, [state, dispatch, lastFocusedBlockId]);
+  }, [state, dispatch, lastFocusedBlockId, focusManager]);
 
   const addHeadingBlock = useCallback(() => {
     // Check if block should be replaced by sidebar buttons (only "" or "\n")
@@ -495,7 +564,10 @@ const EditorContent: FC = () => {
           type: 'CHANGE_BLOCK_TYPE',
           payload: { id: lastFocusedBlockId, newType: 'heading' },
         });
-        setFocusBlockId(lastFocusedBlockId);
+        focusManager.focusBlock(lastFocusedBlockId, {
+          autoFocus: true,
+          deferred: true,
+        });
       } else {
         // Insert after current block
         const newBlock = createHeadingBlock('');
@@ -503,7 +575,10 @@ const EditorContent: FC = () => {
           type: 'INSERT_BLOCK_AFTER',
           payload: { afterBlockId: lastFocusedBlockId, newBlock },
         });
-        setFocusBlockId(newBlock.id);
+        focusManager.onBlockCreated(newBlock.id, {
+          autoFocus: true,
+          deferred: true,
+        });
       }
     } else {
       // No focus - handle last block
@@ -513,7 +588,10 @@ const EditorContent: FC = () => {
       if (!lastBlock) {
         const newBlock = createHeadingBlock('');
         dispatch({ type: 'ADD_BLOCK', payload: newBlock });
-        setFocusBlockId(newBlock.id);
+        focusManager.onBlockCreated(newBlock.id, {
+          autoFocus: true,
+          deferred: true,
+        });
       } else {
         const lastBlockTitle =
           lastBlock.type === 'text' || lastBlock.type === 'heading'
@@ -530,7 +608,10 @@ const EditorContent: FC = () => {
             type: 'CHANGE_BLOCK_TYPE',
             payload: { id: lastBlock.id, newType: 'heading' },
           });
-          setFocusBlockId(lastBlock.id);
+          focusManager.focusBlock(lastBlock.id, {
+            autoFocus: true,
+            deferred: true,
+          });
         } else {
           // Insert after last block
           const newBlock = createHeadingBlock('');
@@ -538,11 +619,14 @@ const EditorContent: FC = () => {
             type: 'INSERT_BLOCK_AFTER',
             payload: { afterBlockId: lastBlock.id, newBlock },
           });
-          setFocusBlockId(newBlock.id);
+          focusManager.onBlockCreated(newBlock.id, {
+          autoFocus: true,
+          deferred: true,
+        });
         }
       }
     }
-  }, [state, dispatch, lastFocusedBlockId]);
+  }, [state, dispatch, lastFocusedBlockId, focusManager]);
 
   const addShortAnswerBlock = useCallback(() => {
     if (lastFocusedBlockId) {
@@ -552,14 +636,22 @@ const EditorContent: FC = () => {
         type: 'INSERT_BLOCK_AFTER',
         payload: { afterBlockId: lastFocusedBlockId, newBlock },
       });
-      setFocusBlockId(newBlock.id);
+      focusManager.onBlockCreated(newBlock.id, {
+        autoFocus: true,
+        deferred: true,
+        cursorAtEnd: true, // Position cursor at end of "Sample Short Answer Question"
+      });
     } else {
       // No focus - insert at end
       const newBlock = createShortAnswerBlock('Sample Short Answer Question');
       dispatch({ type: 'ADD_BLOCK', payload: newBlock });
-      setFocusBlockId(newBlock.id);
+      focusManager.onBlockCreated(newBlock.id, {
+        autoFocus: true,
+        deferred: true,
+        cursorAtEnd: true, // Position cursor at end of "Sample Short Answer Question"
+      });
     }
-  }, [dispatch, lastFocusedBlockId]);
+  }, [dispatch, lastFocusedBlockId, focusManager]);
 
   const addMultipleChoiceBlock = useCallback(() => {
     if (lastFocusedBlockId) {
@@ -569,14 +661,22 @@ const EditorContent: FC = () => {
         type: 'INSERT_BLOCK_AFTER',
         payload: { afterBlockId: lastFocusedBlockId, newBlock },
       });
-      setFocusBlockId(newBlock.id);
+      focusManager.onBlockCreated(newBlock.id, {
+        autoFocus: true,
+        deferred: true,
+        cursorAtEnd: true, // Position cursor at end of "Question"
+      });
     } else {
       // No focus - insert at end
       const newBlock = createMultipleChoiceBlock('Question');
       dispatch({ type: 'ADD_BLOCK', payload: newBlock });
-      setFocusBlockId(newBlock.id);
+      focusManager.onBlockCreated(newBlock.id, {
+        autoFocus: true,
+        deferred: true,
+        cursorAtEnd: true, // Position cursor at end of "Question"
+      });
     }
-  }, [dispatch, lastFocusedBlockId]);
+  }, [dispatch, lastFocusedBlockId, focusManager]);
 
   const addMultiselectBlock = useCallback(() => {
     if (lastFocusedBlockId) {
@@ -586,14 +686,22 @@ const EditorContent: FC = () => {
         type: 'INSERT_BLOCK_AFTER',
         payload: { afterBlockId: lastFocusedBlockId, newBlock },
       });
-      setFocusBlockId(newBlock.id);
+      focusManager.onBlockCreated(newBlock.id, {
+        autoFocus: true,
+        deferred: true,
+        cursorAtEnd: true, // Position cursor at end of "Select label"
+      });
     } else {
       // No focus - insert at end
       const newBlock = createMultiselectBlock('Select label');
       dispatch({ type: 'ADD_BLOCK', payload: newBlock });
-      setFocusBlockId(newBlock.id);
+      focusManager.onBlockCreated(newBlock.id, {
+        autoFocus: true,
+        deferred: true,
+        cursorAtEnd: true, // Position cursor at end of "Select label"
+      });
     }
-  }, [dispatch, lastFocusedBlockId]);
+  }, [dispatch, lastFocusedBlockId, focusManager]);
 
   const handleDragStart = useCallback(
     (event: { active: { id: string | number } }) => {
@@ -626,10 +734,17 @@ const EditorContent: FC = () => {
             type: 'REORDER_BLOCKS',
             payload: { blockIds: reorderedBlockIds },
           });
+          
+          // Restore focus to the dragged block after drag operation
+          const draggedBlockId = Number(active.id);
+          focusManager.focusBlock(draggedBlockId, {
+            autoFocus: true,
+            deferred: true, // Wait for React reorder
+          });
         }
       }
     },
-    [state, dispatch],
+    [state, dispatch, focusManager],
   );
 
   return (
@@ -669,46 +784,24 @@ const EditorContent: FC = () => {
                 )}
                 strategy={verticalListSortingStrategy}
               >
-                {getOrderedBlocks(state).map((block, index) => {
-                  // Auto-focus if it's the first block AND the only block,
-                  // OR if it's a newly created block that should be focused
-                  const orderedBlocks = getOrderedBlocks(state);
-                  const shouldAutoFocus =
-                    focusBlockId === block.id ||
-                    (index === 0 &&
-                      block.type === 'text' &&
-                      orderedBlocks.length === 1 &&
-                      !focusBlockId);
-
-                  const shouldCursorAtStart = cursorAtStartBlockIds.has(
-                    block.id,
-                  );
-                  
-                  if (shouldCursorAtStart) {
-                    console.log('Block should have cursor at start:', block.id);
-                  }
-
-                  return (
-                    <BlockRenderer
-                      key={block.id}
-                      block={block}
-                      onChange={handleBlockChange}
-                      onFieldChange={handleFieldChange}
-                      onOptionsChange={handleOptionsChange}
-                      onRequiredChange={handleRequiredChange}
-                      onBlockClick={handleBlockClick}
-                      onCreateBlockAfter={handleCreateBlockAfter}
-                      onChangeBlockType={handleChangeBlockType}
-                      onDeleteBlock={handleDeleteBlockAndFocusPrevious}
-                      onMergeWithPrevious={handleMergeWithPrevious}
-                      onNavigateToPrevious={handleNavigateToPrevious}
-                      onNavigateToNext={handleNavigateToNext}
-                      autoFocus={shouldAutoFocus}
-                      cursorAtStart={shouldCursorAtStart}
-                      dragHandlesVisible={dragHandlesVisible}
-                    />
-                  );
-                })}
+                {getOrderedBlocks(state).map((block) => (
+                  <BlockRenderer
+                    key={block.id}
+                    block={block}
+                    onChange={handleBlockChange}
+                    onFieldChange={handleFieldChange}
+                    onOptionsChange={handleOptionsChange}
+                    onRequiredChange={handleRequiredChange}
+                    onBlockClick={handleBlockClick}
+                    onCreateBlockAfter={handleCreateBlockAfter}
+                    onChangeBlockType={handleChangeBlockType}
+                    onDeleteBlock={handleDeleteBlockAndFocusPrevious}
+                    onMergeWithPrevious={handleMergeWithPrevious}
+                    onNavigateToPrevious={handleNavigateToPrevious}
+                    onNavigateToNext={handleNavigateToNext}
+                    dragHandlesVisible={dragHandlesVisible}
+                  />
+                ))}
               </SortableContext>
               <DragOverlay dropAnimation={null}>
                 {activeBlockId ? (
@@ -721,8 +814,6 @@ const EditorContent: FC = () => {
                       onOptionsChange={() => {}}
                       onRequiredChange={() => {}}
                       onBlockClick={() => {}}
-                      autoFocus={false}
-                      cursorAtStart={false}
                     />
                   </div>
                 ) : null}

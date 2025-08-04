@@ -5,11 +5,14 @@ interface UseBlockCreationProps {
   onCreateBlockAfter?: (options?: {
     initialContent?: string;
     cursorAtStart?: boolean;
+    onFocusTransferred?: () => void;
   }) => number;
   onChange?: (value: string) => void;
   onMergeWithPrevious?: (currentContent: string) => void;
   onDeleteBlock?: () => void;
   hasPreviousBlock?: boolean;
+  onSplittingStateChange?: (isSplitting: boolean) => void;
+  isInSlashMode?: boolean; // Prevent block deletion when in slash mode
 }
 
 export const useBlockCreation = ({
@@ -18,6 +21,8 @@ export const useBlockCreation = ({
   onMergeWithPrevious,
   onDeleteBlock,
   hasPreviousBlock = true,
+  onSplittingStateChange,
+  isInSlashMode = false,
 }: UseBlockCreationProps) => {
   const splitAndCreateBlock = useCallback(
     (element: HTMLElement) => {
@@ -25,20 +30,27 @@ export const useBlockCreation = ({
 
       const { before, after } = splitContentAtCursor(element);
 
-      // Update current block with content before cursor
-      onChange(before);
-
       // If after content is exactly one newline, create empty block
       const cleanAfter = after === '\n' ? '' : after;
       
-      // Create new block with content after cursor
+      // Signal start of splitting to prevent placeholder flicker
+      onSplittingStateChange?.(true);
+      
+      // Create new block with content after cursor FIRST
       // Always position cursor at start of new block
-      return onCreateBlockAfter({
+      const newBlockId = onCreateBlockAfter({
         initialContent: cleanAfter,
         cursorAtStart: true,
+        // Pass callback to execute after focus transfer
+        onFocusTransferred: () => {
+          onChange(before);
+          onSplittingStateChange?.(false);
+        },
       });
+
+      return newBlockId;
     },
-    [onCreateBlockAfter, onChange],
+    [onCreateBlockAfter, onChange, onSplittingStateChange],
   );
 
   const isCursorAtStart = useCallback((element: HTMLElement) => {
@@ -73,10 +85,24 @@ export const useBlockCreation = ({
     return hasPreviousBlock && onMergeWithPrevious !== undefined;
   }, [onMergeWithPrevious, hasPreviousBlock]);
 
+
   const handleBackspace = useCallback(
     (element: HTMLElement, currentValue: string) => {
+      console.log('🔍 handleBackspace called:', {
+        currentValue: `"${currentValue}"`,
+        isInSlashMode,
+        isEmpty: !currentValue.trim()
+      });
+      
       // If empty block
       if (!currentValue.trim()) {
+        // Don't delete block if in slash mode (user is just deleting the slash)
+        if (isInSlashMode) {
+          console.log('🔍 Block deletion prevented - in slash mode');
+          return false; // Let the slash command handler deal with it
+        }
+        
+        console.log('🔍 Block is empty and not in slash mode - deleting block');
         // Only delete if not first block
         if (hasPreviousBlock && onDeleteBlock) {
           onDeleteBlock();
@@ -86,13 +112,15 @@ export const useBlockCreation = ({
 
       // If cursor at start
       if (isCursorAtStart(element)) {
+        console.log('🔍 Cursor at start - merging with previous');
         mergeWithPreviousBlock(currentValue);
         return true;
       }
 
+      console.log('🔍 Normal backspace - not handling');
       return false;
     },
-    [hasPreviousBlock, onDeleteBlock, isCursorAtStart, mergeWithPreviousBlock],
+    [hasPreviousBlock, onDeleteBlock, isCursorAtStart, mergeWithPreviousBlock, isInSlashMode],
   );
 
   return {

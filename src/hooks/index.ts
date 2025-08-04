@@ -9,3 +9,4 @@ export { useBlockCreation } from './useBlockCreation';
 export { useBlockNavigation } from './useBlockNavigation';
 export { useSlashCommands } from './useSlashCommands';
 export { useCommandIndicator } from './useCommandIndicator';
+export { useFocusManager, useGlobalFocusManager } from './useFocusManager';

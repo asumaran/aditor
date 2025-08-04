@@ -1,4 +1,4 @@
-import { type FC, useMemo } from 'react';
+import { type FC, useMemo, useState, useCallback } from 'react';
 import {
   useContentEditable,
   useBlockCommands,
@@ -18,12 +18,12 @@ interface TextBlockProps extends BlockComponentProps {
   onChange: (value: string) => void;
   placeholder?: string;
   className?: string;
-  autoFocus?: boolean;
-  cursorAtStart?: boolean;
   onCreateBlockAfter?: (options?: {
     initialContent?: string;
     cursorAtStart?: boolean;
     blockType?: string;
+    onFocusTransferred?: () => void;
+    replaceCurrentBlock?: boolean;
   }) => number;
   onDeleteBlock?: () => void;
   onMergeWithPrevious?: (currentContent: string) => void;
@@ -38,26 +38,21 @@ export const TextBlock: FC<TextBlockProps> = ({
   onChange,
   placeholder = "Write, enter '/' for commands…",
   className,
-  autoFocus = false,
-  cursorAtStart = false,
   onCreateBlockAfter,
   onDeleteBlock,
   onMergeWithPrevious,
-  onChangeBlockType,
   blockId,
 }) => {
   const { state } = useEditor();
   const {
     elementRef,
-    handleInput,
+    handleInput: baseHandleInput,
     handleCompositionStart,
     handleCompositionEnd,
     currentValue,
   } = useContentEditable({
     value,
     onChange,
-    autoFocus,
-    cursorAtStart,
     blockId,
   });
 
@@ -67,19 +62,13 @@ export const TextBlock: FC<TextBlockProps> = ({
     return !!previousBlockId;
   }, [state, blockId]);
 
-  const { splitAndCreateBlock, isCursorAtStart, handleBackspace } =
-    useBlockCreation({
-      onCreateBlockAfter,
-      onChange,
-      onMergeWithPrevious,
-      onDeleteBlock,
-      hasPreviousBlock,
-    });
+  const [isSplitting, setIsSplitting] = useState(false);
 
   /**
    * HOOK ORDER CRITICAL SECTION
    *
-   * useSlashCommands MUST be called before useBlockNavigation because:
+   * useSlashCommands MUST be called before useBlockCreation and useBlockNavigation because:
+   * - useBlockCreation needs the isSlashInputMode value to prevent block deletion
    * - useBlockNavigation needs the isSlashInputMode value from useSlashCommands
    * - React hooks must maintain consistent order between renders
    * - Wrong order causes "Cannot access before initialization" errors
@@ -97,20 +86,55 @@ export const TextBlock: FC<TextBlockProps> = ({
     currentValue,
     onChange,
     blockType: 'text',
-    onCreateBlockAfter: (type: string) => {
-      console.log('TextBlock slash command: creating block type', type, 'after block', blockId);
+    onCreateBlockAfter: (options: { blockType: string; replaceCurrentBlock?: boolean }) => {
+      console.log('TextBlock slash command: creating block with options', options, 'after block', blockId);
       if (onCreateBlockAfter) {
-        onCreateBlockAfter({ blockType: type });
+        // Pass through the options from useSlashCommands
+        onCreateBlockAfter(options);
       } else {
         console.error('TextBlock: no onCreateBlockAfter available');
       }
     },
-    onChangeBlockType: (type: string) => {
-      if (blockId) {
-        onChangeBlockType?.(blockId, type);
-      }
-    },
   });
+
+  // Create updated handleInput with slash mode awareness
+  const handleInput = useCallback(
+    (event: React.FormEvent<HTMLDivElement>) => {
+      const target = event.target as HTMLDivElement;
+      
+      // Check for and clean up any leftover background spans (from slash commands)
+      // Only clean up when NOT in slash mode to avoid interfering with active slash commands
+      if (!isSlashInputMode) {
+        const backgroundSpans = target.querySelectorAll('span[style*="background"]');
+        if (backgroundSpans.length > 0) {
+          console.log('🧹 TextBlock: Detected leftover background spans, cleaning up (not in slash mode)');
+          // Get the text content before cleaning
+          const textContent = target.textContent || '';
+          // Clear all HTML and set plain text
+          target.innerHTML = '';
+          target.textContent = textContent;
+          console.log('🧹 TextBlock: Cleaned up spans, content now:', textContent);
+        }
+      }
+      
+      // Call the base handler
+      baseHandleInput(event);
+    },
+    [baseHandleInput, isSlashInputMode]
+  );
+
+  const { splitAndCreateBlock, isCursorAtStart, handleBackspace } =
+    useBlockCreation({
+      onCreateBlockAfter,
+      onChange,
+      onMergeWithPrevious,
+      onDeleteBlock,
+      hasPreviousBlock,
+      onSplittingStateChange: setIsSplitting,
+      isInSlashMode: isSlashInputMode, // Pass slash mode state to prevent block deletion
+    });
+  
+  console.log('🔍 TextBlock render - isSlashInputMode:', isSlashInputMode);
 
   const { navigationCommands } = useBlockNavigation({
     blockId,
@@ -197,6 +221,7 @@ export const TextBlock: FC<TextBlockProps> = ({
         ref={elementRef as React.RefObject<HTMLDivElement>}
         contentEditable
         suppressContentEditableWarning
+        role="textbox"
         onInput={handleInput}
         onCompositionStart={handleCompositionStart}
         onCompositionEnd={handleCompositionEnd}
@@ -210,6 +235,7 @@ export const TextBlock: FC<TextBlockProps> = ({
           !currentValue && !isSlashInputMode && 'text-gray-400',
           !currentValue &&
             !isSlashInputMode &&
+            !isSplitting &&
             'focus:after:content-[attr(data-placeholder)]',
           className,
         )}

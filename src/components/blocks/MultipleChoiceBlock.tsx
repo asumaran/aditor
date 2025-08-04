@@ -172,7 +172,6 @@ export const MultipleChoiceBlock = forwardRef<
       required = false,
       blockId,
       className,
-      autoFocus = false,
       sortOrder = 'manual',
     },
     ref,
@@ -201,7 +200,6 @@ export const MultipleChoiceBlock = forwardRef<
     } = useContentEditable({
       value,
       onChange,
-      autoFocus,
     });
 
     const handleClickWithStopPropagation = useStopPropagation();

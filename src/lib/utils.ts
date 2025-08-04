@@ -75,22 +75,13 @@ export const validateRequired = <T>(
  * Check if cursor should navigate to previous block on ArrowUp
  * This detects if pressing ArrowUp would navigate to previous block
  *
- * EDGE CASES HANDLED:
- * 1. Empty elements - Always returns true (nowhere to go up)
- * 2. Explicit line breaks (\n) - Checks if there's a \n before cursor position
- * 3. Visual line wrapping - Uses getBoundingClientRect() to detect if cursor is visually on first line
- * 4. Mixed content - Handles both explicit \n and visual wrapping in same element
- *
- * IMPORTANT: The visual detection uses lineHeight * 0.5 threshold to avoid false positives
- * when cursor is near but not exactly at the top of the element.
+ * SIMPLIFIED APPROACH: This now focuses on reliable text-based detection
+ * rather than complex visual detection which was causing issues.
  */
 export const isCursorAtFirstLine = (editableElement: HTMLElement): boolean => {
   const selection = window.getSelection();
 
-  if (
-    !selection?.rangeCount ||
-    !editableElement.contains(selection.anchorNode)
-  ) {
+  if (!selection?.rangeCount) {
     return false;
   }
 
@@ -118,20 +109,8 @@ export const isCursorAtFirstLine = (editableElement: HTMLElement): boolean => {
       return false;
     }
 
-    // No explicit newlines before cursor - we're on the first "text line"
-    // But for wrapped text, check if we're visually on the first line
-    const rect = range.getBoundingClientRect();
-    const elementRect = editableElement.getBoundingClientRect();
-
-    // For wrapped text, check if cursor is visually on the first line
-    // Use a smaller threshold for more precise detection
-    const lineHeight =
-      parseInt(window.getComputedStyle(editableElement).lineHeight) || 20;
-    if (rect.top > elementRect.top + lineHeight * 0.5) {
-      // Cursor is visually below the first line due to wrapping
-      return false;
-    }
-
+    // No explicit newlines before cursor - we're on the first text line
+    // For single-line content or cursor before first newline, consider this first line
     return true;
   } catch {
     return false;
@@ -142,28 +121,13 @@ export const isCursorAtFirstLine = (editableElement: HTMLElement): boolean => {
  * Check if cursor is at the last line of a contentEditable element
  * This detects if pressing ArrowDown would navigate to next block
  *
- * EDGE CASES HANDLED:
- * 1. Empty elements - Always returns true (nowhere to go down)
- * 2. Content ending with \n - Special handling for cursor on empty line after final newline
- * 3. Empty lines in middle - Correctly detects if empty line is truly the last line
- * 4. Visual line wrapping - Complex detection using CSS line-height and visual positioning
- * 5. Form block labels - Special handling for standardized 30px line-height in form labels
- * 6. Different line-height units - Handles px, em, rem, unitless, and 'normal' values
- *
- * THRESHOLDS:
- * - Multiple lines: Uses strict 0.6 * lineHeight to avoid premature navigation
- * - Single line: Uses more generous 0.9 * lineHeight for better UX
- * - Form labels: Automatically detects and uses exact 30px line-height
- *
- * WARNING: The debug console.log at line 119 should be removed in production
+ * SIMPLIFIED APPROACH: Focus on reliable text-based detection
+ * for better consistency and fewer edge cases.
  */
 export const isCursorAtLastLine = (editableElement: HTMLElement): boolean => {
   const selection = window.getSelection();
 
-  if (
-    !selection?.rangeCount ||
-    !editableElement.contains(selection.anchorNode)
-  ) {
+  if (!selection?.rangeCount) {
     return false;
   }
 
@@ -182,7 +146,7 @@ export const isCursorAtLastLine = (editableElement: HTMLElement): boolean => {
     preRange.setEnd(range.startContainer, range.startOffset);
     const cursorOffset = preRange.toString().length;
 
-    // Check if there's a newline after cursor position (explicit line breaks)
+    // Check if there's a newline after cursor position
     const textAfterCursor = content.substring(cursorOffset);
 
     // Special handling for empty lines: if text after cursor is only "\n" and it's the final newline
@@ -202,56 +166,7 @@ export const isCursorAtLastLine = (editableElement: HTMLElement): boolean => {
       return true;
     }
 
-    // No explicit newlines after cursor - we're on the last "text line"
-    // But for wrapped text, check if we're visually on the last line
-    const rect = range.getBoundingClientRect();
-    const elementRect = editableElement.getBoundingClientRect();
-
-    // For wrapped text, use precise CSS line height measurement
-    const computedStyle = window.getComputedStyle(editableElement);
-    let actualLineHeight: number;
-
-    if (computedStyle.lineHeight === 'normal') {
-      // Browser default is usually fontSize * 1.2
-      actualLineHeight = parseInt(computedStyle.fontSize) * 1.2;
-    } else if (computedStyle.lineHeight.endsWith('px')) {
-      actualLineHeight = parseInt(computedStyle.lineHeight);
-    } else if (
-      computedStyle.lineHeight.endsWith('em') ||
-      computedStyle.lineHeight.endsWith('rem')
-    ) {
-      const multiplier = parseFloat(computedStyle.lineHeight);
-      actualLineHeight = parseInt(computedStyle.fontSize) * multiplier;
-    } else {
-      // Unitless number like "1.5"
-      const multiplier = parseFloat(computedStyle.lineHeight);
-      actualLineHeight = parseInt(computedStyle.fontSize) * multiplier;
-    }
-
-    // Special handling for form block labels with standardized CSS
-    const isFormBlockLabel =
-      editableElement.getAttribute('data-placeholder') === 'Question name';
-    if (isFormBlockLabel) {
-      // Form block labels use standardized leading-[30px] exactly
-      actualLineHeight = 30;
-    }
-
-    // Calculate actual number of lines in the element
-    const totalLines = Math.round(
-      (elementRect.bottom - elementRect.top) / actualLineHeight,
-    );
-
-    // Much more strict detection: only last line if within 0.6 of line height
-    // But use the line count to ensure we only trigger on actual last line
-    const strictThreshold = actualLineHeight * 0.6;
-
-    // Additional safety check: if there are multiple lines, be extra careful
-    const preciseThreshold =
-      totalLines > 1 ? strictThreshold : actualLineHeight * 0.9;
-
-    if (rect.bottom < elementRect.bottom - preciseThreshold) {
-      return false;
-    }
+    // No explicit newlines after cursor - we're on the last text line
     return true;
   } catch {
     return false;
@@ -287,11 +202,21 @@ export const getCursorHorizontalPosition = (
   const range = selection.getRangeAt(0);
   const content = editableElement.textContent || '';
 
+  if (!content) return 0;
+
   // Get absolute cursor position in text
-  const preRange = document.createRange();
-  preRange.selectNodeContents(editableElement);
-  preRange.setEnd(range.startContainer, range.startOffset);
-  const cursorOffset = preRange.toString().length;
+  let cursorOffset = 0;
+  try {
+    const preRange = document.createRange();
+    preRange.selectNodeContents(editableElement);
+    preRange.setEnd(range.startContainer, range.startOffset);
+    cursorOffset = preRange.toString().length;
+  } catch {
+    // Fallback: try to get position another way
+    if (range.startContainer.nodeType === Node.TEXT_NODE) {
+      cursorOffset = range.startOffset;
+    }
+  }
 
   // Check for explicit newlines first
   const textBeforeCursor = content.substring(0, cursorOffset);
@@ -302,56 +227,8 @@ export const getCursorHorizontalPosition = (
     return cursorOffset - lastNewlineIndex - 1;
   }
 
-  // For wrapped text without explicit newlines:
-  // We need to find where the current visual line starts
-  const cursorRect = range.getBoundingClientRect();
-
-  // Walk backwards character by character to find start of visual line
-  let lineStartOffset = 0;
-  for (let i = cursorOffset - 1; i >= 0; i--) {
-    // Create a range at position i
-    const testRange = document.createRange();
-    let charFound = false;
-
-    // Find the character at position i using TreeWalker
-    const walker = document.createTreeWalker(
-      editableElement,
-      NodeFilter.SHOW_TEXT,
-      null,
-    );
-
-    let currentOffset = 0;
-    let node: Node | null;
-
-    while ((node = walker.nextNode())) {
-      const nodeLength = node.textContent?.length || 0;
-      if (currentOffset + nodeLength > i) {
-        // Found the node containing position i
-        try {
-          testRange.setStart(node, i - currentOffset);
-          testRange.setEnd(node, i - currentOffset + 1);
-          const testRect = testRange.getBoundingClientRect();
-
-          // If this character is on a different line (different Y position)
-          if (Math.abs(testRect.top - cursorRect.top) > 5) {
-            lineStartOffset = i + 1;
-            charFound = true;
-            break;
-          }
-        } catch {
-          // Invalid position, continue
-        }
-        break;
-      }
-      currentOffset += nodeLength;
-    }
-
-    if (charFound) break;
-  }
-
-  const positionInLine = cursorOffset - lineStartOffset;
-
-  return positionInLine;
+  // For single-line content (no newlines), return absolute position
+  return cursorOffset;
 };
 
 /**
@@ -470,7 +347,7 @@ export const setCursorAtHorizontalPosition = (
 /**
  * Set cursor at specific character position in element
  */
-const setCursorAtPosition = (element: HTMLElement, position: number): void => {
+export const setCursorAtPosition = (element: HTMLElement, position: number): void => {
   const selection = window.getSelection();
   if (!selection) return;
 
@@ -557,47 +434,13 @@ export const navigateToLastLine = (
     return;
   }
 
-  // To find the last line, place cursor one character before the end
-  // This avoids the issue where cursor at very end might be considered a new empty line
-  const range = document.createRange();
-  const walker = document.createTreeWalker(
-    editableElement,
-    NodeFilter.SHOW_TEXT,
-    null,
-  );
-  let lastNode: Node | null = null;
-  let node: Node | null;
+  // Find last line length and calculate position - similar to navigateToFirstLine
+  const lastLineStart = content.lastIndexOf('\n');
+  const lastLineStartPos = lastLineStart === -1 ? 0 : lastLineStart + 1;
+  const lastLineLength = content.length - lastLineStartPos;
+  const targetPos = lastLineStartPos + Math.min(horizontalPosition, lastLineLength);
 
-  while ((node = walker.nextNode())) {
-    lastNode = node;
-  }
-
-  if (lastNode && lastNode.textContent && lastNode.textContent.length > 0) {
-    // Place cursor at last character (not after it)
-    range.setStart(lastNode, lastNode.textContent.length - 1);
-    range.setEnd(lastNode, lastNode.textContent.length - 1);
-  } else {
-    // Fallback for empty or single character
-    range.selectNodeContents(editableElement);
-    range.collapse(false);
-  }
-
-  selection.removeAllRanges();
-  selection.addRange(range);
-
-  // Get how many characters from start of last line to last character
-  const charsFromLineStart = getCursorHorizontalPosition(editableElement);
-
-  // Since we measured to the last character (not after it), add 1
-  const lineLength = charsFromLineStart + 1;
-
-  // Calculate absolute position for start of last line
-  const lastLineStart = content.length - lineLength;
-
-  // Target position is start of last line + desired horizontal position
-  // But don't go past the line length
-  const targetPos = lastLineStart + Math.min(horizontalPosition, lineLength);
-
+  // Set cursor directly to calculated position
   setCursorAtPosition(editableElement, targetPos);
 };
 

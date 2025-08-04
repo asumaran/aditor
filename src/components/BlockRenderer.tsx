@@ -27,8 +27,6 @@ interface BlockRendererProps {
   onNavigateToPrevious?: (blockId: Block['id']) => void;
   onNavigateToNext?: (blockId: Block['id']) => void;
   className?: string;
-  autoFocus?: boolean;
-  cursorAtStart?: boolean;
   dragHandlesVisible?: boolean;
 }
 
@@ -97,8 +95,6 @@ export const BlockRenderer: FC<BlockRendererProps> = ({
   onNavigateToPrevious,
   onNavigateToNext,
   className,
-  autoFocus = false,
-  cursorAtStart = false,
   dragHandlesVisible = true,
 }) => {
   const Component = getBlockComponent(block.type);
@@ -142,8 +138,6 @@ export const BlockRenderer: FC<BlockRendererProps> = ({
     onChange: handleChange,
     onFieldChange: handleFieldChange,
     required: getBlockRequired(block),
-    autoFocus: autoFocus,
-    cursorAtStart: cursorAtStart,
     onCreateBlockAfter: onCreateBlockAfter
       ? (options?: {
           initialContent?: string;

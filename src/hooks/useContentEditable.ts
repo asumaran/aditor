@@ -3,21 +3,15 @@ import { useRef, useEffect, useCallback, useState } from 'react';
 interface UseContentEditableProps {
   value: string;
   onChange: (value: string) => void;
-  autoFocus?: boolean;
-  cursorAtStart?: boolean;
   blockId?: number;
 }
 
 export const useContentEditable = ({
   value,
   onChange,
-  autoFocus = false,
-  cursorAtStart = false,
-  blockId,
 }: UseContentEditableProps) => {
   const elementRef = useRef<HTMLElement>(null);
   const isComposingRef = useRef(false);
-  const autoFocusHandledRef = useRef(false);
   const [currentValue, setCurrentValue] = useState(value);
 
   const moveCursorToEnd = useCallback(() => {
@@ -35,16 +29,7 @@ export const useContentEditable = ({
 
   const moveCursorToStart = useCallback(() => {
     const element = elementRef.current;
-    if (!element) {
-      console.log('moveCursorToStart: no element');
-      return;
-    }
-
-    console.log('moveCursorToStart: element content before:', {
-      textContent: element.textContent,
-      innerHTML: element.innerHTML,
-      childNodes: element.childNodes.length
-    });
+    if (!element) return;
 
     const range = document.createRange();
     range.selectNodeContents(element);
@@ -53,21 +38,6 @@ export const useContentEditable = ({
     const selection = window.getSelection();
     selection?.removeAllRanges();
     selection?.addRange(range);
-    
-    // Verify cursor position immediately and after timeout
-    const immediateSelection = window.getSelection();
-    if (immediateSelection?.rangeCount) {
-      const immediateRange = immediateSelection.getRangeAt(0);
-      console.log('moveCursorToStart: immediate offset', immediateRange.startOffset);
-    }
-    
-    setTimeout(() => {
-      const newSelection = window.getSelection();
-      if (newSelection?.rangeCount) {
-        const newRange = newSelection.getRangeAt(0);
-        console.log('moveCursorToStart: final offset', newRange.startOffset);
-      }
-    }, 0);
   }, []);
 
   const handleInput = useCallback(
@@ -143,36 +113,8 @@ export const useContentEditable = ({
     if (element.textContent !== value) {
       element.textContent = value;
       setCurrentValue(value);
-
-      // For autofocus blocks, focus first, then position cursor in the next frame
-      if (autoFocus && !autoFocusHandledRef.current) {
-        autoFocusHandledRef.current = true;
-        element.focus();
-        
-        // Position cursor after focus is complete
-        requestAnimationFrame(() => {
-          if (cursorAtStart) {
-            console.log('useContentEditable: moving cursor to start (autofocus)', { blockId, value, cursorAtStart });
-            moveCursorToStart();
-          } else {
-            console.log('useContentEditable: moving cursor to end (autofocus)', { blockId, value, cursorAtStart });
-            moveCursorToEnd();
-          }
-        });
-      } else {
-        // For non-autofocus blocks, position cursor immediately
-        if (cursorAtStart) {
-          console.log('useContentEditable: moving cursor to start', { blockId, value, cursorAtStart });
-          moveCursorToStart();
-        } else {
-          console.log('useContentEditable: moving cursor to end', { blockId, value, cursorAtStart });
-          moveCursorToEnd();
-        }
-      }
     }
-  }, [value, moveCursorToEnd, moveCursorToStart, cursorAtStart, autoFocus]);
-
-  // Handle autoFocus - removed since it's now handled in the content effect
+  }, [value]);
 
   return {
     elementRef,
@@ -181,5 +123,7 @@ export const useContentEditable = ({
     handleCompositionEnd,
     handleBlur,
     currentValue,
+    moveCursorToEnd,
+    moveCursorToStart,
   };
 };

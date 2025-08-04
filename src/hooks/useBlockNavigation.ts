@@ -1,8 +1,6 @@
 import { useMemo, useCallback } from 'react';
 import { useEditor } from '@/hooks';
 import {
-  isCursorAtFirstLine,
-  isCursorAtLastLine,
   getCursorHorizontalPosition,
   navigateToLastLine,
   navigateToFirstLine,
@@ -94,74 +92,81 @@ export const useBlockNavigation = ({
     [blockId, state, elementRef],
   );
 
+  // Simplified cursor position checks for more natural navigation
+  const isAtTopOfBlock = useCallback(() => {
+    if (!elementRef.current) return false;
+    
+    const selection = window.getSelection();
+    if (!selection?.rangeCount) return false;
+    
+    const range = selection.getRangeAt(0);
+    const preRange = document.createRange();
+    preRange.selectNodeContents(elementRef.current);
+    preRange.setEnd(range.startContainer, range.startOffset);
+    const cursorPosition = preRange.toString().length;
+    
+    // Consider top if cursor is at start OR if there's no newline before cursor
+    const content = elementRef.current.textContent || '';
+    const textBeforeCursor = content.substring(0, cursorPosition);
+    return cursorPosition === 0 || !textBeforeCursor.includes('\n');
+  }, [elementRef]);
+  
+  const isAtBottomOfBlock = useCallback(() => {
+    if (!elementRef.current) return false;
+    
+    const selection = window.getSelection();
+    if (!selection?.rangeCount) return false;
+    
+    const range = selection.getRangeAt(0);
+    const preRange = document.createRange();
+    preRange.selectNodeContents(elementRef.current);
+    preRange.setEnd(range.startContainer, range.startOffset);
+    const cursorPosition = preRange.toString().length;
+    
+    // Consider bottom if cursor is at end OR if there's no newline after cursor
+    const content = elementRef.current.textContent || '';
+    const textAfterCursor = content.substring(cursorPosition);
+    return cursorPosition === content.length || !textAfterCursor.includes('\n');
+  }, [elementRef]);
+
   const navigationCommands = useMemo(
     () => [
       {
         key: 'ArrowUp',
-        condition: () => {
-          return !isSlashInputMode && // Prevent navigation when slash dropdown is open
-            elementRef.current
-            ? isCursorAtFirstLine(elementRef.current)
-            : false;
-        },
+        condition: () => !isSlashInputMode && isAtTopOfBlock(),
         handler: handleArrowUp,
       },
       {
         key: 'ArrowUp',
         modifiers: metaModifier, // Cmd+ArrowUp on Mac
-        condition: () => {
-          return !isSlashInputMode && // Prevent navigation when slash dropdown is open
-            elementRef.current
-            ? isCursorAtFirstLine(elementRef.current)
-            : false;
-        },
+        condition: () => !isSlashInputMode && isAtTopOfBlock(),
         handler: handleArrowUp,
       },
       {
         key: 'ArrowUp',
         modifiers: ctrlModifier, // Ctrl+ArrowUp on Windows/Linux
-        condition: () => {
-          return !isSlashInputMode && // Prevent navigation when slash dropdown is open
-            elementRef.current
-            ? isCursorAtFirstLine(elementRef.current)
-            : false;
-        },
+        condition: () => !isSlashInputMode && isAtTopOfBlock(),
         handler: handleArrowUp,
       },
       {
         key: 'ArrowDown',
-        condition: () => {
-          return !isSlashInputMode && // Prevent navigation when slash dropdown is open
-            elementRef.current
-            ? isCursorAtLastLine(elementRef.current)
-            : false;
-        },
+        condition: () => !isSlashInputMode && isAtBottomOfBlock(),
         handler: handleArrowDown,
       },
       {
         key: 'ArrowDown',
         modifiers: metaModifier, // Cmd+ArrowDown on Mac
-        condition: () => {
-          return !isSlashInputMode && // Prevent navigation when slash dropdown is open
-            elementRef.current
-            ? isCursorAtLastLine(elementRef.current)
-            : false;
-        },
+        condition: () => !isSlashInputMode && isAtBottomOfBlock(),
         handler: handleArrowDown,
       },
       {
         key: 'ArrowDown',
         modifiers: ctrlModifier, // Ctrl+ArrowDown on Windows/Linux
-        condition: () => {
-          return !isSlashInputMode && // Prevent navigation when slash dropdown is open
-            elementRef.current
-            ? isCursorAtLastLine(elementRef.current)
-            : false;
-        },
+        condition: () => !isSlashInputMode && isAtBottomOfBlock(),
         handler: handleArrowDown,
       },
     ],
-    [handleArrowUp, handleArrowDown, elementRef, isSlashInputMode],
+    [handleArrowUp, handleArrowDown, isSlashInputMode, isAtTopOfBlock, isAtBottomOfBlock],
   );
 
   return { navigationCommands };

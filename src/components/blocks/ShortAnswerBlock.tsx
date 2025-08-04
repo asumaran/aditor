@@ -30,7 +30,6 @@ export const ShortAnswerBlock = forwardRef<BlockHandle, ShortAnswerBlockProps>(
       required = false,
       className,
       blockId,
-      autoFocus = false,
     },
     ref,
   ) => {
@@ -50,7 +49,6 @@ export const ShortAnswerBlock = forwardRef<BlockHandle, ShortAnswerBlockProps>(
           onChange(newValue);
         }
       },
-      autoFocus,
     });
 
     const handleClickWithStopPropagation = useStopPropagation();

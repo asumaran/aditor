@@ -47,7 +47,7 @@ export const useCommandIndicator = ({
 
   // Exit command mode
   const exitCommandMode = useCallback(
-    (keepCommandContent: boolean = false) => {
+    (keepCommandContent: boolean = false, shouldBlur: boolean = false) => {
       console.log(
         'exitCommandMode called with keepCommandContent:',
         keepCommandContent,
@@ -133,8 +133,10 @@ export const useCommandIndicator = ({
           onChange(finalContent);
         }
       } else {
-        // Restore original content completely
-        elementRef.current.textContent = originalContent;
+        // Restore original content completely - clean all HTML first
+        console.log('exitCommandMode: Cleaning DOM completely and restoring original content');
+        elementRef.current.innerHTML = ''; // Clear all HTML including spans
+        elementRef.current.textContent = originalContent; // Set plain text
 
         // Dispatch input event to trigger useContentEditable's handler
         const inputEvent = new Event('input', { bubbles: true });
@@ -144,13 +146,32 @@ export const useCommandIndicator = ({
         onChange(originalContent);
       }
 
-      // Clean up
+      // Clean up - remove the indicator span from DOM (redundant but safe)
+      if (indicatorRef.current && indicatorRef.current.parentNode) {
+        console.log('Removing indicator span from DOM', {
+          span: indicatorRef.current,
+          parentNode: indicatorRef.current.parentNode,
+          textContent: indicatorRef.current.textContent
+        });
+        indicatorRef.current.parentNode.removeChild(indicatorRef.current);
+        console.log('Indicator span removed');
+      } else {
+        console.log('No indicator span to remove or no parent node', {
+          indicatorRef: indicatorRef.current,
+          parentNode: indicatorRef.current?.parentNode
+        });
+      }
       indicatorRef.current = null;
       setIsOpen(false);
       setQuery('');
       setIsCommandMode(false);
       setOriginalContent('');
       setSelectedIndex(0);
+
+      // Only blur if requested (when creating new blocks)
+      if (shouldBlur && elementRef.current) {
+        elementRef.current.blur();
+      }
     },
     [elementRef, indicatorRef, query, originalContent, onChange],
   );
@@ -185,18 +206,10 @@ export const useCommandIndicator = ({
     (command: CommandType) => {
       console.log('Selected command:', command.id);
 
-      // Exit command mode without keeping content
-      exitCommandMode(false);
-
-      // Blur the current element to ensure focus transfers to new block
-      if (elementRef.current) {
-        elementRef.current.blur();
-      }
-
-      // Notify parent
+      // Notify parent first - they will decide how to exit
       onCommandSelect?.(command);
     },
-    [exitCommandMode, onCommandSelect, elementRef],
+    [onCommandSelect],
   );
 
   // Handle navigation with arrow keys
@@ -281,6 +294,28 @@ export const useCommandIndicator = ({
     const element = elementRef.current;
     if (!isCommandMode || !element) return;
 
+    // Add MutationObserver to detect unwanted spans being created
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'childList') {
+          // Check for spans that might have been added after we cleaned up
+          const spans = element.querySelectorAll('span[style*="background"]');
+          spans.forEach((span) => {
+            console.log('🚨 Detected unwanted background span after cleanup:', span);
+            if (!isCommandMode) {
+              console.log('🧹 Removing unwanted span since not in command mode');
+              span.remove();
+            }
+          });
+        }
+      });
+    });
+
+    observer.observe(element, {
+      childList: true,
+      subtree: true,
+    });
+
     // Handle keydown for special cases like Backspace on empty query
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Backspace' && indicatorRef.current) {
@@ -294,11 +329,12 @@ export const useCommandIndicator = ({
           return;
         }
 
-        // If we only have the slash, exit command mode
+        // If we only have the slash, allow user to delete it manually
+        // Don't auto-exit here - let the user decide by pressing backspace again
         if (indicatorText === commandSymbol) {
-          console.log('Backspace on empty query, exiting command mode');
-          e.preventDefault();
-          exitCommandMode(false);
+          console.log('Only slash remaining - allowing manual deletion');
+          // Don't preventDefault or exitCommandMode here
+          // Let the normal backspace behavior handle deleting the slash
         }
       }
     };
@@ -314,8 +350,32 @@ export const useCommandIndicator = ({
       if (!indicatorText.startsWith(commandSymbol) || indicatorText === '') {
         console.log(
           'Slash was deleted or indicator is empty, exiting command mode',
+          { indicatorText, startsWithSlash: indicatorText.startsWith(commandSymbol), isEmpty: indicatorText === '' }
         );
-        exitCommandMode(false);
+        
+        // Clean DOM completely by clearing innerHTML and setting textContent
+        // This removes all spans and styling, leaving only plain text
+        console.log('🧹 handleInput: Cleaning DOM by removing all HTML and restoring original content only');
+        console.log('🔍 Before cleanup - innerHTML:', element.innerHTML);
+        element.innerHTML = ''; // Clear all HTML first
+        element.textContent = originalContent; // Set plain text content
+        console.log('🔍 After cleanup - innerHTML:', element.innerHTML);
+        console.log('🔍 After cleanup - textContent:', element.textContent);
+        
+        // Reset indicator ref
+        indicatorRef.current = null;
+        
+        // Exit command mode without keeping command content
+        setIsOpen(false);
+        setQuery('');
+        setIsCommandMode(false);
+        setOriginalContent('');
+        setSelectedIndex(0);
+        
+        // Dispatch input event to synchronize with useContentEditable
+        const inputEvent = new Event('input', { bubbles: true });
+        element.dispatchEvent(inputEvent);
+        
         return;
       }
 
@@ -341,6 +401,7 @@ export const useCommandIndicator = ({
     element.addEventListener('keydown', handleKeyDown);
 
     return () => {
+      observer.disconnect();
       element.removeEventListener('input', handleInput);
       element.removeEventListener('keydown', handleKeyDown);
     };
@@ -506,5 +567,6 @@ export const useCommandIndicator = ({
     isCommandMode,
     selectedIndex,
     originalContent, // Expose original content for decision making
+    exitCommandMode, // Expose for manual exit control
   };
 };

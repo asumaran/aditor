@@ -36,7 +36,6 @@ export const MultiselectBlock = forwardRef<BlockHandle, MultiselectBlockProps>(
       required = false,
       className,
       blockId,
-      autoFocus = false,
     },
     ref,
   ) => {
@@ -50,7 +49,6 @@ export const MultiselectBlock = forwardRef<BlockHandle, MultiselectBlockProps>(
     } = useContentEditable({
       value,
       onChange,
-      autoFocus,
     });
 
     const handleClickWithStopPropagation = useStopPropagation();

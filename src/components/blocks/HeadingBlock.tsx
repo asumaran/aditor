@@ -1,4 +1,4 @@
-import { type FC, useMemo } from 'react';
+import { type FC, useMemo, useCallback } from 'react';
 import {
   useContentEditable,
   useBlockCommands,
@@ -25,6 +25,7 @@ interface HeadingBlockProps extends BlockComponentProps {
     initialContent?: string;
     cursorAtStart?: boolean;
     blockType?: string;
+    replaceCurrentBlock?: boolean;
   }) => number;
   onChangeBlockType?: (blockId: number, newType: string) => void;
   onDeleteBlock?: () => void;
@@ -38,26 +39,21 @@ export const HeadingBlock: FC<HeadingBlockProps> = ({
   onChange,
   placeholder = 'Heading',
   className,
-  autoFocus = false,
-  cursorAtStart = false,
   blockId,
   onCreateBlockAfter,
-  onChangeBlockType,
   onDeleteBlock,
   onMergeWithPrevious,
 }) => {
   const { state } = useEditor();
   const {
     elementRef,
-    handleInput,
+    handleInput: baseHandleInput,
     handleCompositionStart,
     handleCompositionEnd,
     currentValue,
   } = useContentEditable({
     value,
     onChange,
-    autoFocus,
-    cursorAtStart,
     blockId,
   });
 
@@ -67,19 +63,11 @@ export const HeadingBlock: FC<HeadingBlockProps> = ({
     return !!previousBlockId;
   }, [state, blockId]);
 
-  const { splitAndCreateBlock, isCursorAtStart, handleBackspace } =
-    useBlockCreation({
-      onCreateBlockAfter,
-      onChange,
-      onMergeWithPrevious,
-      onDeleteBlock,
-      hasPreviousBlock,
-    });
-
   /**
    * HOOK ORDER CRITICAL SECTION
    *
-   * useSlashCommands MUST be called before useBlockNavigation because:
+   * useSlashCommands MUST be called before useBlockCreation and useBlockNavigation because:
+   * - useBlockCreation needs the isSlashInputMode value to prevent block deletion
    * - useBlockNavigation needs the isSlashInputMode value from useSlashCommands
    * - React hooks must maintain consistent order between renders
    * - Wrong order causes "Cannot access before initialization" errors
@@ -97,17 +85,54 @@ export const HeadingBlock: FC<HeadingBlockProps> = ({
     currentValue,
     onChange,
     blockType: 'heading',
-    onCreateBlockAfter: (type: string) => {
+    onCreateBlockAfter: (options: { blockType: string; replaceCurrentBlock?: boolean }) => {
       if (onCreateBlockAfter) {
-        onCreateBlockAfter({ blockType: type });
-      }
-    },
-    onChangeBlockType: (type: string) => {
-      if (blockId) {
-        onChangeBlockType?.(blockId, type);
+        // For heading blocks, override the replace logic from useSlashCommands
+        // Text and heading blocks should always create after (never replace heading)
+        const shouldReplace = !['text', 'heading'].includes(options.blockType);
+        onCreateBlockAfter({ 
+          blockType: options.blockType,
+          replaceCurrentBlock: shouldReplace,
+        });
       }
     },
   });
+
+  // Create updated handleInput with slash mode awareness
+  const handleInput = useCallback(
+    (event: React.FormEvent<HTMLDivElement>) => {
+      const target = event.target as HTMLDivElement;
+      
+      // Check for and clean up any leftover background spans (from slash commands)
+      // Only clean up when NOT in slash mode to avoid interfering with active slash commands
+      if (!isSlashInputMode) {
+        const backgroundSpans = target.querySelectorAll('span[style*="background"]');
+        if (backgroundSpans.length > 0) {
+          console.log('🧹 HeadingBlock: Detected leftover background spans, cleaning up (not in slash mode)');
+          // Get the text content before cleaning
+          const textContent = target.textContent || '';
+          // Clear all HTML and set plain text
+          target.innerHTML = '';
+          target.textContent = textContent;
+          console.log('🧹 HeadingBlock: Cleaned up spans, content now:', textContent);
+        }
+      }
+      
+      // Call the base handler
+      baseHandleInput(event);
+    },
+    [baseHandleInput, isSlashInputMode]
+  );
+
+  const { splitAndCreateBlock, isCursorAtStart, handleBackspace } =
+    useBlockCreation({
+      onCreateBlockAfter,
+      onChange,
+      onMergeWithPrevious,
+      onDeleteBlock,
+      hasPreviousBlock,
+      isInSlashMode: isSlashInputMode, // Pass slash mode state to prevent block deletion
+    });
 
   const { navigationCommands } = useBlockNavigation({
     blockId,
@@ -195,6 +220,7 @@ export const HeadingBlock: FC<HeadingBlockProps> = ({
           ref={elementRef as React.RefObject<HTMLHeadingElement>}
           contentEditable
           suppressContentEditableWarning
+          role="textbox"
           onInput={handleInput}
           onCompositionStart={handleCompositionStart}
           onCompositionEnd={handleCompositionEnd}

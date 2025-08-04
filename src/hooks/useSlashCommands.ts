@@ -18,8 +18,7 @@ interface UseSlashCommandsProps {
   currentValue: string;
   onChange: (value: string) => void;
   blockType?: string;
-  onCreateBlockAfter?: (type: string) => void;
-  onChangeBlockType?: (type: string) => void;
+  onCreateBlockAfter?: (options: { blockType: string; replaceCurrentBlock?: boolean }) => void;
 }
 
 export const useSlashCommands = ({
@@ -28,7 +27,6 @@ export const useSlashCommands = ({
   onChange,
   blockType = 'text',
   onCreateBlockAfter,
-  onChangeBlockType,
 }: UseSlashCommandsProps) => {
   const {
     isOpen,
@@ -42,6 +40,7 @@ export const useSlashCommands = ({
     isCommandMode: isSlashInputMode,
     selectedIndex,
     originalContent,
+    exitCommandMode,
   } = useCommandIndicator({
     elementRef,
     currentValue,
@@ -72,9 +71,9 @@ export const useSlashCommands = ({
        * SELECTION LOGIC CASES:
        *
        * 1. Empty text block + select "Text" → Just exit slash mode (stay in same block)
-       * 2. Empty text block + select different type → Change current block type
-       * 3. Any other block + select "Text" → Create new TextBlock after current
-       * 4. Any block + select any type → Create new block after current
+       * 2. Empty text block + select different type → Replace current block with new type
+       * 3. Text block with content + select "Text" → Create new text block after current
+       * 4. All other cases → Create new block after current
        */
 
       // Case 1: Empty text block selecting text - just exit slash mode
@@ -82,29 +81,40 @@ export const useSlashCommands = ({
         console.log(
           'Case 1: Empty text block selecting text - just exit slash mode',
         );
+        // Exit slash mode without blur (stay in same element)
+        exitCommandMode(false, false);
         return;
       }
 
-      // Case 2: Empty text block selecting different type - change block type
+      // Case 2: Text block with content selecting text - create new text block after
+      if (blockType === 'text' && selectedType === 'text' && !isBlockEmpty) {
+        console.log(
+          'Case 2: Text block with content selecting text - create new text block after',
+        );
+        // Exit slash mode with blur (will create new block)
+        exitCommandMode(false, true);
+        onCreateBlockAfter?.({ blockType: selectedType, replaceCurrentBlock: false });
+        return;
+      }
+
+      // Case 3: Empty text block selecting different type - replace current block
       if (blockType === 'text' && selectedType !== 'text' && isBlockEmpty) {
         console.log(
-          'Case 2: Empty text block selecting different type - change block type',
+          'Case 3: Empty text block selecting different type - replace current block',
         );
         
-        // Only use onChangeBlockType for text/heading conversions
-        // Form blocks need to be created with onCreateBlockAfter
-        if (selectedType === 'text' || selectedType === 'heading') {
-          onChangeBlockType?.(selectedType);
-        } else {
-          // For form blocks, create new block after current (then delete current)
-          onCreateBlockAfter?.(selectedType);
-        }
+        // Exit slash mode with blur (will create new block)
+        exitCommandMode(false, true);
+        // For all block types, create new block after current and replace
+        onCreateBlockAfter?.({ blockType: selectedType, replaceCurrentBlock: true });
         return;
       }
 
-      // Case 3 & 4: All other cases - create new block after current one
-      console.log('Case 3/4: Create new block after current one');
-      onCreateBlockAfter?.(selectedType);
+      // Case 4: All other cases - create new block after current one
+      console.log('Case 4: All other cases - create new block after current one');
+      // Exit slash mode with blur (will create new block)
+      exitCommandMode(false, true);
+      onCreateBlockAfter?.({ blockType: selectedType, replaceCurrentBlock: false });
     },
   });
 

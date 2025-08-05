@@ -172,9 +172,6 @@ describe('Focus Behaviors', () => {
       // Form blocks should focus the input, not the container
       const shouldFocusInput = true;
       expect(shouldFocusInput).toBe(true);
-
-      // This is currently implemented in App.tsx:focusBlockImperatively
-      // by finding focusable elements within the block
     });
 
     test('text blocks should focus on contenteditable', () => {

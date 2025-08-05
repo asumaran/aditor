@@ -5,4 +5,6 @@ export { SortableBlockWrapper } from './SortableBlockWrapper';
 export { OptionsView } from './OptionsView';
 export { SlashCommandDropdown } from './SlashCommandDropdown';
 export { CommandIndicator } from './CommandIndicator';
+export { EditorSidebar } from './EditorSidebar';
+export { EditorCanvas } from './EditorCanvas';
 export * from './menu';

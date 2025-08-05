@@ -10,3 +10,6 @@ export { useBlockNavigation } from './useBlockNavigation';
 export { useSlashCommands } from './useSlashCommands';
 export { useCommandIndicator } from './useCommandIndicator';
 export { useFocusManager, useGlobalFocusManager } from './useFocusManager';
+export { useBlockOperations } from './useBlockOperations';
+export { useBlockEventHandlers } from './useBlockEventHandlers';
+export { useDragAndDrop } from './useDragAndDrop';

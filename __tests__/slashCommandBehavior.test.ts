@@ -12,13 +12,8 @@
  * 6. Span cleanup after exiting slash mode
  */
 
-import { useSlashCommands } from '../src/hooks/useSlashCommands';
-import { useCommandIndicator } from '../src/hooks/useCommandIndicator';
-
 // Mock dependencies
 const mockElementRef = { current: document.createElement('div') };
-const mockOnChange = jest.fn();
-const mockOnCreateBlockAfter = jest.fn();
 
 // Available commands for testing
 const mockAvailableCommands = [

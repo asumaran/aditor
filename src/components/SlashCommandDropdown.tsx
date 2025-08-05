@@ -39,11 +39,8 @@ export const SlashCommandDropdown: FC<SlashCommandDropdownProps> = ({
   }, [isOpen, targetRef]);
 
   if (!isOpen) {
-    console.log('Dropdown not rendering - isOpen:', isOpen); // Debug
     return null;
   }
-
-  console.log('Dropdown rendering - blocks:', filteredBlocks.length); // Debug
 
   return (
     <div

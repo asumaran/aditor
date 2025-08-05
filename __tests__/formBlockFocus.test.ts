@@ -95,8 +95,10 @@ describe('Form Block Focus Tests', () => {
       addRange: jest.fn(),
     };
 
-    global.window.getSelection = jest.fn(() => mockSelection as any);
-    global.document.createRange = jest.fn(() => mockRange as any);
+    global.window.getSelection = jest.fn(
+      () => mockSelection as unknown as Selection,
+    );
+    global.document.createRange = jest.fn(() => mockRange as unknown as Range);
 
     // Simulate positioning cursor at end
     const range = document.createRange();

@@ -102,10 +102,6 @@ export class FocusManager {
       `[data-block-id="${blockId}"]`,
     ) as HTMLElement;
     if (!element) {
-      console.log(
-        '🎯 FocusManager.getBlockInfo: Could not find element for blockId:',
-        blockId,
-      );
       return null;
     }
 
@@ -126,8 +122,6 @@ export class FocusManager {
    * Focus a block with specified options
    */
   focusBlock(blockId: number, options: FocusOptions = {}): boolean {
-    console.log('🎯 FocusManager.focusBlock called:', { blockId, options });
-
     // Only apply cursorAtStart from internal state if not explicitly overridden
     const focusOptions = {
       ...(options.cursorAtStart === undefined &&
@@ -138,8 +132,6 @@ export class FocusManager {
         : {}),
       ...options,
     };
-
-    console.log('🎯 FocusManager.focusBlock final options:', focusOptions);
 
     // Emit BEFORE event so React can prepare components
     this.emitEvent({
@@ -172,7 +164,6 @@ export class FocusManager {
     blockId: number,
     _eventType: FocusEventType,
     options: FocusOptions = {},
-    _context?: Record<string, unknown>,
   ): boolean {
     // Only apply cursorAtStart from internal state if not explicitly overridden
     const focusOptions = {
@@ -282,9 +273,6 @@ export class FocusManager {
       targetBlockId,
       'block-merged',
       defaultOptions,
-      {
-        junctionOffset,
-      },
     );
   }
 
@@ -306,10 +294,7 @@ export class FocusManager {
       ...options,
     };
 
-    return this.focusBlockForEvent(blockId, 'slash-command', defaultOptions, {
-      blockType,
-      isFormBlock,
-    });
+    return this.focusBlockForEvent(blockId, 'slash-command', defaultOptions);
   }
 
   /**

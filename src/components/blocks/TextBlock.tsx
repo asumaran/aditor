@@ -90,12 +90,6 @@ export const TextBlock: FC<TextBlockProps> = ({
       blockType: string;
       replaceCurrentBlock?: boolean;
     }) => {
-      console.log(
-        'TextBlock slash command: creating block with options',
-        options,
-        'after block',
-        blockId,
-      );
       if (onCreateBlockAfter) {
         // Pass through the options from useSlashCommands
         onCreateBlockAfter(options);
@@ -117,18 +111,11 @@ export const TextBlock: FC<TextBlockProps> = ({
           'span[style*="background"]',
         );
         if (backgroundSpans.length > 0) {
-          console.log(
-            '🧹 TextBlock: Detected leftover background spans, cleaning up (not in slash mode)',
-          );
           // Get the text content before cleaning
           const textContent = target.textContent || '';
           // Clear all HTML and set plain text
           target.innerHTML = '';
           target.textContent = textContent;
-          console.log(
-            '🧹 TextBlock: Cleaned up spans, content now:',
-            textContent,
-          );
         }
       }
 
@@ -148,8 +135,6 @@ export const TextBlock: FC<TextBlockProps> = ({
       onSplittingStateChange: setIsSplitting,
       isInSlashMode: isSlashInputMode, // Pass slash mode state to prevent block deletion
     });
-
-  console.log('🔍 TextBlock render - isSlashInputMode:', isSlashInputMode);
 
   const { navigationCommands } = useBlockNavigation({
     blockId,

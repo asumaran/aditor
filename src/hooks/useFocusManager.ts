@@ -16,8 +16,6 @@ import {
 export interface UseFocusManagerOptions {
   /** Block ID this hook is managing */
   blockId?: number;
-  /** Auto-register for focus events */
-  autoRegister?: boolean;
   /** Debug logging */
   debug?: boolean;
 }
@@ -44,7 +42,7 @@ export interface FocusManagerHook {
 export const useFocusManager = (
   options: UseFocusManagerOptions = {},
 ): FocusManagerHook => {
-  const { blockId, autoRegister = true, debug = false } = options;
+  const { blockId, debug = false } = options;
   const managerRef = useRef<FocusManager>(FocusManager.getInstance());
   const manager = managerRef.current;
 
@@ -54,10 +52,6 @@ export const useFocusManager = (
         if (debug)
           console.warn('useFocusManager: No blockId provided for focus');
         return false;
-      }
-
-      if (debug) {
-        console.log('useFocusManager: Focusing block', blockId, focusOptions);
       }
 
       return manager.focusBlock(blockId, focusOptions);
@@ -72,20 +66,7 @@ export const useFocusManager = (
       context?: Record<string, unknown>,
     ) => {
       if (!blockId) {
-        if (debug)
-          console.warn(
-            'useFocusManager: No blockId provided for focusForEvent',
-          );
         return false;
-      }
-
-      if (debug) {
-        console.log(
-          'useFocusManager: Focusing block for event',
-          blockId,
-          eventType,
-          focusOptions,
-        );
       }
 
       return manager.focusBlockForEvent(
@@ -95,57 +76,30 @@ export const useFocusManager = (
         context,
       );
     },
-    [blockId, manager, debug],
+    [blockId, manager],
   );
 
   const setCursorAtStart = useCallback(() => {
     if (blockId) {
       manager.setCursorAtStart(blockId);
-      if (debug)
-        console.log('useFocusManager: Set cursor at start for block', blockId);
     }
-  }, [blockId, manager, debug]);
+  }, [blockId, manager]);
 
   const clearCursorAtStart = useCallback(() => {
     if (blockId) {
       manager.clearCursorAtStart(blockId);
-      if (debug)
-        console.log(
-          'useFocusManager: Cleared cursor at start for block',
-          blockId,
-        );
     }
-  }, [blockId, manager, debug]);
+  }, [blockId, manager]);
 
   const shouldCursorBeAtStart = useCallback(() => {
     return blockId ? manager.shouldCursorBeAtStart(blockId) : false;
   }, [blockId, manager]);
-
-  // Auto-register block for focus management
-  useEffect(() => {
-    if (autoRegister && blockId) {
-      if (debug) {
-        console.log('useFocusManager: Auto-registering block', blockId);
-      }
-
-      // The block is automatically discoverable via DOM queries in FocusManager
-      // so no explicit registration is needed, but we can perform validation
-      const blockInfo = manager.getBlockInfo(blockId);
-      if (!blockInfo && debug) {
-        console.warn(
-          'useFocusManager: Block not found in DOM during registration',
-          blockId,
-        );
-      }
-    }
-  }, [autoRegister, blockId, manager, debug]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (blockId) {
         manager.clearCursorAtStart(blockId);
-        if (debug) console.log('useFocusManager: Cleanup for block', blockId);
       }
     };
   }, [blockId, manager, debug]);

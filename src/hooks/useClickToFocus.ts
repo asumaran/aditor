@@ -17,7 +17,6 @@ export const useClickToFocus = (options: UseClickToFocusOptions | string) => {
 
     const handleClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-      console.log('🖱️ useClickToFocus: Click detected on:', target);
 
       // Don't intercept clicks on editable elements, within blocks, or on dropdowns
       if (
@@ -25,15 +24,12 @@ export const useClickToFocus = (options: UseClickToFocusOptions | string) => {
           '[contenteditable="true"], input, textarea, [data-editable]',
         )
       ) {
-        console.log('🖱️ useClickToFocus: Click on editable element, ignoring');
         return;
       }
       if (target.closest('[data-block-id]')) {
-        console.log('🖱️ useClickToFocus: Click on block, ignoring');
         return;
       }
       if (target.closest('[data-slash-dropdown]')) {
-        console.log('🖱️ useClickToFocus: Click on slash dropdown, ignoring');
         return; // Don't intercept clicks on slash command dropdown
       }
 
@@ -96,5 +92,5 @@ export const useClickToFocus = (options: UseClickToFocusOptions | string) => {
 
     container.addEventListener('click', handleClick);
     return () => container.removeEventListener('click', handleClick);
-  }, [containerId]);
+  }, [containerId, onEmptyAreaClick]);
 };

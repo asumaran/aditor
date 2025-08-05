@@ -48,13 +48,6 @@ export const useCommandIndicator = ({
   // Exit command mode
   const exitCommandMode = useCallback(
     (keepCommandContent: boolean = false, shouldBlur: boolean = false) => {
-      console.log(
-        'exitCommandMode called with keepCommandContent:',
-        keepCommandContent,
-      );
-      console.log('Current query:', query);
-      console.log('Original content:', originalContent);
-
       if (!elementRef.current || !indicatorRef.current) {
         setIsOpen(false);
         setQuery('');
@@ -67,7 +60,6 @@ export const useCommandIndicator = ({
         // Check if we only have the slash with no query
         if (query === '') {
           // Just the slash - restore original content
-          console.log('Only slash detected, restoring original content');
           elementRef.current.textContent = originalContent;
 
           // Dispatch input event to trigger useContentEditable's handler
@@ -93,10 +85,6 @@ export const useCommandIndicator = ({
            */
           const commandText = indicatorRef.current.textContent || '';
           const finalContent = commandText + originalContent;
-
-          console.log('Command text:', commandText);
-          console.log('Original content:', originalContent);
-          console.log('Final content will be:', finalContent);
 
           // Replace entire content
           elementRef.current.textContent = finalContent;
@@ -133,10 +121,6 @@ export const useCommandIndicator = ({
           onChange(finalContent);
         }
       } else {
-        // Restore original content completely - clean all HTML first
-        console.log(
-          'exitCommandMode: Cleaning DOM completely and restoring original content',
-        );
         elementRef.current.innerHTML = ''; // Clear all HTML including spans
         elementRef.current.textContent = originalContent; // Set plain text
 
@@ -150,18 +134,7 @@ export const useCommandIndicator = ({
 
       // Clean up - remove the indicator span from DOM (redundant but safe)
       if (indicatorRef.current && indicatorRef.current.parentNode) {
-        console.log('Removing indicator span from DOM', {
-          span: indicatorRef.current,
-          parentNode: indicatorRef.current.parentNode,
-          textContent: indicatorRef.current.textContent,
-        });
         indicatorRef.current.parentNode.removeChild(indicatorRef.current);
-        console.log('Indicator span removed');
-      } else {
-        console.log('No indicator span to remove or no parent node', {
-          indicatorRef: indicatorRef.current,
-          parentNode: indicatorRef.current?.parentNode,
-        });
       }
       indicatorRef.current = null;
       setIsOpen(false);
@@ -194,9 +167,6 @@ export const useCommandIndicator = ({
    */
   useEffect(() => {
     if (isCommandMode && query.length >= 5 && filteredCommands.length === 0) {
-      console.log(
-        'No commands match query after 5+ characters, auto-exiting command mode',
-      );
       setTimeout(() => {
         exitCommandMode(true); // Keep the command text as regular text
       }, 0);
@@ -206,8 +176,6 @@ export const useCommandIndicator = ({
   // Handle command selection
   const handleSelectCommand = useCallback(
     (command: CommandType) => {
-      console.log('Selected command:', command.id);
-
       // Notify parent first - they will decide how to exit
       onCommandSelect?.(command);
     },
@@ -216,27 +184,18 @@ export const useCommandIndicator = ({
 
   // Handle navigation with arrow keys
   const handleArrowDown = useCallback(() => {
-    console.log(
-      'handleArrowDown called, current selectedIndex:',
-      selectedIndex,
-      'filteredCommands.length:',
-      filteredCommands.length,
-    );
     setSelectedIndex((prev) => {
       const newIndex = prev < filteredCommands.length - 1 ? prev + 1 : prev;
-      console.log('Setting selectedIndex from', prev, 'to', newIndex);
       return newIndex;
     });
-  }, [filteredCommands, selectedIndex]);
+  }, [filteredCommands]);
 
   const handleArrowUp = useCallback(() => {
-    console.log('handleArrowUp called, current selectedIndex:', selectedIndex);
     setSelectedIndex((prev) => {
       const newIndex = prev > 0 ? prev - 1 : prev;
-      console.log('Setting selectedIndex from', prev, 'to', newIndex);
       return newIndex;
     });
-  }, [selectedIndex]);
+  }, []);
 
   // Handle Enter key to select current item
   const handleEnterKey = useCallback(() => {
@@ -256,8 +215,6 @@ export const useCommandIndicator = ({
 
     // Get the current text content (not HTML) to preserve
     const existingTextContent = elementRef.current.textContent || '';
-
-    console.log('Creating indicator, existing text:', existingTextContent);
 
     // Create indicator HTML exactly like Notion: symbol inside inner span, with placeholder support
     const indicatorHTML = `<span class="notion-temporary-input pseudoAfter pseudoAfterWhenComposing" style="background:rgba(84, 72, 49, 0.08);border-radius:0.5px;outline:5.5px solid rgba(84, 72, 49, 0.08);--pseudoAfter--content:&quot;Filter…&quot;;--pseudoAfter--color:rgba(70, 68, 64, 0.45);--pseudoAfterWhenComposing--display:none"><span style="color:inherit">${commandSymbol}</span></span>`;
@@ -303,14 +260,7 @@ export const useCommandIndicator = ({
           // Check for spans that might have been added after we cleaned up
           const spans = element.querySelectorAll('span[style*="background"]');
           spans.forEach((span) => {
-            console.log(
-              '🚨 Detected unwanted background span after cleanup:',
-              span,
-            );
             if (!isCommandMode) {
-              console.log(
-                '🧹 Removing unwanted span since not in command mode',
-              );
               span.remove();
             }
           });
@@ -330,7 +280,6 @@ export const useCommandIndicator = ({
 
         // Handle Cmd+Backspace (or Ctrl+Backspace on Windows)
         if (e.metaKey || e.ctrlKey) {
-          console.log('Cmd/Ctrl+Backspace detected, exiting command mode');
           e.preventDefault();
           exitCommandMode(false);
           return;
@@ -339,7 +288,6 @@ export const useCommandIndicator = ({
         // If we only have the slash, allow user to delete it manually
         // Don't auto-exit here - let the user decide by pressing backspace again
         if (indicatorText === commandSymbol) {
-          console.log('Only slash remaining - allowing manual deletion');
           // Don't preventDefault or exitCommandMode here
           // Let the normal backspace behavior handle deleting the slash
         }
@@ -355,25 +303,10 @@ export const useCommandIndicator = ({
 
       // Check if the slash itself was deleted or indicator is empty
       if (!indicatorText.startsWith(commandSymbol) || indicatorText === '') {
-        console.log(
-          'Slash was deleted or indicator is empty, exiting command mode',
-          {
-            indicatorText,
-            startsWithSlash: indicatorText.startsWith(commandSymbol),
-            isEmpty: indicatorText === '',
-          },
-        );
-
         // Clean DOM completely by clearing innerHTML and setting textContent
         // This removes all spans and styling, leaving only plain text
-        console.log(
-          '🧹 handleInput: Cleaning DOM by removing all HTML and restoring original content only',
-        );
-        console.log('🔍 Before cleanup - innerHTML:', element.innerHTML);
         element.innerHTML = ''; // Clear all HTML first
         element.textContent = originalContent; // Set plain text content
-        console.log('🔍 After cleanup - innerHTML:', element.innerHTML);
-        console.log('🔍 After cleanup - textContent:', element.textContent);
 
         // Reset indicator ref
         indicatorRef.current = null;
@@ -395,9 +328,6 @@ export const useCommandIndicator = ({
       // Extract just the query part (everything after the symbol inside the indicator)
       const query = indicatorText.substring(symbolLength);
 
-      console.log('Indicator text:', indicatorText);
-      console.log('Extracted query:', query);
-
       // Control placeholder visibility
       if (query.length > 0) {
         // Hide placeholder when there's a query
@@ -418,7 +348,13 @@ export const useCommandIndicator = ({
       element.removeEventListener('input', handleInput);
       element.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isCommandMode, elementRef, commandSymbol, exitCommandMode]);
+  }, [
+    isCommandMode,
+    originalContent,
+    elementRef,
+    commandSymbol,
+    exitCommandMode,
+  ]);
 
   // Handle command key press
   const handleCommandKey = useCallback(() => {
@@ -442,20 +378,14 @@ export const useCommandIndicator = ({
       setQuery('');
       setIsCommandMode(true);
 
-      console.log(
-        'Original content stored:',
-        elementRef.current.textContent || '',
-      );
-
       // Create the visual indicator immediately
       createCommandIndicator();
 
-      console.log('Command mode activated for:', commandSymbol);
       return true;
     }
 
     return false;
-  }, [elementRef, commandSymbol, createCommandIndicator]);
+  }, [elementRef, createCommandIndicator]);
 
   // Commands for behavior
   const commandCommands = useMemo(
@@ -492,16 +422,9 @@ export const useCommandIndicator = ({
         key: 'Backspace',
         ignoreModifiers: true,
         condition: () => {
-          console.log(
-            'Backspace condition check - isCommandMode:',
-            isCommandMode,
-            'query:',
-            query,
-          );
           return isCommandMode && query === '';
         },
         handler: (e?: React.KeyboardEvent) => {
-          console.log('Backspace handler triggered');
           e?.preventDefault(); // Prevent default backspace behavior
           exitCommandMode(false);
         },
@@ -511,11 +434,9 @@ export const useCommandIndicator = ({
         ignoreModifiers: true,
         commandType: 'SLASH_ARROW_DOWN', // Debug identifier
         condition: () => {
-          console.log('SLASH ArrowDown condition - isOpen:', isOpen);
           return isOpen;
         },
         handler: (e?: React.KeyboardEvent) => {
-          console.log('SLASH ArrowDown handler triggered');
           e?.preventDefault(); // Prevent cursor movement
           handleArrowDown();
         },
@@ -525,11 +446,9 @@ export const useCommandIndicator = ({
         ignoreModifiers: true,
         commandType: 'SLASH_ARROW_UP', // Debug identifier
         condition: () => {
-          console.log('SLASH ArrowUp condition - isOpen:', isOpen);
           return isOpen;
         },
         handler: (e?: React.KeyboardEvent) => {
-          console.log('SLASH ArrowUp handler triggered');
           e?.preventDefault(); // Prevent cursor movement
           handleArrowUp();
         },

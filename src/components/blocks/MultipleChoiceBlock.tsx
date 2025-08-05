@@ -27,7 +27,6 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical } from 'lucide-react';
 import {
-  useContentEditable,
   useStopPropagation,
   useBlockOptions,
   useBlockCommands,

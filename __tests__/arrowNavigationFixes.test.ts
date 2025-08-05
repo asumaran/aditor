@@ -242,7 +242,7 @@ describe('Arrow Navigation Tests (Fixed)', () => {
 
   describe('Integration Scenarios', () => {
     test('navigation between blocks with different lengths completes successfully', () => {
-      const block1 = createMockElement('foo');
+      createMockElement('foo'); // block1 not used
       const block2 = createMockElement('bar');
 
       // Test navigation from foo to bar

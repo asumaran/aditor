@@ -106,14 +106,10 @@ const createMockSelection = (startOffset: number = 0, content: string = '') => {
 };
 
 describe('useBlockCreation Logic Tests', () => {
-  let onCreateBlockAfter: jest.Mock;
-  let onChange: jest.Mock;
   let onMergeWithPrevious: jest.Mock;
   let onDeleteBlock: jest.Mock;
 
   beforeEach(() => {
-    onCreateBlockAfter = jest.fn();
-    onChange = jest.fn();
     onMergeWithPrevious = jest.fn();
     onDeleteBlock = jest.fn();
 
@@ -301,7 +297,7 @@ describe('useBlockCreation Logic Tests', () => {
       malformedInputs.forEach((input) => {
         // Should not throw errors
         expect(() => {
-          handleBackspace(element, input as any);
+          handleBackspace(element, input as string);
         }).not.toThrow();
       });
     });
@@ -315,7 +311,7 @@ describe('useBlockCreation Logic Tests', () => {
         { input: '   \n\t  ', description: 'mixed whitespace' },
       ];
 
-      testCases.forEach(({ input, description }) => {
+      testCases.forEach(({ input }) => {
         const handleBackspace = createHandleBackspace({
           onDeleteBlock: jest.fn(),
           onMergeWithPrevious: jest.fn(),

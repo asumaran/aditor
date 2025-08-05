@@ -62,14 +62,6 @@ export const useSlashCommands = ({
        */
       const isBlockEmpty = originalContent.trim() === '';
 
-      console.log('Block selection logic:', {
-        blockType,
-        selectedType,
-        originalContent,
-        currentValue,
-        isBlockEmpty,
-      });
-
       /**
        * SELECTION LOGIC CASES:
        *
@@ -81,9 +73,6 @@ export const useSlashCommands = ({
 
       // Case 1: Empty text block selecting text - just exit slash mode
       if (blockType === 'text' && selectedType === 'text' && isBlockEmpty) {
-        console.log(
-          'Case 1: Empty text block selecting text - just exit slash mode',
-        );
         // Exit slash mode without blur (stay in same element)
         exitCommandMode(false, false);
         return;
@@ -91,9 +80,6 @@ export const useSlashCommands = ({
 
       // Case 2: Text block with content selecting text - create new text block after
       if (blockType === 'text' && selectedType === 'text' && !isBlockEmpty) {
-        console.log(
-          'Case 2: Text block with content selecting text - create new text block after',
-        );
         // Exit slash mode with blur (will create new block)
         exitCommandMode(false, true);
         onCreateBlockAfter?.({
@@ -105,10 +91,6 @@ export const useSlashCommands = ({
 
       // Case 3: Empty text block selecting different type - replace current block
       if (blockType === 'text' && selectedType !== 'text' && isBlockEmpty) {
-        console.log(
-          'Case 3: Empty text block selecting different type - replace current block',
-        );
-
         // Exit slash mode with blur (will create new block)
         exitCommandMode(false, true);
         // For all block types, create new block after current and replace
@@ -120,9 +102,6 @@ export const useSlashCommands = ({
       }
 
       // Case 4: All other cases - create new block after current one
-      console.log(
-        'Case 4: All other cases - create new block after current one',
-      );
       // Exit slash mode with blur (will create new block)
       exitCommandMode(false, true);
       onCreateBlockAfter?.({

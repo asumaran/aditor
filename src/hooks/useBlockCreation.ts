@@ -87,21 +87,13 @@ export const useBlockCreation = ({
 
   const handleBackspace = useCallback(
     (element: HTMLElement, currentValue: string) => {
-      console.log('🔍 handleBackspace called:', {
-        currentValue: `"${currentValue}"`,
-        isInSlashMode,
-        isEmpty: !currentValue.trim(),
-      });
-
       // If empty block
       if (!currentValue.trim()) {
         // Don't delete block if in slash mode (user is just deleting the slash)
         if (isInSlashMode) {
-          console.log('🔍 Block deletion prevented - in slash mode');
           return false; // Let the slash command handler deal with it
         }
 
-        console.log('🔍 Block is empty and not in slash mode - deleting block');
         // Only delete if not first block
         if (hasPreviousBlock && onDeleteBlock) {
           onDeleteBlock();
@@ -111,12 +103,10 @@ export const useBlockCreation = ({
 
       // If cursor at start
       if (isCursorAtStart(element)) {
-        console.log('🔍 Cursor at start - merging with previous');
         mergeWithPreviousBlock(currentValue);
         return true;
       }
 
-      console.log('🔍 Normal backspace - not handling');
       return false;
     },
     [

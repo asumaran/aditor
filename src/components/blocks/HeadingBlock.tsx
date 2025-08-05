@@ -113,18 +113,11 @@ export const HeadingBlock: FC<HeadingBlockProps> = ({
           'span[style*="background"]',
         );
         if (backgroundSpans.length > 0) {
-          console.log(
-            '🧹 HeadingBlock: Detected leftover background spans, cleaning up (not in slash mode)',
-          );
           // Get the text content before cleaning
           const textContent = target.textContent || '';
           // Clear all HTML and set plain text
           target.innerHTML = '';
           target.textContent = textContent;
-          console.log(
-            '🧹 HeadingBlock: Cleaned up spans, content now:',
-            textContent,
-          );
         }
       }
 

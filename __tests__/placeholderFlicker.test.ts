@@ -48,19 +48,6 @@ const createMockSelection = (startOffset: number = 0, content: string = '') => {
   return { mockSelection, mockRange };
 };
 
-// Mock splitContentAtCursor function
-const mockSplitContentAtCursor = (
-  beforeContent: string,
-  afterContent: string,
-) => {
-  jest.doMock('@/lib/splitContent', () => ({
-    splitContentAtCursor: jest.fn(() => ({
-      before: beforeContent,
-      after: afterContent,
-    })),
-  }));
-};
-
 // Test helper function that replicates the splitting logic
 const createSplitAndCreateBlock = (callbacks: {
   onCreateBlockAfter?: jest.Mock;
@@ -70,7 +57,7 @@ const createSplitAndCreateBlock = (callbacks: {
   const { onCreateBlockAfter, onChange, onSplittingStateChange } = callbacks;
 
   return (
-    element: HTMLElement,
+    _element: HTMLElement,
     beforeContent: string,
     afterContent: string,
   ) => {
@@ -346,7 +333,7 @@ describe('Placeholder Flicker Prevention Tests', () => {
         ['onCreateBlockAfter', onCreateBlockAfter],
       ];
 
-      calls.forEach(([name, mockFn], index) => {
+      calls.forEach(([, mockFn]) => {
         expect(mockFn).toHaveBeenCalled();
       });
 

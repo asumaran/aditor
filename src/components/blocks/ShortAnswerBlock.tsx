@@ -1,6 +1,5 @@
 import { forwardRef, useImperativeHandle, useMemo, useRef } from 'react';
 import {
-  useContentEditable,
   useStopPropagation,
   useBlockCommands,
   useBlockNavigation,

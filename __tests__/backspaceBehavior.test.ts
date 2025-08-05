@@ -88,7 +88,6 @@ describe('Backspace Behavior Tests', () => {
 
       // Mock callbacks
       const onDeleteBlock = jest.fn();
-      const onMergeWithPrevious = jest.fn();
 
       // Test conditions for empty block backspace
       const currentValue = '';
@@ -145,8 +144,6 @@ describe('Backspace Behavior Tests', () => {
       // Mock cursor at start of second block
       const { mockRange } = createMockSelection();
       mockRange.startOffset = 0;
-
-      const onMergeWithPrevious = jest.fn();
 
       // Test cursor at start detection
       const isCursorAtStart = mockRange.startOffset === 0;
@@ -245,7 +242,7 @@ describe('Backspace Behavior Tests', () => {
       block.setAttribute('data-block-id', '1');
       document.body.appendChild(block);
 
-      const { mockRange } = createMockSelection();
+      createMockSelection();
 
       // Test focus with cursorAtEnd option
       const focusResult = focusManager.focusBlockForEvent(1, 'block-deleted', {
@@ -325,7 +322,7 @@ describe('Backspace Behavior Tests', () => {
         { value: '', cursorAt: 0, shouldTrigger: true }, // Empty - should trigger
       ];
 
-      operations.forEach(({ value, cursorAt, shouldTrigger }, index) => {
+      operations.forEach(({ value, cursorAt, shouldTrigger }) => {
         const isEmpty = !value.trim();
         const isCursorAtStart = cursorAt === 0 && value.length > 0;
         const shouldTriggerSpecialBehavior = isEmpty || isCursorAtStart;

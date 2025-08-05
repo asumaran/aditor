@@ -17,12 +17,10 @@ export const useBlockInteraction = ({
   const [isHovered, setIsHovered] = useState(false);
 
   const handleMouseEnter = useCallback(() => {
-    console.log('handleMouseEnter called');
     setIsHovered(true);
   }, []);
 
   const handleMouseLeave = useCallback(() => {
-    console.log('handleMouseLeave called');
     setIsHovered(false);
   }, []);
 

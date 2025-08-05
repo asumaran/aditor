@@ -80,14 +80,12 @@ const createMockSelection = (element: HTMLElement, offset: number) => {
 };
 
 describe('Arrow Key Navigation Tests', () => {
-  let focusManager: FocusManager;
-
   beforeEach(() => {
     // Clear DOM
     document.body.innerHTML = '';
 
     // Fresh FocusManager
-    focusManager = FocusManager.getInstance();
+    FocusManager.getInstance();
 
     // Clear mocks
     jest.clearAllMocks();
@@ -152,7 +150,7 @@ describe('Arrow Key Navigation Tests', () => {
   describe('Navigation Behavior', () => {
     test('should navigate up from first line of current block', () => {
       // Create two blocks: "foo" and "bar"
-      const block1 = createMockTextBlock('foo', 1);
+      createMockTextBlock('foo', 1); // block1 not used
       const block2 = createMockTextBlock('bar', 2);
 
       // Position cursor at start of second block
@@ -168,7 +166,7 @@ describe('Arrow Key Navigation Tests', () => {
     test('should navigate down from last line of current block', () => {
       // Create two blocks: "foo" and "bar"
       const block1 = createMockTextBlock('foo', 1);
-      const block2 = createMockTextBlock('bar', 2);
+      createMockTextBlock('bar', 2); // block2 not used
 
       // Position cursor at end of first block
       createMockSelection(block1, 3);
@@ -262,8 +260,6 @@ describe('Arrow Key Navigation Tests', () => {
       const block = createMockTextBlock(longText, 1);
 
       // Mock wrapped text behavior
-      const originalGetBoundingClientRect =
-        Element.prototype.getBoundingClientRect;
       block.getBoundingClientRect = jest.fn(() => ({
         top: 0,
         left: 0,

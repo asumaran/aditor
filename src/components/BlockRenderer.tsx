@@ -113,7 +113,6 @@ const getBlockDescription = (block: Block): string => {
 
 export const BlockRenderer: FC<BlockRendererProps> = ({
   block,
-  onChange,
   onFieldChange,
   onOptionsChange,
   onBlockClick,

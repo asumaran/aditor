@@ -114,12 +114,12 @@ describe('Initial Focus on Page Load', () => {
   });
 
   test('should handle empty editor state', () => {
-    const blocks: any[] = [];
+    const blocks: unknown[] = [];
     const focusSpy = jest.spyOn(focusManager, 'focusBlock');
 
     // Simulate empty state
     if (blocks.length > 0) {
-      const lastBlock = blocks[blocks.length - 1];
+      const lastBlock = blocks[blocks.length - 1] as { id: number };
       focusManager.focusBlock(lastBlock.id, {
         autoFocus: true,
         deferred: true,

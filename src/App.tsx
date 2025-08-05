@@ -63,6 +63,7 @@ const EditorContent: FC = () => {
         setLastFocusedBlockId(lastBlock.id);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run on mount
 
   const sensors = useSensors(
@@ -83,11 +84,9 @@ const EditorContent: FC = () => {
   useClickToFocus({
     containerId: 'mouse-listener',
     onEmptyAreaClick: (clickY: number) => {
-      console.log('🖱️ onEmptyAreaClick called with clickY:', clickY);
       // Use the ref to get the current state
       const currentState = stateRef.current;
       const blocks = getOrderedBlocks(currentState);
-      console.log('🖱️ Total blocks:', blocks.length);
 
       if (blocks.length > 0) {
         const lastBlock = blocks[blocks.length - 1];
@@ -97,31 +96,16 @@ const EditorContent: FC = () => {
           `[data-block-id="${lastBlock.id}"]`,
         ) as HTMLElement;
         if (!lastBlockElement) {
-          console.log('🖱️ Could not find DOM element for last block');
           return false;
         }
 
         const lastBlockRect = lastBlockElement.getBoundingClientRect();
         const lastBlockBottom = lastBlockRect.bottom;
 
-        console.log('🖱️ Click position check:', {
-          clickY,
-          lastBlockBottom,
-          isBelowLastBlock: clickY > lastBlockBottom,
-        });
-
         // Check if click is below the last block
         if (clickY <= lastBlockBottom) {
-          console.log('🖱️ Click is not below last block, ignoring');
           return false;
         }
-
-        console.log('🖱️ Last block:', {
-          id: lastBlock.id,
-          type: lastBlock.type,
-          properties: lastBlock.properties,
-          title: (lastBlock.properties as any).title,
-        });
 
         const lastBlockTitle =
           lastBlock.type === 'text' || lastBlock.type === 'heading'
@@ -135,14 +119,7 @@ const EditorContent: FC = () => {
           lastBlock.type !== 'text' ||
           (lastBlock.type === 'text' && lastBlockTitle.trim() !== '');
 
-        console.log('🖱️ Should create new block:', shouldCreateNewBlock, {
-          isTextBlock: lastBlock.type === 'text',
-          content: lastBlockTitle,
-          isEmpty: lastBlockTitle.trim() === '',
-        });
-
         if (shouldCreateNewBlock) {
-          console.log('🖱️ Creating new text block on empty area click');
           const newBlock = createTextBlock('');
           dispatch({
             type: 'INSERT_BLOCK_AFTER',
@@ -174,7 +151,6 @@ const EditorContent: FC = () => {
 
       // Hide drag handles when user focuses on any contenteditable or input
       if (target.matches('[contenteditable="true"], input, textarea')) {
-        console.log('🔴 HIDING handles - focus on contenteditable');
         setDragHandlesVisible(false);
       }
     };
@@ -187,7 +163,6 @@ const EditorContent: FC = () => {
           activeElement &&
           activeElement.matches('[contenteditable="true"], input, textarea')
         ) {
-          console.log('🔴 HIDING handles - typing in contenteditable');
           setDragHandlesVisible(false);
         }
       }
@@ -198,7 +173,6 @@ const EditorContent: FC = () => {
       // Only update if currently hidden to avoid unnecessary re-renders
       setDragHandlesVisible((prev) => {
         if (!prev) {
-          console.log('🟢 SHOWING handles - mouse move');
           return true;
         }
         return prev;
@@ -269,7 +243,6 @@ const EditorContent: FC = () => {
         replaceCurrentBlock?: boolean;
       },
     ) => {
-      console.log('handleCreateBlockAfter called:', { afterBlockId, options });
       const {
         initialContent = '',
         cursorAtStart = false,
@@ -304,11 +277,6 @@ const EditorContent: FC = () => {
 
       // If this is replacing the current block (slash command case), hide the original BEFORE creating new block
       if (replaceCurrentBlock) {
-        console.log(
-          '🎯 App: Hiding original block before creating replacement:',
-          afterBlockId,
-        );
-
         // Hide the original block immediately to prevent visual jump
         const originalBlockElement = document.querySelector(
           `[data-block-id="${afterBlockId}"]`,
@@ -316,11 +284,6 @@ const EditorContent: FC = () => {
         if (originalBlockElement) {
           originalBlockElement.style.display = 'none';
         }
-      } else {
-        console.log(
-          '🎯 App: Creating new block after current block (no replacement):',
-          afterBlockId,
-        );
       }
 
       dispatch({
@@ -342,16 +305,6 @@ const EditorContent: FC = () => {
       }
 
       // Use FocusManager for new block focus
-      console.log(
-        '🎯 App: Calling focusManager.onBlockCreated for slash command block:',
-        {
-          blockId: newBlock.id,
-          blockType,
-          cursorAtStart: shouldCursorBeAtStart,
-          initialContent,
-        },
-      );
-
       focusManager.onBlockCreated(newBlock.id, {
         cursorAtStart: shouldCursorBeAtStart,
         autoFocus: true,
@@ -365,11 +318,6 @@ const EditorContent: FC = () => {
 
       // Delete the original block from state after the new block is created and focused
       if (replaceCurrentBlock) {
-        console.log(
-          '🎯 App: Deleting original block from state:',
-          afterBlockId,
-        );
-
         // Delete it from the state after a small delay to allow focus to complete
         setTimeout(() => {
           dispatch({ type: 'REMOVE_BLOCK', payload: { id: afterBlockId } });
@@ -406,8 +354,6 @@ const EditorContent: FC = () => {
 
   const handleChangeBlockType = useCallback(
     (blockId: Block['id'], newType: string) => {
-      console.log('🎯 App.handleChangeBlockType called:', { blockId, newType });
-
       // Use the existing CHANGE_BLOCK_TYPE action which handles this properly
       dispatch({
         type: 'CHANGE_BLOCK_TYPE',
@@ -457,11 +403,6 @@ const EditorContent: FC = () => {
         type: 'UPDATE_BLOCK_CONTENT',
         payload: { id: previousBlockId, value: mergedContent },
       });
-
-      console.log(
-        'handleMergeWithPrevious: using FocusManager to position cursor at junction',
-        junctionPoint,
-      );
 
       // Use FocusManager for merge focus
       focusManager.onBlockMerged(previousBlockId, junctionPoint, {

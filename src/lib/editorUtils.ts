@@ -19,6 +19,24 @@ export const getBlockById = (
 };
 
 /**
+ * Check if a block should be replaced based on its content
+ * Returns true for empty content or content with only newlines
+ */
+export const shouldReplaceBlock = (content: string): boolean => {
+  return content === '' || content === '\n';
+};
+
+/**
+ * Get the text content of a block for comparison purposes
+ */
+export const getBlockTextContent = (block: Block): string => {
+  if (block.type === 'text' || block.type === 'heading') {
+    return block.properties.title || '';
+  }
+  return '';
+};
+
+/**
  * Get index of block by ID
  */
 export const getBlockIndex = (state: EditorState, id: number): number => {

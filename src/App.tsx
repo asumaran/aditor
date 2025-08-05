@@ -28,6 +28,8 @@ import {
   getOrderedBlocks,
   getPreviousBlockId,
   getNextBlockId,
+  shouldReplaceBlock,
+  getBlockTextContent,
 } from '@/lib/editorUtils';
 import type {
   Block,
@@ -80,6 +82,24 @@ const EditorContent: FC = () => {
   // Use a ref to always have access to the latest state
   const stateRef = useRef(state);
   stateRef.current = state;
+
+  // Helper function to replace empty text/heading blocks with form blocks
+  const replaceEmptyBlock = useCallback(
+    (blockId: number, newBlock: Block) => {
+      dispatch({
+        type: 'REPLACE_BLOCK',
+        payload: { id: blockId, newBlock },
+      });
+
+      // Use onBlockCreated since the structure has changed significantly
+      focusManager.onBlockCreated(blockId, {
+        autoFocus: true,
+        deferred: true,
+        cursorAtEnd: true,
+      });
+    },
+    [dispatch, focusManager],
+  );
 
   useClickToFocus({
     containerId: 'mouse-listener',
@@ -275,56 +295,73 @@ const EditorContent: FC = () => {
           newBlock = createTextBlock(initialContent);
       }
 
-      // If this is replacing the current block (slash command case), hide the original BEFORE creating new block
       if (replaceCurrentBlock) {
-        // Hide the original block immediately to prevent visual jump
-        const originalBlockElement = document.querySelector(
-          `[data-block-id="${afterBlockId}"]`,
-        ) as HTMLElement;
-        if (originalBlockElement) {
-          originalBlockElement.style.display = 'none';
-        }
-      }
+        // Use REPLACE_BLOCK for slash commands to avoid visual jump
+        dispatch({
+          type: 'REPLACE_BLOCK',
+          payload: { id: afterBlockId, newBlock },
+        });
 
-      dispatch({
-        type: 'INSERT_BLOCK_AFTER',
-        payload: { afterBlockId, newBlock },
-      });
-
-      // If there's a callback to execute after focus, set up a one-time listener
-      if (onFocusTransferred) {
-        // Use multiple requestAnimationFrame to wait for focus to complete
-        // This matches FocusManager's deferred timing (double RAF)
-        requestAnimationFrame(() => {
+        // If there's a callback to execute after focus, set up a one-time listener
+        if (onFocusTransferred) {
+          // Use multiple requestAnimationFrame to wait for focus to complete
+          // This matches FocusManager's deferred timing (double RAF)
           requestAnimationFrame(() => {
             requestAnimationFrame(() => {
-              onFocusTransferred();
+              requestAnimationFrame(() => {
+                onFocusTransferred();
+              });
             });
           });
+        }
+
+        // Use FocusManager for replaced block focus (keeping the same ID)
+        focusManager.onBlockCreated(afterBlockId, {
+          cursorAtStart: shouldCursorBeAtStart,
+          autoFocus: true,
+          deferred: true,
+          ...(blockType === 'short_answer' ||
+          blockType === 'multiple_choice' ||
+          blockType === 'multiselect'
+            ? { cursorAtEnd: true }
+            : {}),
         });
+
+        return afterBlockId;
+      } else {
+        // Normal case: insert after
+        dispatch({
+          type: 'INSERT_BLOCK_AFTER',
+          payload: { afterBlockId, newBlock },
+        });
+
+        // If there's a callback to execute after focus, set up a one-time listener
+        if (onFocusTransferred) {
+          // Use multiple requestAnimationFrame to wait for focus to complete
+          // This matches FocusManager's deferred timing (double RAF)
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              requestAnimationFrame(() => {
+                onFocusTransferred();
+              });
+            });
+          });
+        }
+
+        // Use FocusManager for new block focus
+        focusManager.onBlockCreated(newBlock.id, {
+          cursorAtStart: shouldCursorBeAtStart,
+          autoFocus: true,
+          deferred: true,
+          ...(blockType === 'short_answer' ||
+          blockType === 'multiple_choice' ||
+          blockType === 'multiselect'
+            ? { cursorAtEnd: true }
+            : {}),
+        });
+
+        return newBlock.id;
       }
-
-      // Use FocusManager for new block focus
-      focusManager.onBlockCreated(newBlock.id, {
-        cursorAtStart: shouldCursorBeAtStart,
-        autoFocus: true,
-        deferred: true, // Wait for React render
-        ...(blockType === 'short_answer' ||
-        blockType === 'multiple_choice' ||
-        blockType === 'multiselect'
-          ? { cursorAtEnd: true }
-          : {}),
-      });
-
-      // Delete the original block from state after the new block is created and focused
-      if (replaceCurrentBlock) {
-        // Delete it from the state after a small delay to allow focus to complete
-        setTimeout(() => {
-          dispatch({ type: 'REMOVE_BLOCK', payload: { id: afterBlockId } });
-        }, 50);
-      }
-
-      return newBlock.id;
     },
     [dispatch, focusManager],
   );
@@ -440,18 +477,10 @@ const EditorContent: FC = () => {
   );
 
   const addTextBlock = useCallback(() => {
-    // Check if block should be replaced by sidebar buttons (only "" or "\n")
-    const shouldReplaceBlock = (content: string) => {
-      return content === '' || content === '\n';
-    };
-
     if (lastFocusedBlockId) {
       const block = state.blockMap[lastFocusedBlockId];
-      const blockTitle =
-        block.type === 'text' || block.type === 'heading'
-          ? block.properties.title
-          : '';
-      const isEmpty = shouldReplaceBlock(blockTitle || '');
+      const blockTitle = getBlockTextContent(block);
+      const isEmpty = shouldReplaceBlock(blockTitle);
 
       if ((block.type === 'text' || block.type === 'heading') && isEmpty) {
         // Replace empty text/heading block
@@ -524,18 +553,10 @@ const EditorContent: FC = () => {
   }, [state, dispatch, lastFocusedBlockId, focusManager]);
 
   const addHeadingBlock = useCallback(() => {
-    // Check if block should be replaced by sidebar buttons (only "" or "\n")
-    const shouldReplaceBlock = (content: string) => {
-      return content === '' || content === '\n';
-    };
-
     if (lastFocusedBlockId) {
       const block = state.blockMap[lastFocusedBlockId];
-      const blockTitle =
-        block.type === 'text' || block.type === 'heading'
-          ? block.properties.title
-          : '';
-      const isEmpty = shouldReplaceBlock(blockTitle || '');
+      const blockTitle = getBlockTextContent(block);
+      const isEmpty = shouldReplaceBlock(blockTitle);
 
       if ((block.type === 'text' || block.type === 'heading') && isEmpty) {
         // Replace empty text/heading block
@@ -572,11 +593,8 @@ const EditorContent: FC = () => {
           deferred: true,
         });
       } else {
-        const lastBlockTitle =
-          lastBlock.type === 'text' || lastBlock.type === 'heading'
-            ? lastBlock.properties.title
-            : '';
-        const isEmpty = shouldReplaceBlock(lastBlockTitle || '');
+        const lastBlockTitle = getBlockTextContent(lastBlock);
+        const isEmpty = shouldReplaceBlock(lastBlockTitle);
 
         if (
           (lastBlock.type === 'text' || lastBlock.type === 'heading') &&
@@ -609,17 +627,27 @@ const EditorContent: FC = () => {
 
   const addShortAnswerBlock = useCallback(() => {
     if (lastFocusedBlockId) {
-      // Always insert after focused block (never replace for form blocks)
-      const newBlock = createShortAnswerBlock('Sample Short Answer Question');
-      dispatch({
-        type: 'INSERT_BLOCK_AFTER',
-        payload: { afterBlockId: lastFocusedBlockId, newBlock },
-      });
-      focusManager.onBlockCreated(newBlock.id, {
-        autoFocus: true,
-        deferred: true,
-        cursorAtEnd: true, // Position cursor at end of "Sample Short Answer Question"
-      });
+      const block = state.blockMap[lastFocusedBlockId];
+      const blockTitle = getBlockTextContent(block);
+      const isEmpty = shouldReplaceBlock(blockTitle);
+
+      if ((block.type === 'text' || block.type === 'heading') && isEmpty) {
+        // Replace empty text/heading block
+        const newBlock = createShortAnswerBlock('Sample Short Answer Question');
+        replaceEmptyBlock(lastFocusedBlockId, newBlock);
+      } else {
+        // Insert after focused block for non-empty blocks
+        const newBlock = createShortAnswerBlock('Sample Short Answer Question');
+        dispatch({
+          type: 'INSERT_BLOCK_AFTER',
+          payload: { afterBlockId: lastFocusedBlockId, newBlock },
+        });
+        focusManager.onBlockCreated(newBlock.id, {
+          autoFocus: true,
+          deferred: true,
+          cursorAtEnd: true,
+        });
+      }
     } else {
       // No focus - insert at end
       const newBlock = createShortAnswerBlock('Sample Short Answer Question');
@@ -627,24 +655,34 @@ const EditorContent: FC = () => {
       focusManager.onBlockCreated(newBlock.id, {
         autoFocus: true,
         deferred: true,
-        cursorAtEnd: true, // Position cursor at end of "Sample Short Answer Question"
+        cursorAtEnd: true,
       });
     }
-  }, [dispatch, lastFocusedBlockId, focusManager]);
+  }, [state, dispatch, lastFocusedBlockId, focusManager, replaceEmptyBlock]);
 
   const addMultipleChoiceBlock = useCallback(() => {
     if (lastFocusedBlockId) {
-      // Always insert after focused block (never replace for form blocks)
-      const newBlock = createMultipleChoiceBlock('Question');
-      dispatch({
-        type: 'INSERT_BLOCK_AFTER',
-        payload: { afterBlockId: lastFocusedBlockId, newBlock },
-      });
-      focusManager.onBlockCreated(newBlock.id, {
-        autoFocus: true,
-        deferred: true,
-        cursorAtEnd: true, // Position cursor at end of "Question"
-      });
+      const block = state.blockMap[lastFocusedBlockId];
+      const blockTitle = getBlockTextContent(block);
+      const isEmpty = shouldReplaceBlock(blockTitle);
+
+      if ((block.type === 'text' || block.type === 'heading') && isEmpty) {
+        // Replace empty text/heading block
+        const newBlock = createMultipleChoiceBlock('Question');
+        replaceEmptyBlock(lastFocusedBlockId, newBlock);
+      } else {
+        // Insert after focused block for non-empty blocks
+        const newBlock = createMultipleChoiceBlock('Question');
+        dispatch({
+          type: 'INSERT_BLOCK_AFTER',
+          payload: { afterBlockId: lastFocusedBlockId, newBlock },
+        });
+        focusManager.onBlockCreated(newBlock.id, {
+          autoFocus: true,
+          deferred: true,
+          cursorAtEnd: true,
+        });
+      }
     } else {
       // No focus - insert at end
       const newBlock = createMultipleChoiceBlock('Question');
@@ -652,24 +690,34 @@ const EditorContent: FC = () => {
       focusManager.onBlockCreated(newBlock.id, {
         autoFocus: true,
         deferred: true,
-        cursorAtEnd: true, // Position cursor at end of "Question"
+        cursorAtEnd: true,
       });
     }
-  }, [dispatch, lastFocusedBlockId, focusManager]);
+  }, [state, dispatch, lastFocusedBlockId, focusManager, replaceEmptyBlock]);
 
   const addMultiselectBlock = useCallback(() => {
     if (lastFocusedBlockId) {
-      // Always insert after focused block (never replace for form blocks)
-      const newBlock = createMultiselectBlock('Select label');
-      dispatch({
-        type: 'INSERT_BLOCK_AFTER',
-        payload: { afterBlockId: lastFocusedBlockId, newBlock },
-      });
-      focusManager.onBlockCreated(newBlock.id, {
-        autoFocus: true,
-        deferred: true,
-        cursorAtEnd: true, // Position cursor at end of "Select label"
-      });
+      const block = state.blockMap[lastFocusedBlockId];
+      const blockTitle = getBlockTextContent(block);
+      const isEmpty = shouldReplaceBlock(blockTitle);
+
+      if ((block.type === 'text' || block.type === 'heading') && isEmpty) {
+        // Replace empty text/heading block
+        const newBlock = createMultiselectBlock('Select label');
+        replaceEmptyBlock(lastFocusedBlockId, newBlock);
+      } else {
+        // Insert after focused block for non-empty blocks
+        const newBlock = createMultiselectBlock('Select label');
+        dispatch({
+          type: 'INSERT_BLOCK_AFTER',
+          payload: { afterBlockId: lastFocusedBlockId, newBlock },
+        });
+        focusManager.onBlockCreated(newBlock.id, {
+          autoFocus: true,
+          deferred: true,
+          cursorAtEnd: true,
+        });
+      }
     } else {
       // No focus - insert at end
       const newBlock = createMultiselectBlock('Select label');
@@ -677,10 +725,10 @@ const EditorContent: FC = () => {
       focusManager.onBlockCreated(newBlock.id, {
         autoFocus: true,
         deferred: true,
-        cursorAtEnd: true, // Position cursor at end of "Select label"
+        cursorAtEnd: true,
       });
     }
-  }, [dispatch, lastFocusedBlockId, focusManager]);
+  }, [state, dispatch, lastFocusedBlockId, focusManager, replaceEmptyBlock]);
 
   const handleDragStart = useCallback(
     (event: { active: { id: string | number } }) => {

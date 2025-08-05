@@ -39,4 +39,5 @@ export type EditorAction =
       type: 'UPDATE_SORT_ORDER';
       payload: { id: number; sortOrder: 'manual' | 'asc' | 'desc' };
     }
-  | { type: 'REORDER_BLOCKS'; payload: { blockIds: number[] } };
+  | { type: 'REORDER_BLOCKS'; payload: { blockIds: number[] } }
+  | { type: 'REPLACE_BLOCK'; payload: { id: number; newBlock: Block } };

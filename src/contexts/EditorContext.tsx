@@ -237,6 +237,20 @@ const editorReducer = (
       };
     }
 
+    case 'REPLACE_BLOCK': {
+      const { id, newBlock } = action.payload;
+      const existingBlock = getBlockById(state, id);
+      if (!existingBlock) return state;
+
+      // Replace the block with the new one, keeping the same ID and position
+      const replacementBlock = { ...newBlock, id };
+
+      return {
+        ...state,
+        blockMap: { ...state.blockMap, [id]: replacementBlock },
+      };
+    }
+
     default:
       return state;
   }

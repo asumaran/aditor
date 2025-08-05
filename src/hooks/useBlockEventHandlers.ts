@@ -11,7 +11,10 @@ import {
   getOrderedBlocks,
   getPreviousBlockId,
   getNextBlockId,
+  getBlockTextContent,
+  shouldReplaceBlock,
 } from '@/lib/editorUtils';
+import { getBlockConfig } from '@/config/blocks';
 import type {
   Block,
   Option,
@@ -289,6 +292,104 @@ export const useBlockEventHandlers = () => {
     [state, focusManager],
   );
 
+  /**
+   * Shared logic for creating blocks with smart replacement/insertion decisions
+   * Used by both sidebar buttons and slash commands
+   */
+  const handleSmartBlockCreation = useCallback(
+    (
+      targetBlockId: Block['id'] | null,
+      newBlockType: string,
+      options: {
+        source: 'sidebar' | 'slash-command';
+        preserveFocus?: boolean; // For slash commands to preserve focus
+        onFocusTransferred?: () => void;
+      } = { source: 'sidebar' },
+    ) => {
+      const blockConfig = getBlockConfig(newBlockType);
+      if (!blockConfig) {
+        console.error(`Unknown block type: ${newBlockType}`);
+        return;
+      }
+
+      const { defaultContent } = blockConfig;
+      const { source, preserveFocus = false, onFocusTransferred } = options;
+
+      // Handle case when no target block is specified
+      if (!targetBlockId) {
+        const blocks = getOrderedBlocks(state);
+        const lastBlock = blocks[blocks.length - 1];
+
+        if (!lastBlock) {
+          // No blocks exist, create the first one
+          return handleCreateBlockAfter(0, {
+            blockType: newBlockType,
+            initialContent: defaultContent,
+            onFocusTransferred,
+          });
+        }
+
+        targetBlockId = lastBlock.id;
+      }
+
+      const targetBlock = state.blockMap[targetBlockId];
+      if (!targetBlock) return;
+
+      const blockContent = getBlockTextContent(targetBlock);
+      const isEmpty = shouldReplaceBlock(blockContent);
+
+      // Shared logic for both sidebar and slash commands:
+      // 1. Empty text block + same type (text) → Stay in current block or just focus
+      // 2. Empty text block + different type → Replace
+      // 3. Empty heading block → NEVER replace, always insert after
+      // 4. Non-empty blocks → Always insert after
+
+      if (targetBlock.type === 'text' && newBlockType === 'text' && isEmpty) {
+        // Text-to-text on empty block:
+        // - Sidebar: Just focus current block
+        // - Slash: Exit slash mode (handled by caller)
+        if (source === 'sidebar') {
+          focusManager.focusBlock(targetBlockId, {
+            autoFocus: true,
+            deferred: true,
+          });
+        }
+        return targetBlockId;
+      }
+
+      if (targetBlock.type === 'text' && newBlockType !== 'text' && isEmpty) {
+        // Empty text block + different type → Replace
+        const isFormBlock = [
+          'short_answer',
+          'multiple_choice',
+          'multiselect',
+        ].includes(newBlockType);
+        return handleCreateBlockAfter(targetBlockId, {
+          blockType: newBlockType,
+          initialContent: defaultContent,
+          replaceCurrentBlock: true,
+          cursorAtStart: !preserveFocus && !isFormBlock, // Form blocks need cursor at end
+          onFocusTransferred,
+        });
+      }
+
+      // All other cases: insert after (including empty heading blocks)
+      const isFormBlock = [
+        'short_answer',
+        'multiple_choice',
+        'multiselect',
+      ].includes(newBlockType);
+      return handleCreateBlockAfter(targetBlockId, {
+        blockType: newBlockType,
+        initialContent: defaultContent,
+        replaceCurrentBlock: false,
+        cursorAtStart: !preserveFocus && !isFormBlock, // Form blocks need cursor at end
+        onFocusTransferred,
+      });
+    },
+    [state, focusManager, handleCreateBlockAfter],
+  );
+
   return {
     handleBlockChange,
     handleFieldChange,
@@ -297,6 +398,7 @@ export const useBlockEventHandlers = () => {
     handleDescriptionChange,
     handleBlockClick,
     handleCreateBlockAfter,
+    handleSmartBlockCreation,
     handleDeleteBlockAndFocusPrevious,
     handleChangeBlockType,
     handleMergeWithPrevious,

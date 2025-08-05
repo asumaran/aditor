@@ -264,6 +264,58 @@ describe('useSlashCommands', () => {
     });
   });
 
+  describe('Case 4b: Empty heading block selecting different type', () => {
+    it('should create new block after heading (never replace empty heading)', () => {
+      const mockOnCommandSelect = jest.fn();
+
+      mockUseCommandIndicator.mockImplementation(({ onCommandSelect }) => {
+        mockOnCommandSelect.mockImplementation((command) => {
+          if (onCommandSelect) {
+            onCommandSelect(command);
+          }
+        });
+
+        return {
+          isOpen: true,
+          query: '',
+          filteredCommands: [{ id: 'text', label: 'Text' }],
+          shouldShowCommandIndicator: false,
+          handleSelectCommand: mockOnCommandSelect,
+          handleQueryChange: jest.fn(),
+          handleBlur: jest.fn(),
+          commandCommands: [],
+          isCommandMode: true,
+          selectedIndex: 0,
+          originalContent: '', // Empty heading
+          exitCommandMode: mockExitCommandMode,
+        };
+      });
+
+      renderHook(() =>
+        useSlashCommands({
+          elementRef: mockElementRef,
+          currentValue: '', // Empty
+          onChange: mockOnChange,
+          blockType: 'heading',
+          onCreateBlockAfter: mockOnCreateBlockAfter,
+        }),
+      );
+
+      // Simulate selecting "Text" command
+      act(() => {
+        mockOnCommandSelect({ id: 'text', label: 'Text' });
+      });
+
+      // Should exit command mode with blur (will create new block)
+      expect(mockExitCommandMode).toHaveBeenCalledWith(false, true);
+      // Should create after (never replace empty heading)
+      expect(mockOnCreateBlockAfter).toHaveBeenCalledWith({
+        blockType: 'text',
+        replaceCurrentBlock: false,
+      });
+    });
+  });
+
   describe('Case 5: All other cases', () => {
     it('should create new block after current for form blocks', () => {
       const mockOnCommandSelect = jest.fn();

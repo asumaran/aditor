@@ -1,17 +1,5 @@
 import { useCommandIndicator } from './useCommandIndicator';
-
-interface BlockType {
-  id: string;
-  label: string;
-}
-
-const AVAILABLE_BLOCKS: BlockType[] = [
-  { id: 'text', label: 'Text' },
-  { id: 'heading', label: 'Heading' },
-  { id: 'short_answer', label: 'Short Answer' },
-  { id: 'multiple_choice', label: 'Multiple Choice' },
-  { id: 'multiselect', label: 'Multiselect' },
-];
+import { AVAILABLE_BLOCKS } from '@/config/blocks';
 
 interface UseSlashCommandsProps {
   elementRef: React.RefObject<HTMLElement | null>;
@@ -59,11 +47,14 @@ export const useSlashCommands = ({
        * We need to check if the block is empty by looking at the original content
        * that was stored before slash mode was activated, not the currentValue
        * which includes the slash command content.
+       *
+       * NOTE: This logic matches the shared logic in handleSmartBlockCreation
+       * but is kept here for slash command specific behavior (like focus handling)
        */
       const isBlockEmpty = originalContent.trim() === '';
 
       /**
-       * SELECTION LOGIC CASES:
+       * SELECTION LOGIC CASES (shared with sidebar buttons):
        *
        * 1. Empty text block + select "Text" → Just exit slash mode (stay in same block)
        * 2. Empty text block + select different type → Replace current block with new type
@@ -78,25 +69,25 @@ export const useSlashCommands = ({
         return;
       }
 
-      // Case 2: Text block with content selecting text - create new text block after
+      // Case 1b: Empty text block selecting different block type - replace current block
+      if (blockType === 'text' && selectedType !== 'text' && isBlockEmpty) {
+        // Exit slash mode with blur (will create new block)
+        exitCommandMode(false, true);
+        // Different block types replace empty text blocks
+        onCreateBlockAfter?.({
+          blockType: selectedType,
+          replaceCurrentBlock: true,
+        });
+        return;
+      }
+
+      // Case 3: Text block with content selecting text - create new text block after
       if (blockType === 'text' && selectedType === 'text' && !isBlockEmpty) {
         // Exit slash mode with blur (will create new block)
         exitCommandMode(false, true);
         onCreateBlockAfter?.({
           blockType: selectedType,
           replaceCurrentBlock: false,
-        });
-        return;
-      }
-
-      // Case 3: Empty text block selecting different type - replace current block
-      if (blockType === 'text' && selectedType !== 'text' && isBlockEmpty) {
-        // Exit slash mode with blur (will create new block)
-        exitCommandMode(false, true);
-        // For all block types, create new block after current and replace
-        onCreateBlockAfter?.({
-          blockType: selectedType,
-          replaceCurrentBlock: true,
         });
         return;
       }

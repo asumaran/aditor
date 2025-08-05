@@ -60,21 +60,12 @@ export const useFocusManager = (
   );
 
   const focusForEvent = useCallback(
-    (
-      eventType: FocusEventType,
-      focusOptions: FocusOptions = {},
-      context?: Record<string, unknown>,
-    ) => {
+    (eventType: FocusEventType, focusOptions: FocusOptions = {}) => {
       if (!blockId) {
         return false;
       }
 
-      return manager.focusBlockForEvent(
-        blockId,
-        eventType,
-        focusOptions,
-        context,
-      );
+      return manager.focusBlockForEvent(blockId, eventType, focusOptions);
     },
     [blockId, manager],
   );
@@ -132,9 +123,8 @@ export const useGlobalFocusManager = () => {
       blockId: number,
       eventType: FocusEventType,
       options: FocusOptions = {},
-      context?: Record<string, unknown>,
     ) => {
-      return manager.focusBlockForEvent(blockId, eventType, options, context);
+      return manager.focusBlockForEvent(blockId, eventType, options);
     },
     [manager],
   );

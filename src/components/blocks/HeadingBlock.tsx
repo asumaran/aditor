@@ -90,12 +90,10 @@ export const HeadingBlock: FC<HeadingBlockProps> = ({
       replaceCurrentBlock?: boolean;
     }) => {
       if (onCreateBlockAfter) {
-        // For heading blocks, override the replace logic from useSlashCommands
-        // Text and heading blocks should always create after (never replace heading)
-        const shouldReplace = !['text', 'heading'].includes(options.blockType);
+        // Pass through the replacement decision from useSlashCommands
         onCreateBlockAfter({
           blockType: options.blockType,
-          replaceCurrentBlock: shouldReplace,
+          replaceCurrentBlock: options.replaceCurrentBlock,
         });
       }
     },

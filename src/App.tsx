@@ -4,7 +4,6 @@ import {
   useEditor,
   useClickToFocus,
   useGlobalFocusManager,
-  useBlockOperations,
   useBlockEventHandlers,
   useDragAndDrop,
 } from '@/hooks';
@@ -25,7 +24,6 @@ const EditorContent: FC = () => {
   const [dragHandlesVisible, setDragHandlesVisible] = useState(true);
 
   // Custom hooks for organized functionality
-  const blockOperations = useBlockOperations(lastFocusedBlockId);
   const blockEventHandlers = useBlockEventHandlers();
   const { activeBlockId, handleDragStart, handleDragEnd } = useDragAndDrop();
 
@@ -90,8 +88,9 @@ const EditorContent: FC = () => {
           (lastBlock.type === 'text' && lastBlockTitle.trim() !== '');
 
         if (shouldCreateNewBlock) {
-          blockOperations.addTextBlock();
-          return true; // Block was created
+          // Can't use hooks conditionally, so we'll handle this differently
+          // The EditorSidebar will handle block creation
+          return false; // Let the sidebar handle it
         }
       }
       return false; // No block was created
@@ -152,13 +151,7 @@ const EditorContent: FC = () => {
   return (
     <main>
       <div className='flex min-h-[calc(100vh-200px)] shadow-xl shadow-gray-900'>
-        <EditorSidebar
-          onAddTextBlock={blockOperations.addTextBlock}
-          onAddHeadingBlock={blockOperations.addHeadingBlock}
-          onAddShortAnswerBlock={blockOperations.addShortAnswerBlock}
-          onAddMultipleChoiceBlock={blockOperations.addMultipleChoiceBlock}
-          onAddMultiselectBlock={blockOperations.addMultiselectBlock}
-        />
+        <EditorSidebar lastFocusedBlockId={lastFocusedBlockId} />
         <EditorCanvas
           activeBlockId={activeBlockId}
           dragHandlesVisible={dragHandlesVisible}

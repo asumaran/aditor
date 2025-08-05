@@ -1,6 +1,6 @@
 /**
  * Debug Navigation Tests
- * 
+ *
  * Tests to debug why getCursorHorizontalPosition is returning 0
  */
 
@@ -11,7 +11,7 @@ const createMockSelection = (element: HTMLElement, offset: number) => {
   const textNode = element.firstChild || element;
   const content = element.textContent || '';
   const actualOffset = Math.min(offset, content.length);
-  
+
   // Create a mock range that simulates proper text selection
   const mockRange = {
     selectNodeContents: jest.fn(),
@@ -27,7 +27,7 @@ const createMockSelection = (element: HTMLElement, offset: number) => {
     endContainer: textNode,
     endOffset: actualOffset,
   };
-  
+
   // Mock selection with proper methods
   const mockSelection = {
     rangeCount: 1,
@@ -36,13 +36,13 @@ const createMockSelection = (element: HTMLElement, offset: number) => {
     addRange: jest.fn(),
     toString: jest.fn().mockReturnValue(''),
   };
-  
+
   // Override window.getSelection to return our mock
   Object.defineProperty(window, 'getSelection', {
     writable: true,
     value: jest.fn().mockReturnValue(mockSelection),
   });
-  
+
   // Override document.createRange to return a mock range that works with our utilities
   Object.defineProperty(document, 'createRange', {
     writable: true,
@@ -51,14 +51,16 @@ const createMockSelection = (element: HTMLElement, offset: number) => {
       setStart: jest.fn(),
       setEnd: jest.fn(),
       collapse: jest.fn(),
-      toString: jest.fn().mockImplementation(() => content.substring(0, actualOffset)),
+      toString: jest
+        .fn()
+        .mockImplementation(() => content.substring(0, actualOffset)),
       startContainer: textNode,
       startOffset: actualOffset,
       endContainer: textNode,
       endOffset: actualOffset,
     })),
   });
-  
+
   return { range: mockRange, selection: mockSelection };
 };
 
@@ -96,17 +98,17 @@ describe('Debug Navigation Tests', () => {
     block.contentEditable = 'true';
     block.textContent = 'foo';
     document.body.appendChild(block);
-    
+
     console.log('Manual text node content:', block.textContent);
     console.log('Block with manual node:', block.textContent);
-    
+
     // Use our mock selection function
     createMockSelection(block, 3);
-    
+
     // Test horizontal position
     const horizontalPos = getCursorHorizontalPosition(block);
     console.log('Horizontal position result:', horizontalPos);
-    
+
     // Should be 3 (position in "foo")
     expect(horizontalPos).toBe(3);
   });

@@ -1,6 +1,6 @@
 /**
  * useSlashCommands Hook Tests
- * 
+ *
  * Tests the slash command logic for different block types and scenarios.
  * Covers the new implementation that handles:
  * 1. Empty text block + select "Text" → Exit slash mode (no change)
@@ -16,11 +16,13 @@ import { renderHook, act } from '@testing-library/react';
 
 // Mock useCommandIndicator
 jest.mock('../src/hooks/useCommandIndicator', () => ({
-  useCommandIndicator: jest.fn()
+  useCommandIndicator: jest.fn(),
 }));
 
 import { useCommandIndicator } from '../src/hooks/useCommandIndicator';
-const mockUseCommandIndicator = useCommandIndicator as jest.MockedFunction<typeof useCommandIndicator>;
+const mockUseCommandIndicator = useCommandIndicator as jest.MockedFunction<
+  typeof useCommandIndicator
+>;
 
 describe('useSlashCommands', () => {
   let mockElementRef: React.RefObject<HTMLElement>;
@@ -58,7 +60,7 @@ describe('useSlashCommands', () => {
   describe('Case 1: Empty text block selecting "Text"', () => {
     it('should exit slash mode without creating new block', () => {
       const mockOnCommandSelect = jest.fn();
-      
+
       // Setup the onCommandSelect callback to trigger our logic
       mockUseCommandIndicator.mockImplementation(({ onCommandSelect }) => {
         mockOnCommandSelect.mockImplementation((command) => {
@@ -66,7 +68,7 @@ describe('useSlashCommands', () => {
             onCommandSelect(command);
           }
         });
-        
+
         return {
           isOpen: true,
           query: '',
@@ -84,13 +86,15 @@ describe('useSlashCommands', () => {
       });
 
       // Render the hook with empty text block
-      renderHook(() => useSlashCommands({
-        elementRef: mockElementRef,
-        currentValue: '', // Empty current value
-        onChange: mockOnChange,
-        blockType: 'text',
-        onCreateBlockAfter: mockOnCreateBlockAfter,
-      }));
+      renderHook(() =>
+        useSlashCommands({
+          elementRef: mockElementRef,
+          currentValue: '', // Empty current value
+          onChange: mockOnChange,
+          blockType: 'text',
+          onCreateBlockAfter: mockOnCreateBlockAfter,
+        }),
+      );
 
       // Simulate selecting "Text" command
       act(() => {
@@ -107,14 +111,14 @@ describe('useSlashCommands', () => {
   describe('Case 2: Text block with content selecting "Text"', () => {
     it('should create new text block after current', () => {
       const mockOnCommandSelect = jest.fn();
-      
+
       mockUseCommandIndicator.mockImplementation(({ onCommandSelect }) => {
         mockOnCommandSelect.mockImplementation((command) => {
           if (onCommandSelect) {
             onCommandSelect(command);
           }
         });
-        
+
         return {
           isOpen: true,
           query: '',
@@ -131,13 +135,15 @@ describe('useSlashCommands', () => {
         };
       });
 
-      renderHook(() => useSlashCommands({
-        elementRef: mockElementRef,
-        currentValue: 'Some content', // Has content
-        onChange: mockOnChange,
-        blockType: 'text',
-        onCreateBlockAfter: mockOnCreateBlockAfter,
-      }));
+      renderHook(() =>
+        useSlashCommands({
+          elementRef: mockElementRef,
+          currentValue: 'Some content', // Has content
+          onChange: mockOnChange,
+          blockType: 'text',
+          onCreateBlockAfter: mockOnCreateBlockAfter,
+        }),
+      );
 
       // Simulate selecting "Text" command
       act(() => {
@@ -149,7 +155,7 @@ describe('useSlashCommands', () => {
       // Should create new text block after current
       expect(mockOnCreateBlockAfter).toHaveBeenCalledWith({
         blockType: 'text',
-        replaceCurrentBlock: false
+        replaceCurrentBlock: false,
       });
     });
   });
@@ -157,14 +163,14 @@ describe('useSlashCommands', () => {
   describe('Case 3: Empty text block selecting different type', () => {
     it('should replace current block with new type', () => {
       const mockOnCommandSelect = jest.fn();
-      
+
       mockUseCommandIndicator.mockImplementation(({ onCommandSelect }) => {
         mockOnCommandSelect.mockImplementation((command) => {
           if (onCommandSelect) {
             onCommandSelect(command);
           }
         });
-        
+
         return {
           isOpen: true,
           query: '',
@@ -181,13 +187,15 @@ describe('useSlashCommands', () => {
         };
       });
 
-      renderHook(() => useSlashCommands({
-        elementRef: mockElementRef,
-        currentValue: '', // Empty
-        onChange: mockOnChange,
-        blockType: 'text',
-        onCreateBlockAfter: mockOnCreateBlockAfter,
-      }));
+      renderHook(() =>
+        useSlashCommands({
+          elementRef: mockElementRef,
+          currentValue: '', // Empty
+          onChange: mockOnChange,
+          blockType: 'text',
+          onCreateBlockAfter: mockOnCreateBlockAfter,
+        }),
+      );
 
       // Simulate selecting "Heading" command
       act(() => {
@@ -199,7 +207,7 @@ describe('useSlashCommands', () => {
       // Should replace current block
       expect(mockOnCreateBlockAfter).toHaveBeenCalledWith({
         blockType: 'heading',
-        replaceCurrentBlock: true
+        replaceCurrentBlock: true,
       });
     });
   });
@@ -207,14 +215,14 @@ describe('useSlashCommands', () => {
   describe('Case 4: Heading block selecting text', () => {
     it('should create text block after heading (never replace)', () => {
       const mockOnCommandSelect = jest.fn();
-      
+
       mockUseCommandIndicator.mockImplementation(({ onCommandSelect }) => {
         mockOnCommandSelect.mockImplementation((command) => {
           if (onCommandSelect) {
             onCommandSelect(command);
           }
         });
-        
+
         return {
           isOpen: true,
           query: '',
@@ -231,13 +239,15 @@ describe('useSlashCommands', () => {
         };
       });
 
-      renderHook(() => useSlashCommands({
-        elementRef: mockElementRef,
-        currentValue: 'Heading content',
-        onChange: mockOnChange,
-        blockType: 'heading',
-        onCreateBlockAfter: mockOnCreateBlockAfter,
-      }));
+      renderHook(() =>
+        useSlashCommands({
+          elementRef: mockElementRef,
+          currentValue: 'Heading content',
+          onChange: mockOnChange,
+          blockType: 'heading',
+          onCreateBlockAfter: mockOnCreateBlockAfter,
+        }),
+      );
 
       // Simulate selecting "Text" command
       act(() => {
@@ -249,7 +259,7 @@ describe('useSlashCommands', () => {
       // Should create after (not replace)
       expect(mockOnCreateBlockAfter).toHaveBeenCalledWith({
         blockType: 'text',
-        replaceCurrentBlock: false
+        replaceCurrentBlock: false,
       });
     });
   });
@@ -257,14 +267,14 @@ describe('useSlashCommands', () => {
   describe('Case 5: All other cases', () => {
     it('should create new block after current for form blocks', () => {
       const mockOnCommandSelect = jest.fn();
-      
+
       mockUseCommandIndicator.mockImplementation(({ onCommandSelect }) => {
         mockOnCommandSelect.mockImplementation((command) => {
           if (onCommandSelect) {
             onCommandSelect(command);
           }
         });
-        
+
         return {
           isOpen: true,
           query: '',
@@ -281,13 +291,15 @@ describe('useSlashCommands', () => {
         };
       });
 
-      renderHook(() => useSlashCommands({
-        elementRef: mockElementRef,
-        currentValue: 'Some content',
-        onChange: mockOnChange,
-        blockType: 'heading',
-        onCreateBlockAfter: mockOnCreateBlockAfter,
-      }));
+      renderHook(() =>
+        useSlashCommands({
+          elementRef: mockElementRef,
+          currentValue: 'Some content',
+          onChange: mockOnChange,
+          blockType: 'heading',
+          onCreateBlockAfter: mockOnCreateBlockAfter,
+        }),
+      );
 
       // Simulate selecting "Short Answer" command
       act(() => {
@@ -299,20 +311,22 @@ describe('useSlashCommands', () => {
       // Should create after current
       expect(mockOnCreateBlockAfter).toHaveBeenCalledWith({
         blockType: 'short_answer',
-        replaceCurrentBlock: false
+        replaceCurrentBlock: false,
       });
     });
   });
 
   describe('Block type filtering', () => {
     it('should return available block types', () => {
-      const { result } = renderHook(() => useSlashCommands({
-        elementRef: mockElementRef,
-        currentValue: '',
-        onChange: mockOnChange,
-        blockType: 'text',
-        onCreateBlockAfter: mockOnCreateBlockAfter,
-      }));
+      const { result } = renderHook(() =>
+        useSlashCommands({
+          elementRef: mockElementRef,
+          currentValue: '',
+          onChange: mockOnChange,
+          blockType: 'text',
+          onCreateBlockAfter: mockOnCreateBlockAfter,
+        }),
+      );
 
       // The hook should expose filtered blocks from useCommandIndicator
       expect(result.current.filteredBlocks).toBeDefined();

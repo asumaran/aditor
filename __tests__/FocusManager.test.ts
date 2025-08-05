@@ -1,9 +1,9 @@
 /**
  * FocusManager Tests
- * 
+ *
  * Tests the centralized focus management system that handles:
  * 1. Block creation focus (cursor positioning)
- * 2. Block splitting focus (Enter key behavior) 
+ * 2. Block splitting focus (Enter key behavior)
  * 3. Block merging focus (Backspace behavior)
  * 4. Form block vs text block focus differences
  * 5. Cursor positioning options (start, end, offset)
@@ -14,9 +14,14 @@ import { FocusManager } from '../src/lib/FocusManager';
 
 // Mock DOM environment
 const createMockBlock = (
-  blockId: number, 
-  blockType: 'text' | 'heading' | 'short_answer' | 'multiple_choice' | 'multiselect' = 'text',
-  content: string = ''
+  blockId: number,
+  blockType:
+    | 'text'
+    | 'heading'
+    | 'short_answer'
+    | 'multiple_choice'
+    | 'multiselect' = 'text',
+  content: string = '',
 ): HTMLElement => {
   const blockElement = document.createElement('div');
   blockElement.setAttribute('data-block-id', blockId.toString());
@@ -24,16 +29,19 @@ const createMockBlock = (
 
   if (blockType === 'text' || blockType === 'heading') {
     // Text/heading blocks have contenteditable
-    const contentEl = document.createElement(blockType === 'heading' ? 'h2' : 'div');
-    contentEl.setAttribute('contenteditable', 'true');  // Use setAttribute instead of property
+    const contentEl = document.createElement(
+      blockType === 'heading' ? 'h2' : 'div',
+    );
+    contentEl.setAttribute('contenteditable', 'true'); // Use setAttribute instead of property
     contentEl.textContent = content;
-    contentEl.className = blockType === 'heading' ? 'text-3xl font-semibold' : ''; // Help with detection
+    contentEl.className =
+      blockType === 'heading' ? 'text-3xl font-semibold' : ''; // Help with detection
     contentEl.setAttribute('role', 'textbox');
     blockElement.appendChild(contentEl);
   } else {
-    // Form blocks have label (contenteditable) + input elements  
+    // Form blocks have label (contenteditable) + input elements
     const labelEl = document.createElement('div');
-    labelEl.setAttribute('contenteditable', 'true');  // Use setAttribute instead of property
+    labelEl.setAttribute('contenteditable', 'true'); // Use setAttribute instead of property
     labelEl.textContent = content || 'Sample Question';
     labelEl.setAttribute('role', 'textbox');
     blockElement.appendChild(labelEl);
@@ -59,8 +67,10 @@ const createMockBlock = (
   }
 
   // Mock focus function for all focusable elements
-  const focusableElements = blockElement.querySelectorAll('[contenteditable="true"], input, textarea');
-  focusableElements.forEach(el => {
+  const focusableElements = blockElement.querySelectorAll(
+    '[contenteditable="true"], input, textarea',
+  );
+  focusableElements.forEach((el) => {
     (el as HTMLElement).focus = jest.fn();
   });
 
@@ -75,7 +85,7 @@ describe('FocusManager', () => {
   beforeEach(() => {
     // Clear DOM
     document.body.innerHTML = '';
-    
+
     // Get fresh instance
     focusManager = FocusManager.getInstance();
 
@@ -120,10 +130,13 @@ describe('FocusManager', () => {
 
       // Debug: log the HTML structure
       console.log('Text block HTML:', textBlock.outerHTML);
-      console.log('Contenteditable elements:', textBlock.querySelectorAll('[contenteditable="true"]'));
+      console.log(
+        'Contenteditable elements:',
+        textBlock.querySelectorAll('[contenteditable="true"]'),
+      );
 
       const blockInfo = focusManager.getBlockInfo(1);
-      
+
       expect(blockInfo).toBeTruthy();
       expect(blockInfo!.blockId).toBe(1);
       expect(blockInfo!.blockType).toBe('text');
@@ -136,7 +149,7 @@ describe('FocusManager', () => {
       document.body.appendChild(formBlock);
 
       const blockInfo = focusManager.getBlockInfo(2);
-      
+
       expect(blockInfo).toBeTruthy();
       expect(blockInfo!.blockId).toBe(2);
       expect(blockInfo!.blockType).toBe('short_answer');
@@ -158,10 +171,12 @@ describe('FocusManager', () => {
       const result = focusManager.onBlockCreated(1);
 
       expect(result).toBe(true);
-      
+
       // onBlockCreated uses deferred focus by default, so wait for requestAnimationFrame
       setTimeout(() => {
-        const contentEl = textBlock.querySelector('[contenteditable="true"]') as HTMLElement;
+        const contentEl = textBlock.querySelector(
+          '[contenteditable="true"]',
+        ) as HTMLElement;
         expect(contentEl.focus).toHaveBeenCalled();
         done();
       }, 50);
@@ -174,10 +189,12 @@ describe('FocusManager', () => {
       const result = focusManager.onBlockCreated(2, { cursorAtEnd: true });
 
       expect(result).toBe(true);
-      
+
       // onBlockCreated uses deferred focus by default, so wait for requestAnimationFrame
       setTimeout(() => {
-        const labelEl = formBlock.querySelector('[contenteditable="true"]') as HTMLElement;
+        const labelEl = formBlock.querySelector(
+          '[contenteditable="true"]',
+        ) as HTMLElement;
         expect(labelEl.focus).toHaveBeenCalled();
         // Should position cursor at end
         expect(mockRange.selectNodeContents).toHaveBeenCalledWith(labelEl);
@@ -193,9 +210,11 @@ describe('FocusManager', () => {
       const result = focusManager.onBlockCreated(1, { deferred: true });
 
       expect(result).toBe(true);
-      
+
       // Focus should not happen immediately
-      const contentEl = textBlock.querySelector('[contenteditable="true"]') as HTMLElement;
+      const contentEl = textBlock.querySelector(
+        '[contenteditable="true"]',
+      ) as HTMLElement;
       expect(contentEl.focus).not.toHaveBeenCalled();
 
       // Should happen after double requestAnimationFrame
@@ -215,18 +234,20 @@ describe('FocusManager', () => {
       const result = focusManager.onBlockMerged(1, junctionOffset);
 
       expect(result).toBe(true);
-      
-      const contentEl = textBlock.querySelector('[contenteditable="true"]') as HTMLElement;
+
+      const contentEl = textBlock.querySelector(
+        '[contenteditable="true"]',
+      ) as HTMLElement;
       expect(contentEl.focus).toHaveBeenCalled();
-      
+
       // Should set cursor at specific offset
       expect(mockRange.setStart).toHaveBeenCalledWith(
-        contentEl.firstChild, 
-        junctionOffset
+        contentEl.firstChild,
+        junctionOffset,
       );
       expect(mockRange.setEnd).toHaveBeenCalledWith(
-        contentEl.firstChild, 
-        junctionOffset
+        contentEl.firstChild,
+        junctionOffset,
       );
     });
   });
@@ -239,10 +260,12 @@ describe('FocusManager', () => {
       const result = focusManager.onNavigation(1);
 
       expect(result).toBe(true);
-      
-      const contentEl = textBlock.querySelector('[contenteditable="true"]') as HTMLElement;
+
+      const contentEl = textBlock.querySelector(
+        '[contenteditable="true"]',
+      ) as HTMLElement;
       expect(contentEl.focus).toHaveBeenCalled();
-      
+
       // Navigation without cursor options should not position cursor
       expect(mockRange.selectNodeContents).not.toHaveBeenCalled();
       expect(mockRange.collapse).not.toHaveBeenCalled();
@@ -255,10 +278,12 @@ describe('FocusManager', () => {
       const result = focusManager.onNavigation(1, { cursorAtStart: true });
 
       expect(result).toBe(true);
-      
-      const contentEl = textBlock.querySelector('[contenteditable="true"]') as HTMLElement;
+
+      const contentEl = textBlock.querySelector(
+        '[contenteditable="true"]',
+      ) as HTMLElement;
       expect(contentEl.focus).toHaveBeenCalled();
-      
+
       // Should position at start when explicitly requested
       expect(mockRange.selectNodeContents).toHaveBeenCalledWith(contentEl);
       expect(mockRange.collapse).toHaveBeenCalledWith(true); // true = at start
@@ -269,7 +294,7 @@ describe('FocusManager', () => {
     it('should track cursor at start blocks', () => {
       focusManager.setCursorAtStart(1);
       expect(focusManager.shouldCursorBeAtStart(1)).toBe(true);
-      
+
       focusManager.clearCursorAtStart(1);
       expect(focusManager.shouldCursorBeAtStart(1)).toBe(false);
     });
@@ -284,14 +309,16 @@ describe('FocusManager', () => {
       const result = focusManager.focusBlock(1);
 
       expect(result).toBe(true);
-      
-      const contentEl = textBlock.querySelector('[contenteditable="true"]') as HTMLElement;
+
+      const contentEl = textBlock.querySelector(
+        '[contenteditable="true"]',
+      ) as HTMLElement;
       expect(contentEl.focus).toHaveBeenCalled();
-      
+
       // Should position at start due to internal flag
       expect(mockRange.selectNodeContents).toHaveBeenCalledWith(contentEl);
       expect(mockRange.collapse).toHaveBeenCalledWith(true); // true = at start
-      
+
       // Should clear the flag after successful focus
       expect(focusManager.shouldCursorBeAtStart(1)).toBe(false);
     });
@@ -307,10 +334,12 @@ describe('FocusManager', () => {
       const result = focusManager.focusBlock(1, { cursorAtEnd: true });
 
       expect(result).toBe(true);
-      
-      const contentEl = textBlock.querySelector('[contenteditable="true"]') as HTMLElement;
+
+      const contentEl = textBlock.querySelector(
+        '[contenteditable="true"]',
+      ) as HTMLElement;
       expect(contentEl.focus).toHaveBeenCalled();
-      
+
       // Should position at end (explicit option overrides internal flag)
       expect(mockRange.selectNodeContents).toHaveBeenCalledWith(contentEl);
       expect(mockRange.collapse).toHaveBeenCalledWith(false); // false = at end
@@ -338,7 +367,9 @@ describe('FocusManager', () => {
       document.body.appendChild(textBlock);
 
       // Make focus throw an error
-      const contentEl = textBlock.querySelector('[contenteditable="true"]') as HTMLElement;
+      const contentEl = textBlock.querySelector(
+        '[contenteditable="true"]',
+      ) as HTMLElement;
       (contentEl.focus as jest.Mock).mockImplementation(() => {
         throw new Error('Focus failed');
       });

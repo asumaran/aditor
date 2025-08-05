@@ -1,6 +1,6 @@
 /**
  * Navigation Behavior Tests
- * 
+ *
  * Tests to reproduce and fix the specific navigation issue:
  * - Navigation from "foo" to "bar" positions cursor at start of "bar" (correct)
  * - Arrow down from start of "bar" moves cursor to end of "bar" (correct)
@@ -14,7 +14,7 @@ const createMockSelection = (element: HTMLElement, offset: number) => {
   const textNode = element.firstChild || element;
   const content = element.textContent || '';
   const actualOffset = Math.min(offset, content.length);
-  
+
   // Create a mock range that simulates proper text selection
   const mockRange = {
     selectNodeContents: jest.fn(),
@@ -30,7 +30,7 @@ const createMockSelection = (element: HTMLElement, offset: number) => {
     endContainer: textNode,
     endOffset: actualOffset,
   };
-  
+
   // Mock selection with proper methods
   const mockSelection = {
     rangeCount: 1,
@@ -39,13 +39,13 @@ const createMockSelection = (element: HTMLElement, offset: number) => {
     addRange: jest.fn(),
     toString: jest.fn().mockReturnValue(''),
   };
-  
+
   // Override window.getSelection to return our mock
   Object.defineProperty(window, 'getSelection', {
     writable: true,
     value: jest.fn().mockReturnValue(mockSelection),
   });
-  
+
   // Override document.createRange to return a mock range that works with our utilities
   Object.defineProperty(document, 'createRange', {
     writable: true,
@@ -54,14 +54,16 @@ const createMockSelection = (element: HTMLElement, offset: number) => {
       setStart: jest.fn(),
       setEnd: jest.fn(),
       collapse: jest.fn(),
-      toString: jest.fn().mockImplementation(() => content.substring(0, actualOffset)),
+      toString: jest
+        .fn()
+        .mockImplementation(() => content.substring(0, actualOffset)),
       startContainer: textNode,
       startOffset: actualOffset,
       endContainer: textNode,
       endOffset: actualOffset,
     })),
   });
-  
+
   return { range: mockRange, selection: mockSelection };
 };
 
@@ -83,7 +85,7 @@ describe('Navigation Behavior Tests', () => {
 
     // Get horizontal position
     const horizontalPos = getCursorHorizontalPosition(block);
-    
+
     // Should be 3 (length of "foo")
     expect(horizontalPos).toBe(3);
   });
@@ -100,7 +102,7 @@ describe('Navigation Behavior Tests', () => {
 
     // Get horizontal position
     const horizontalPos = getCursorHorizontalPosition(block);
-    
+
     // Should be 0
     expect(horizontalPos).toBe(0);
   });
@@ -108,7 +110,7 @@ describe('Navigation Behavior Tests', () => {
   test('should navigate correctly with preserved horizontal position', () => {
     // This tests the expected behavior:
     // 1. Start with cursor at end of "foo" (position 3)
-    // 2. Navigate down to "bar" -> should go to position 3 in "bar", but clamp to length of "bar"  
+    // 2. Navigate down to "bar" -> should go to position 3 in "bar", but clamp to length of "bar"
     // 3. Navigate up from "bar" -> should go to position that preserves horizontal position in "foo"
 
     const fooBlock = document.createElement('div');
@@ -130,13 +132,13 @@ describe('Navigation Behavior Tests', () => {
 
     // When navigating to "bar", position cursor at the same horizontal position
     createMockSelection(barBlock, 3);
-    
+
     const horizontalPosInBar = getCursorHorizontalPosition(barBlock);
     expect(horizontalPosInBar).toBe(3); // At end of "bar"
 
     // Now when navigating back to "foo", test preserved horizontal position
     createMockSelection(fooBlock, 3);
-    
+
     const finalHorizontalPos = getCursorHorizontalPosition(fooBlock);
     expect(finalHorizontalPos).toBe(3); // Should be at end of "foo", not start
   });
@@ -149,7 +151,7 @@ describe('Navigation Behavior Tests', () => {
     document.body.appendChild(shortBlock);
 
     const longBlock = document.createElement('div');
-    longBlock.contentEditable = 'true';  
+    longBlock.contentEditable = 'true';
     longBlock.textContent = 'hello world';
     document.body.appendChild(longBlock);
 

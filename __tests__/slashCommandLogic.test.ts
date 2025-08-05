@@ -1,6 +1,6 @@
 /**
  * Slash Command Logic Tests
- * 
+ *
  * Tests the key logic for slash command behavior:
  * 1. Empty text block + "Text" → No change (exit slash mode)
  * 2. Text with content + "Text" → Create new text block after
@@ -14,7 +14,7 @@ describe('Slash Command Logic', () => {
     const shouldReplaceBlock = (
       blockType: string,
       selectedType: string,
-      isBlockEmpty: boolean
+      isBlockEmpty: boolean,
     ): boolean => {
       // Case 1: Empty text block selecting text - no change (handled separately)
       if (blockType === 'text' && selectedType === 'text' && isBlockEmpty) {
@@ -58,7 +58,7 @@ describe('Slash Command Logic', () => {
     it('should replace empty text block when selecting different type', () => {
       const result = shouldReplaceBlock('text', 'heading', true);
       expect(result).toBe(true);
-      
+
       const result2 = shouldReplaceBlock('text', 'short_answer', true);
       expect(result2).toBe(true);
     });
@@ -81,7 +81,7 @@ describe('Slash Command Logic', () => {
     it('should replace heading when selecting form types', () => {
       const result = shouldReplaceBlock('heading', 'short_answer', false);
       expect(result).toBe(true);
-      
+
       const result2 = shouldReplaceBlock('heading', 'multiple_choice', false);
       expect(result2).toBe(true);
     });
@@ -89,7 +89,7 @@ describe('Slash Command Logic', () => {
     it('should not replace form blocks when selecting any type', () => {
       const result = shouldReplaceBlock('short_answer', 'text', false);
       expect(result).toBe(false);
-      
+
       const result2 = shouldReplaceBlock('multiple_choice', 'heading', false);
       expect(result2).toBe(false);
     });
@@ -100,13 +100,13 @@ describe('Slash Command Logic', () => {
     const shouldBlurOnExit = (
       blockType: string,
       selectedType: string,
-      isBlockEmpty: boolean
+      isBlockEmpty: boolean,
     ): boolean => {
       // Case 1: Empty text + text = stay in same element (no blur)
       if (blockType === 'text' && selectedType === 'text' && isBlockEmpty) {
         return false;
       }
-      
+
       // All other cases create new blocks, so blur is needed
       return true;
     };
@@ -124,7 +124,7 @@ describe('Slash Command Logic', () => {
     it('should blur when selecting different types', () => {
       const result = shouldBlurOnExit('text', 'heading', true);
       expect(result).toBe(true);
-      
+
       const result2 = shouldBlurOnExit('heading', 'text', false);
       expect(result2).toBe(true);
     });
@@ -149,7 +149,7 @@ describe('Slash Command Logic', () => {
         isBlockEmpty: true,
         expectedReplace: false,
         expectedBlur: false,
-        expectedAction: 'exit_slash_mode'
+        expectedAction: 'exit_slash_mode',
       },
       {
         description: 'Text with content selecting text',
@@ -158,7 +158,7 @@ describe('Slash Command Logic', () => {
         isBlockEmpty: false,
         expectedReplace: false,
         expectedBlur: true,
-        expectedAction: 'create_after'
+        expectedAction: 'create_after',
       },
       {
         description: 'Empty text selecting heading',
@@ -167,7 +167,7 @@ describe('Slash Command Logic', () => {
         isBlockEmpty: true,
         expectedReplace: true,
         expectedBlur: true,
-        expectedAction: 'replace_current'
+        expectedAction: 'replace_current',
       },
       {
         description: 'Heading selecting text',
@@ -176,7 +176,7 @@ describe('Slash Command Logic', () => {
         isBlockEmpty: false,
         expectedReplace: false,
         expectedBlur: true,
-        expectedAction: 'create_after'
+        expectedAction: 'create_after',
       },
       {
         description: 'Heading selecting form type',
@@ -185,18 +185,24 @@ describe('Slash Command Logic', () => {
         isBlockEmpty: false,
         expectedReplace: true,
         expectedBlur: true,
-        expectedAction: 'replace_current'
-      }
+        expectedAction: 'replace_current',
+      },
     ];
 
-    scenarios.forEach(scenario => {
+    scenarios.forEach((scenario) => {
       it(`should handle: ${scenario.description}`, () => {
-        const shouldReplace = scenario.blockType === 'text' 
-          ? (scenario.selectedType !== 'text' && scenario.isBlockEmpty)
-          : (scenario.blockType === 'heading' && !['text', 'heading'].includes(scenario.selectedType));
-          
-        const shouldBlur = !(scenario.blockType === 'text' && scenario.selectedType === 'text' && scenario.isBlockEmpty);
-        
+        const shouldReplace =
+          scenario.blockType === 'text'
+            ? scenario.selectedType !== 'text' && scenario.isBlockEmpty
+            : scenario.blockType === 'heading' &&
+              !['text', 'heading'].includes(scenario.selectedType);
+
+        const shouldBlur = !(
+          scenario.blockType === 'text' &&
+          scenario.selectedType === 'text' &&
+          scenario.isBlockEmpty
+        );
+
         expect(shouldReplace).toBe(scenario.expectedReplace);
         expect(shouldBlur).toBe(scenario.expectedBlur);
       });

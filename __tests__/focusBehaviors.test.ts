@@ -1,9 +1,9 @@
 /**
  * Focus Behavior Tests
- * 
+ *
  * These tests capture the current focus behaviors in the editor to ensure
  * no regressions are introduced during the FocusManager refactoring.
- * 
+ *
  * Key behaviors tested:
  * 1. Enter key block splitting with cursor at start of new block
  * 2. Backspace block merging with cursor at junction point
@@ -13,7 +13,10 @@
  */
 
 // Mock DOM environment for testing
-const createMockElement = (content: string = '', tag: string = 'div'): HTMLElement => {
+const createMockElement = (
+  content: string = '',
+  tag: string = 'div',
+): HTMLElement => {
   const element = document.createElement(tag);
   element.textContent = content;
   if (tag === 'div') {
@@ -22,7 +25,11 @@ const createMockElement = (content: string = '', tag: string = 'div'): HTMLEleme
   return element;
 };
 
-const createMockRange = (element: HTMLElement, startOffset: number, endOffset?: number): Range => {
+const createMockRange = (
+  element: HTMLElement,
+  startOffset: number,
+  endOffset?: number,
+): Range => {
   const range = document.createRange();
   if (element.firstChild) {
     range.setStart(element.firstChild, startOffset);
@@ -38,7 +45,7 @@ describe('Focus Behaviors', () => {
   beforeEach(() => {
     // Clear any existing DOM state
     document.body.innerHTML = '';
-    
+
     // Mock Selection API
     const mockSelection = {
       removeAllRanges: jest.fn(),
@@ -56,21 +63,21 @@ describe('Focus Behaviors', () => {
     test('cursor should be at start of new block after splitting', () => {
       // This test captures the current behavior where pressing Enter
       // creates a new block with cursor at the beginning
-      
+
       const originalBlock = createMockElement('Hello world');
       document.body.appendChild(originalBlock);
-      
+
       // Simulate cursor in middle of text (after "Hello ")
       createMockRange(originalBlock, 6);
-      
+
       // Simulate the current useBlockCreation logic
       const beforeContent = 'Hello ';
       const afterContent = 'world';
-      
+
       // Test expectations based on current implementation
       expect(beforeContent).toBe('Hello ');
       expect(afterContent).toBe('world');
-      
+
       // The new block should be created with cursorAtStart: true
       // This is verified in useBlockCreation.ts:82
       const shouldCursorBeAtStart = true;
@@ -80,7 +87,7 @@ describe('Focus Behaviors', () => {
     test('empty block creation should focus new block', () => {
       const originalBlock = createMockElement('');
       document.body.appendChild(originalBlock);
-      
+
       // When creating from empty block, focus should move to new block
       const shouldFocusNewBlock = true;
       expect(shouldFocusNewBlock).toBe(true);
@@ -91,20 +98,20 @@ describe('Focus Behaviors', () => {
     test('cursor should be at junction point after merging', () => {
       // Test the current behavior where backspace merges blocks
       // and positions cursor at the junction point
-      
+
       const previousBlock = createMockElement('Previous content');
       const currentBlock = createMockElement('Current content');
-      
+
       document.body.appendChild(previousBlock);
       document.body.appendChild(currentBlock);
-      
+
       // Simulate cursor at start of current block
       createMockRange(currentBlock, 0);
-      
+
       // After merge, cursor should be at end of previous content
       const expectedJunctionPosition = 'Previous content'.length;
       expect(expectedJunctionPosition).toBe(16);
-      
+
       // The merged content should be
       const mergedContent = 'Previous contentCurrent content';
       expect(mergedContent).toBe('Previous contentCurrent content');
@@ -113,10 +120,10 @@ describe('Focus Behaviors', () => {
     test('empty block deletion should focus previous block', () => {
       const previousBlock = createMockElement('Previous');
       const emptyBlock = createMockElement('');
-      
+
       document.body.appendChild(previousBlock);
       document.body.appendChild(emptyBlock);
-      
+
       // When deleting empty block, focus should move to previous
       const shouldFocusPrevious = true;
       expect(shouldFocusPrevious).toBe(true);
@@ -126,23 +133,23 @@ describe('Focus Behaviors', () => {
       // This is the specific regression case reported by the user
       const firstTextBlock = createMockElement('First block content');
       const secondEmptyBlock = createMockElement('');
-      
+
       firstTextBlock.setAttribute('data-block-id', '1');
       secondEmptyBlock.setAttribute('data-block-id', '2');
-      
+
       document.body.appendChild(firstTextBlock);
       document.body.appendChild(secondEmptyBlock);
-      
+
       // Simulate the expected behavior:
       // 1. Second block is empty
       const secondBlockContent = secondEmptyBlock.textContent || '';
       const isEmpty = !secondBlockContent.trim();
       expect(isEmpty).toBe(true);
-      
+
       // 2. Should trigger block deletion (not merge)
       const shouldDelete = isEmpty;
       expect(shouldDelete).toBe(true);
-      
+
       // 3. Should focus first block at end position
       const firstBlockContent = firstTextBlock.textContent || '';
       const expectedCursorPosition = firstBlockContent.length;
@@ -154,18 +161,18 @@ describe('Focus Behaviors', () => {
     test('form blocks should focus on input element', () => {
       // Test current behavior where form blocks created via slash commands
       // should focus on their input/textarea elements, not the container
-      
+
       const formBlockContainer = createMockElement('', 'div');
       const labelElement = createMockElement('Question label', 'div');
       const inputElement = createMockElement('', 'input');
-      
+
       formBlockContainer.appendChild(labelElement);
       formBlockContainer.appendChild(inputElement);
-      
+
       // Form blocks should focus the input, not the container
       const shouldFocusInput = true;
       expect(shouldFocusInput).toBe(true);
-      
+
       // This is currently implemented in App.tsx:focusBlockImperatively
       // by finding focusable elements within the block
     });
@@ -174,7 +181,7 @@ describe('Focus Behaviors', () => {
       // Text blocks should focus directly on the contenteditable element
       const textBlock = createMockElement('Some text');
       document.body.appendChild(textBlock);
-      
+
       const shouldFocusContentEditable = true;
       expect(shouldFocusContentEditable).toBe(true);
     });
@@ -184,10 +191,10 @@ describe('Focus Behaviors', () => {
     test('arrow up should move to previous block when at first line', () => {
       const firstBlock = createMockElement('First block');
       const secondBlock = createMockElement('Second block');
-      
+
       document.body.appendChild(firstBlock);
       document.body.appendChild(secondBlock);
-      
+
       // When cursor is at first line of second block,
       // arrow up should navigate to last line of first block
       const shouldNavigateToPrevious = true;
@@ -197,10 +204,10 @@ describe('Focus Behaviors', () => {
     test('arrow down should move to next block when at last line', () => {
       const firstBlock = createMockElement('First block');
       const secondBlock = createMockElement('Second block');
-      
+
       document.body.appendChild(firstBlock);
       document.body.appendChild(secondBlock);
-      
+
       // When cursor is at last line of first block,
       // arrow down should navigate to first line of second block
       const shouldNavigateToNext = true;
@@ -212,10 +219,10 @@ describe('Focus Behaviors', () => {
     test('isCursorAtStart should detect cursor at beginning', () => {
       const element = createMockElement('Hello world');
       const range = createMockRange(element, 0);
-      
+
       // Mock the actual utility function behavior
       const isCursorAtStart = (range: Range) => range.startOffset === 0;
-      
+
       expect(isCursorAtStart(range)).toBe(true);
     });
 
@@ -223,13 +230,13 @@ describe('Focus Behaviors', () => {
       const element = createMockElement('Hello world');
       const content = element.textContent || '';
       const range = createMockRange(element, content.length);
-      
+
       // The mock range might not set startOffset correctly, so let's check the setup
       const isCursorAtEnd = (range: Range, content: string) => {
         // For our mock, we can simulate this behavior
         return content.length > 0; // Just verify we have content
       };
-      
+
       expect(isCursorAtEnd(range, content)).toBe(true);
     });
   });
@@ -247,13 +254,15 @@ describe('Focus Behaviors', () => {
       const container = createMockElement('', 'div');
       const label = createMockElement('Label', 'div');
       const input = createMockElement('', 'input');
-      
+
       label.contentEditable = 'true';
       container.appendChild(label);
       container.appendChild(input);
-      
+
       // Should focus the first focusable element
-      const focusableElements = container.querySelectorAll('input, textarea, [contenteditable="true"]');
+      const focusableElements = container.querySelectorAll(
+        'input, textarea, [contenteditable="true"]',
+      );
       // JSDOM might not handle contentEditable attribute correctly, so we'll check that at least the input is found
       expect(focusableElements.length).toBeGreaterThanOrEqual(1);
     });
@@ -262,9 +271,9 @@ describe('Focus Behaviors', () => {
 
 /**
  * Manual Test Checklist
- * 
+ *
  * These behaviors should be tested manually after any focus-related changes:
- * 
+ *
  * □ Press Enter in middle of text → cursor at start of new block
  * □ Press Backspace at start of block → merge with previous, cursor at junction
  * □ Create form block via slash command → input element gains focus

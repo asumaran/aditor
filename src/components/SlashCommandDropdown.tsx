@@ -49,7 +49,7 @@ export const SlashCommandDropdown: FC<SlashCommandDropdownProps> = ({
     <div
       ref={dropdownRef}
       data-slash-dropdown
-      data-testid="slash-dropdown"
+      data-testid='slash-dropdown'
       className={cn(
         'z-50 min-w-[240px] overflow-hidden rounded-md bg-white shadow-md',
         'border border-gray-200',
@@ -62,12 +62,12 @@ export const SlashCommandDropdown: FC<SlashCommandDropdownProps> = ({
             <button
               key={block.id}
               onClick={() => onSelect(block)}
-              role="option"
+              role='option'
               className={cn(
                 'flex w-full cursor-pointer items-start gap-2 rounded px-2 py-1.5 text-sm outline-none select-none',
                 'hover:bg-gray-100 focus:bg-gray-100',
                 'transition-colors',
-                index === selectedIndex && 'bg-gray-100 selected', // Highlight selected item
+                index === selectedIndex && 'selected bg-gray-100', // Highlight selected item
               )}
             >
               <div className='flex flex-col items-start'>

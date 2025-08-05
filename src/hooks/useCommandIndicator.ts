@@ -134,7 +134,9 @@ export const useCommandIndicator = ({
         }
       } else {
         // Restore original content completely - clean all HTML first
-        console.log('exitCommandMode: Cleaning DOM completely and restoring original content');
+        console.log(
+          'exitCommandMode: Cleaning DOM completely and restoring original content',
+        );
         elementRef.current.innerHTML = ''; // Clear all HTML including spans
         elementRef.current.textContent = originalContent; // Set plain text
 
@@ -151,14 +153,14 @@ export const useCommandIndicator = ({
         console.log('Removing indicator span from DOM', {
           span: indicatorRef.current,
           parentNode: indicatorRef.current.parentNode,
-          textContent: indicatorRef.current.textContent
+          textContent: indicatorRef.current.textContent,
         });
         indicatorRef.current.parentNode.removeChild(indicatorRef.current);
         console.log('Indicator span removed');
       } else {
         console.log('No indicator span to remove or no parent node', {
           indicatorRef: indicatorRef.current,
-          parentNode: indicatorRef.current?.parentNode
+          parentNode: indicatorRef.current?.parentNode,
         });
       }
       indicatorRef.current = null;
@@ -301,9 +303,14 @@ export const useCommandIndicator = ({
           // Check for spans that might have been added after we cleaned up
           const spans = element.querySelectorAll('span[style*="background"]');
           spans.forEach((span) => {
-            console.log('🚨 Detected unwanted background span after cleanup:', span);
+            console.log(
+              '🚨 Detected unwanted background span after cleanup:',
+              span,
+            );
             if (!isCommandMode) {
-              console.log('🧹 Removing unwanted span since not in command mode');
+              console.log(
+                '🧹 Removing unwanted span since not in command mode',
+              );
               span.remove();
             }
           });
@@ -350,32 +357,38 @@ export const useCommandIndicator = ({
       if (!indicatorText.startsWith(commandSymbol) || indicatorText === '') {
         console.log(
           'Slash was deleted or indicator is empty, exiting command mode',
-          { indicatorText, startsWithSlash: indicatorText.startsWith(commandSymbol), isEmpty: indicatorText === '' }
+          {
+            indicatorText,
+            startsWithSlash: indicatorText.startsWith(commandSymbol),
+            isEmpty: indicatorText === '',
+          },
         );
-        
+
         // Clean DOM completely by clearing innerHTML and setting textContent
         // This removes all spans and styling, leaving only plain text
-        console.log('🧹 handleInput: Cleaning DOM by removing all HTML and restoring original content only');
+        console.log(
+          '🧹 handleInput: Cleaning DOM by removing all HTML and restoring original content only',
+        );
         console.log('🔍 Before cleanup - innerHTML:', element.innerHTML);
         element.innerHTML = ''; // Clear all HTML first
         element.textContent = originalContent; // Set plain text content
         console.log('🔍 After cleanup - innerHTML:', element.innerHTML);
         console.log('🔍 After cleanup - textContent:', element.textContent);
-        
+
         // Reset indicator ref
         indicatorRef.current = null;
-        
+
         // Exit command mode without keeping command content
         setIsOpen(false);
         setQuery('');
         setIsCommandMode(false);
         setOriginalContent('');
         setSelectedIndex(0);
-        
+
         // Dispatch input event to synchronize with useContentEditable
         const inputEvent = new Event('input', { bubbles: true });
         element.dispatchEvent(inputEvent);
-        
+
         return;
       }
 

@@ -16,6 +16,10 @@ export type EditorAction =
       payload: { id: number; required: boolean };
     }
   | {
+      type: 'UPDATE_BLOCK_DESCRIPTION';
+      payload: { id: number; showDescription: boolean };
+    }
+  | {
       type: 'UPDATE_BLOCK_OPTIONS';
       payload: {
         id: number;

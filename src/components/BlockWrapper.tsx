@@ -17,9 +17,11 @@ interface BlockWrapperProps {
   blockType?: BlockType;
   blockId?: number;
   required?: boolean;
+  description?: boolean;
   options?: readonly Option[];
   sortOrder?: 'manual' | 'asc' | 'desc';
   onRequiredChange?: (required: boolean) => void;
+  onDescriptionChange?: (description: boolean) => void;
   onDeleteBlock?: () => void;
 }
 
@@ -30,9 +32,11 @@ export const BlockWrapper: FC<BlockWrapperProps> = ({
   blockType,
   blockId,
   required = false,
+  description = false,
   options = [],
   sortOrder = 'manual',
   onRequiredChange,
+  onDescriptionChange,
   onDeleteBlock,
 }) => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
@@ -58,6 +62,13 @@ export const BlockWrapper: FC<BlockWrapperProps> = ({
       onRequiredChange?.(newRequired);
     },
     [onRequiredChange],
+  );
+
+  const handleDescriptionToggle = useCallback(
+    (newDescription: boolean) => {
+      onDescriptionChange?.(newDescription);
+    },
+    [onDescriptionChange],
   );
 
   const handleOptionsClick = useCallback(() => {
@@ -176,8 +187,10 @@ export const BlockWrapper: FC<BlockWrapperProps> = ({
           <BlockMenuView
             blockType={blockType!}
             required={required}
+            description={description}
             optionsCount={options.length}
             onRequiredChange={handleRequiredToggle}
+            onDescriptionChange={handleDescriptionToggle}
             onOptionsClick={handleOptionsClick}
             onDeleteClick={handleDeleteClick}
             onClose={handleClosePopover}

@@ -347,7 +347,10 @@ export const setCursorAtHorizontalPosition = (
 /**
  * Set cursor at specific character position in element
  */
-export const setCursorAtPosition = (element: HTMLElement, position: number): void => {
+export const setCursorAtPosition = (
+  element: HTMLElement,
+  position: number,
+): void => {
   const selection = window.getSelection();
   if (!selection) return;
 
@@ -413,12 +416,13 @@ export const navigateToLastLine = (
     // TextBlock case - the block itself is contentEditable
     editableElement = targetBlock;
   } else {
-    // Form block case - find contentEditable within the block
-    const found = targetBlock.querySelector(
+    // Form block case - find the LAST contentEditable within the block
+    // This ensures navigation to Description field when enabled, otherwise Label
+    const contentEditables = targetBlock.querySelectorAll(
       '[contenteditable="true"]',
-    ) as HTMLElement;
-    if (!found) return;
-    editableElement = found;
+    ) as NodeListOf<HTMLElement>;
+    if (contentEditables.length === 0) return;
+    editableElement = contentEditables[contentEditables.length - 1];
   }
 
   editableElement.focus();
@@ -438,7 +442,8 @@ export const navigateToLastLine = (
   const lastLineStart = content.lastIndexOf('\n');
   const lastLineStartPos = lastLineStart === -1 ? 0 : lastLineStart + 1;
   const lastLineLength = content.length - lastLineStartPos;
-  const targetPos = lastLineStartPos + Math.min(horizontalPosition, lastLineLength);
+  const targetPos =
+    lastLineStartPos + Math.min(horizontalPosition, lastLineLength);
 
   // Set cursor directly to calculated position
   setCursorAtPosition(editableElement, targetPos);

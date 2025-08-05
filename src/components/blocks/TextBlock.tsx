@@ -15,7 +15,7 @@ import type { BlockComponentProps } from '@/types';
 
 interface TextBlockProps extends BlockComponentProps {
   value: string;
-  onChange: (value: string) => void;
+  onFieldChange: (fieldId: string, value: string) => void;
   placeholder?: string;
   className?: string;
   onCreateBlockAfter?: (options?: {
@@ -35,7 +35,7 @@ const metaModifier: Modifier[] = ['meta'];
 
 export const TextBlock: FC<TextBlockProps> = ({
   value,
-  onChange,
+  onFieldChange,
   placeholder = "Write, enter '/' for commands…",
   className,
   onCreateBlockAfter,
@@ -52,7 +52,7 @@ export const TextBlock: FC<TextBlockProps> = ({
     currentValue,
   } = useContentEditable({
     value,
-    onChange,
+    onChange: (newValue) => onFieldChange('title', newValue),
     blockId,
   });
 
@@ -84,10 +84,18 @@ export const TextBlock: FC<TextBlockProps> = ({
   } = useSlashCommands({
     elementRef,
     currentValue,
-    onChange,
+    onChange: (newValue) => onFieldChange('title', newValue),
     blockType: 'text',
-    onCreateBlockAfter: (options: { blockType: string; replaceCurrentBlock?: boolean }) => {
-      console.log('TextBlock slash command: creating block with options', options, 'after block', blockId);
+    onCreateBlockAfter: (options: {
+      blockType: string;
+      replaceCurrentBlock?: boolean;
+    }) => {
+      console.log(
+        'TextBlock slash command: creating block with options',
+        options,
+        'after block',
+        blockId,
+      );
       if (onCreateBlockAfter) {
         // Pass through the options from useSlashCommands
         onCreateBlockAfter(options);
@@ -101,39 +109,46 @@ export const TextBlock: FC<TextBlockProps> = ({
   const handleInput = useCallback(
     (event: React.FormEvent<HTMLDivElement>) => {
       const target = event.target as HTMLDivElement;
-      
+
       // Check for and clean up any leftover background spans (from slash commands)
       // Only clean up when NOT in slash mode to avoid interfering with active slash commands
       if (!isSlashInputMode) {
-        const backgroundSpans = target.querySelectorAll('span[style*="background"]');
+        const backgroundSpans = target.querySelectorAll(
+          'span[style*="background"]',
+        );
         if (backgroundSpans.length > 0) {
-          console.log('🧹 TextBlock: Detected leftover background spans, cleaning up (not in slash mode)');
+          console.log(
+            '🧹 TextBlock: Detected leftover background spans, cleaning up (not in slash mode)',
+          );
           // Get the text content before cleaning
           const textContent = target.textContent || '';
           // Clear all HTML and set plain text
           target.innerHTML = '';
           target.textContent = textContent;
-          console.log('🧹 TextBlock: Cleaned up spans, content now:', textContent);
+          console.log(
+            '🧹 TextBlock: Cleaned up spans, content now:',
+            textContent,
+          );
         }
       }
-      
+
       // Call the base handler
       baseHandleInput(event);
     },
-    [baseHandleInput, isSlashInputMode]
+    [baseHandleInput, isSlashInputMode],
   );
 
   const { splitAndCreateBlock, isCursorAtStart, handleBackspace } =
     useBlockCreation({
       onCreateBlockAfter,
-      onChange,
+      onChange: (newValue) => onFieldChange('title', newValue),
       onMergeWithPrevious,
       onDeleteBlock,
       hasPreviousBlock,
       onSplittingStateChange: setIsSplitting,
       isInSlashMode: isSlashInputMode, // Pass slash mode state to prevent block deletion
     });
-  
+
   console.log('🔍 TextBlock render - isSlashInputMode:', isSlashInputMode);
 
   const { navigationCommands } = useBlockNavigation({
@@ -221,7 +236,7 @@ export const TextBlock: FC<TextBlockProps> = ({
         ref={elementRef as React.RefObject<HTMLDivElement>}
         contentEditable
         suppressContentEditableWarning
-        role="textbox"
+        role='textbox'
         onInput={handleInput}
         onCompositionStart={handleCompositionStart}
         onCompositionEnd={handleCompositionEnd}

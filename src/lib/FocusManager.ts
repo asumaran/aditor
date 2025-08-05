@@ -1,10 +1,10 @@
 /**
  * FocusManager - Centralized Focus Management System
- * 
+ *
  * This system provides a unified interface for managing focus behavior
  * across different block types in the editor, ensuring consistent
  * cursor positioning and focus handling.
- * 
+ *
  * Key responsibilities:
  * 1. Block focus with cursor positioning control
  * 2. Form block vs text block focus differences
@@ -41,10 +41,10 @@ export interface BlockFocusInfo {
   isFormBlock: boolean;
 }
 
-export type FocusEventType = 
+export type FocusEventType =
   | 'block-created'
   | 'block-split'
-  | 'block-merged' 
+  | 'block-merged'
   | 'block-deleted'
   | 'slash-command'
   | 'navigation'
@@ -59,7 +59,10 @@ export interface FocusEvent {
 
 export class FocusManager {
   private static instance: FocusManager;
-  private eventListeners: Map<FocusEventType, Array<(event: FocusEvent) => void>> = new Map();
+  private eventListeners: Map<
+    FocusEventType,
+    Array<(event: FocusEvent) => void>
+  > = new Map();
   private lastFocusedBlock: number | null = null;
   private cursorAtStartBlocks = new Set<number>();
 
@@ -95,9 +98,14 @@ export class FocusManager {
    * Get information about a block for focus management
    */
   getBlockInfo(blockId: number): BlockFocusInfo | null {
-    const element = document.querySelector(`[data-block-id="${blockId}"]`) as HTMLElement;
+    const element = document.querySelector(
+      `[data-block-id="${blockId}"]`,
+    ) as HTMLElement;
     if (!element) {
-      console.log('🎯 FocusManager.getBlockInfo: Could not find element for blockId:', blockId);
+      console.log(
+        '🎯 FocusManager.getBlockInfo: Could not find element for blockId:',
+        blockId,
+      );
       return null;
     }
 
@@ -119,15 +127,18 @@ export class FocusManager {
    */
   focusBlock(blockId: number, options: FocusOptions = {}): boolean {
     console.log('🎯 FocusManager.focusBlock called:', { blockId, options });
-    
+
     // Only apply cursorAtStart from internal state if not explicitly overridden
     const focusOptions = {
-      ...(options.cursorAtStart === undefined && options.cursorAtEnd === undefined ? {
-        cursorAtStart: this.shouldCursorBeAtStart(blockId)
-      } : {}),
+      ...(options.cursorAtStart === undefined &&
+      options.cursorAtEnd === undefined
+        ? {
+            cursorAtStart: this.shouldCursorBeAtStart(blockId),
+          }
+        : {}),
       ...options,
     };
-    
+
     console.log('🎯 FocusManager.focusBlock final options:', focusOptions);
 
     // Emit BEFORE event so React can prepare components
@@ -144,7 +155,7 @@ export class FocusManager {
     }
 
     const success = this.performFocus(blockInfo, focusOptions);
-    
+
     if (success) {
       this.lastFocusedBlock = blockId;
       // Clear cursor at start flag after successful focus
@@ -158,22 +169,24 @@ export class FocusManager {
    * Focus block for specific events (block creation, splitting, etc.)
    */
   focusBlockForEvent(
-    blockId: number, 
-    _eventType: FocusEventType, 
+    blockId: number,
+    _eventType: FocusEventType,
     options: FocusOptions = {},
-    _context?: Record<string, unknown>
+    _context?: Record<string, unknown>,
   ): boolean {
     // Only apply cursorAtStart from internal state if not explicitly overridden
     const focusOptions = {
-      ...(options.cursorAtStart === undefined && options.cursorAtEnd === undefined ? {
-        cursorAtStart: this.shouldCursorBeAtStart(blockId)
-      } : {}),
+      ...(options.cursorAtStart === undefined &&
+      options.cursorAtEnd === undefined
+        ? {
+            cursorAtStart: this.shouldCursorBeAtStart(blockId),
+          }
+        : {}),
       ...options,
     };
 
     // For deferred focus, wait for DOM to be ready, then focus
     if (focusOptions.deferred) {
-      
       // Use double requestAnimationFrame to ensure React has rendered
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
@@ -185,7 +198,9 @@ export class FocusManager {
               this.clearCursorAtStart(blockId);
             }
           } else {
-            console.warn(`FocusManager: Deferred focus failed - Block ${blockId} not found`);
+            console.warn(
+              `FocusManager: Deferred focus failed - Block ${blockId} not found`,
+            );
           }
         });
       });
@@ -200,7 +215,7 @@ export class FocusManager {
     }
 
     const success = this.performFocus(blockInfo, focusOptions);
-    
+
     if (success) {
       this.lastFocusedBlock = blockId;
       // Clear cursor at start flag after successful focus
@@ -216,7 +231,10 @@ export class FocusManager {
   onBlockCreated(blockId: number, options: FocusOptions = {}): boolean {
     // New blocks typically want cursor at start unless specified otherwise
     const defaultOptions: FocusOptions = {
-      ...(options.cursorAtEnd === undefined && options.cursorAtStart === undefined ? { cursorAtStart: true } : {}),
+      ...(options.cursorAtEnd === undefined &&
+      options.cursorAtStart === undefined
+        ? { cursorAtStart: true }
+        : {}),
       autoFocus: true,
       deferred: true, // Wait for React render
       ...options,
@@ -248,7 +266,11 @@ export class FocusManager {
   /**
    * Handle block merging focus (Backspace key)
    */
-  onBlockMerged(targetBlockId: number, junctionOffset: number, options: FocusOptions = {}): boolean {
+  onBlockMerged(
+    targetBlockId: number,
+    junctionOffset: number,
+    options: FocusOptions = {},
+  ): boolean {
     // Merged blocks want cursor at junction point
     const defaultOptions: FocusOptions = {
       cursorOffset: junctionOffset,
@@ -256,15 +278,24 @@ export class FocusManager {
       ...options,
     };
 
-    return this.focusBlockForEvent(targetBlockId, 'block-merged', defaultOptions, {
-      junctionOffset,
-    });
+    return this.focusBlockForEvent(
+      targetBlockId,
+      'block-merged',
+      defaultOptions,
+      {
+        junctionOffset,
+      },
+    );
   }
 
   /**
    * Handle slash command block creation
    */
-  onSlashCommandBlock(blockId: number, blockType: string, options: FocusOptions = {}): boolean {
+  onSlashCommandBlock(
+    blockId: number,
+    blockType: string,
+    options: FocusOptions = {},
+  ): boolean {
     // Form blocks need special handling for input elements
     const isFormBlock = this.isFormBlock(blockType);
     const defaultOptions: FocusOptions = {
@@ -297,7 +328,10 @@ export class FocusManager {
   /**
    * Add event listener for focus events
    */
-  addEventListener(eventType: FocusEventType, listener: (event: FocusEvent) => void): void {
+  addEventListener(
+    eventType: FocusEventType,
+    listener: (event: FocusEvent) => void,
+  ): void {
     if (!this.eventListeners.has(eventType)) {
       this.eventListeners.set(eventType, []);
     }
@@ -307,7 +341,10 @@ export class FocusManager {
   /**
    * Remove event listener
    */
-  removeEventListener(eventType: FocusEventType, listener: (event: FocusEvent) => void): void {
+  removeEventListener(
+    eventType: FocusEventType,
+    listener: (event: FocusEvent) => void,
+  ): void {
     const listeners = this.eventListeners.get(eventType);
     if (listeners) {
       const index = listeners.indexOf(listener);
@@ -326,9 +363,11 @@ export class FocusManager {
 
   // Private implementation methods
 
-  private performFocus(blockInfo: BlockFocusInfo, options: FocusOptions): boolean {
+  private performFocus(
+    blockInfo: BlockFocusInfo,
+    options: FocusOptions,
+  ): boolean {
     const { element, focusableElements, isFormBlock } = blockInfo;
-
 
     const focusFunction = () => {
       try {
@@ -336,24 +375,31 @@ export class FocusManager {
           // Focus first focusable element in form blocks
           const targetElement = focusableElements[0];
           targetElement.focus();
-          
+
           // Position cursor based on element type
-          if (targetElement.contentEditable === 'true' || targetElement.getAttribute('contenteditable') === 'true') {
+          if (
+            targetElement.contentEditable === 'true' ||
+            targetElement.getAttribute('contenteditable') === 'true'
+          ) {
             // It's a contenteditable element (like the label in form blocks)
             this.positionCursorInContentEditable(targetElement, options);
           } else if (this.isTextInput(targetElement)) {
             // It's an input/textarea
-            this.positionCursorInInput(targetElement as HTMLInputElement | HTMLTextAreaElement, options);
+            this.positionCursorInInput(
+              targetElement as HTMLInputElement | HTMLTextAreaElement,
+              options,
+            );
           }
         } else {
           // Focus contenteditable element for text blocks
           // First try to find contenteditable within the element, then check if element itself is contenteditable
-          let contentEditable = element.querySelector('[contenteditable="true"]') as HTMLElement;
+          let contentEditable = element.querySelector(
+            '[contenteditable="true"]',
+          ) as HTMLElement;
           if (!contentEditable && element.contentEditable === 'true') {
             contentEditable = element;
           }
-          
-          
+
           if (contentEditable) {
             contentEditable.focus();
             this.positionCursorInContentEditable(contentEditable, options);
@@ -379,12 +425,15 @@ export class FocusManager {
     }
   }
 
-  private positionCursorInContentEditable(element: HTMLElement, options: FocusOptions): void {
+  private positionCursorInContentEditable(
+    element: HTMLElement,
+    options: FocusOptions,
+  ): void {
     const selection = window.getSelection();
     if (!selection) return;
 
     const range = document.createRange();
-    
+
     if (options.cursorOffset !== undefined) {
       // Position at specific offset
       this.setCursorAtOffset(element, options.cursorOffset, range);
@@ -405,7 +454,10 @@ export class FocusManager {
     selection.addRange(range);
   }
 
-  private positionCursorInInput(element: HTMLInputElement | HTMLTextAreaElement, options: FocusOptions): void {
+  private positionCursorInInput(
+    element: HTMLInputElement | HTMLTextAreaElement,
+    options: FocusOptions,
+  ): void {
     if (options.cursorOffset !== undefined) {
       element.setSelectionRange(options.cursorOffset, options.cursorOffset);
     } else if (options.cursorAtStart) {
@@ -416,10 +468,14 @@ export class FocusManager {
     }
   }
 
-  private setCursorAtOffset(element: HTMLElement, offset: number, range: Range): void {
+  private setCursorAtOffset(
+    element: HTMLElement,
+    offset: number,
+    range: Range,
+  ): void {
     const textContent = element.textContent || '';
     const clampedOffset = Math.min(offset, textContent.length);
-    
+
     if (element.firstChild && element.firstChild.nodeType === Node.TEXT_NODE) {
       range.setStart(element.firstChild, clampedOffset);
       range.setEnd(element.firstChild, clampedOffset);
@@ -430,7 +486,8 @@ export class FocusManager {
   }
 
   private getFocusableElements(element: HTMLElement): HTMLElement[] {
-    const selector = 'input, textarea, [contenteditable="true"], button, select, [tabindex]:not([tabindex="-1"])';
+    const selector =
+      'input, textarea, [contenteditable="true"], button, select, [tabindex]:not([tabindex="-1"])';
     return Array.from(element.querySelectorAll(selector)) as HTMLElement[];
   }
 
@@ -440,15 +497,19 @@ export class FocusManager {
     if (element.querySelector('input[type="radio"]')) return 'multiple_choice';
     if (element.querySelector('input[type="checkbox"]')) return 'multiselect';
     if (element.querySelector('[contenteditable="true"]')) {
-      const contentEl = element.querySelector('[contenteditable="true"]') as HTMLElement;
+      const contentEl = element.querySelector(
+        '[contenteditable="true"]',
+      ) as HTMLElement;
       // Check for heading indicators: large font size, heading tag, or heading classes
-      if (contentEl.tagName === 'H1' || 
-          contentEl.tagName === 'H2' || 
-          contentEl.tagName === 'H3' ||
-          contentEl.style.fontSize === '24px' || 
-          contentEl.classList.contains('text-2xl') ||
-          contentEl.classList.contains('text-3xl') ||
-          contentEl.classList.contains('font-semibold')) {
+      if (
+        contentEl.tagName === 'H1' ||
+        contentEl.tagName === 'H2' ||
+        contentEl.tagName === 'H3' ||
+        contentEl.style.fontSize === '24px' ||
+        contentEl.classList.contains('text-2xl') ||
+        contentEl.classList.contains('text-3xl') ||
+        contentEl.classList.contains('font-semibold')
+      ) {
         return 'heading';
       }
       return 'text';
@@ -457,7 +518,9 @@ export class FocusManager {
   }
 
   private isFormBlock(blockType: string): boolean {
-    return ['short_answer', 'multiple_choice', 'multiselect'].includes(blockType);
+    return ['short_answer', 'multiple_choice', 'multiselect'].includes(
+      blockType,
+    );
   }
 
   private isTextInput(element: HTMLElement): boolean {
@@ -467,7 +530,7 @@ export class FocusManager {
   private emitEvent(event: FocusEvent): void {
     const listeners = this.eventListeners.get(event.type);
     if (listeners) {
-      listeners.forEach(listener => {
+      listeners.forEach((listener) => {
         try {
           listener(event);
         } catch (error) {

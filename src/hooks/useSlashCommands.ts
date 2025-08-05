@@ -18,7 +18,10 @@ interface UseSlashCommandsProps {
   currentValue: string;
   onChange: (value: string) => void;
   blockType?: string;
-  onCreateBlockAfter?: (options: { blockType: string; replaceCurrentBlock?: boolean }) => void;
+  onCreateBlockAfter?: (options: {
+    blockType: string;
+    replaceCurrentBlock?: boolean;
+  }) => void;
 }
 
 export const useSlashCommands = ({
@@ -93,7 +96,10 @@ export const useSlashCommands = ({
         );
         // Exit slash mode with blur (will create new block)
         exitCommandMode(false, true);
-        onCreateBlockAfter?.({ blockType: selectedType, replaceCurrentBlock: false });
+        onCreateBlockAfter?.({
+          blockType: selectedType,
+          replaceCurrentBlock: false,
+        });
         return;
       }
 
@@ -102,19 +108,27 @@ export const useSlashCommands = ({
         console.log(
           'Case 3: Empty text block selecting different type - replace current block',
         );
-        
+
         // Exit slash mode with blur (will create new block)
         exitCommandMode(false, true);
         // For all block types, create new block after current and replace
-        onCreateBlockAfter?.({ blockType: selectedType, replaceCurrentBlock: true });
+        onCreateBlockAfter?.({
+          blockType: selectedType,
+          replaceCurrentBlock: true,
+        });
         return;
       }
 
       // Case 4: All other cases - create new block after current one
-      console.log('Case 4: All other cases - create new block after current one');
+      console.log(
+        'Case 4: All other cases - create new block after current one',
+      );
       // Exit slash mode with blur (will create new block)
       exitCommandMode(false, true);
-      onCreateBlockAfter?.({ blockType: selectedType, replaceCurrentBlock: false });
+      onCreateBlockAfter?.({
+        blockType: selectedType,
+        replaceCurrentBlock: false,
+      });
     },
   });
 

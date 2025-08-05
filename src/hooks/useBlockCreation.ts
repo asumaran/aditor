@@ -32,10 +32,10 @@ export const useBlockCreation = ({
 
       // If after content is exactly one newline, create empty block
       const cleanAfter = after === '\n' ? '' : after;
-      
+
       // Signal start of splitting to prevent placeholder flicker
       onSplittingStateChange?.(true);
-      
+
       // Create new block with content after cursor FIRST
       // Always position cursor at start of new block
       const newBlockId = onCreateBlockAfter({
@@ -85,15 +85,14 @@ export const useBlockCreation = ({
     return hasPreviousBlock && onMergeWithPrevious !== undefined;
   }, [onMergeWithPrevious, hasPreviousBlock]);
 
-
   const handleBackspace = useCallback(
     (element: HTMLElement, currentValue: string) => {
       console.log('🔍 handleBackspace called:', {
         currentValue: `"${currentValue}"`,
         isInSlashMode,
-        isEmpty: !currentValue.trim()
+        isEmpty: !currentValue.trim(),
       });
-      
+
       // If empty block
       if (!currentValue.trim()) {
         // Don't delete block if in slash mode (user is just deleting the slash)
@@ -101,7 +100,7 @@ export const useBlockCreation = ({
           console.log('🔍 Block deletion prevented - in slash mode');
           return false; // Let the slash command handler deal with it
         }
-        
+
         console.log('🔍 Block is empty and not in slash mode - deleting block');
         // Only delete if not first block
         if (hasPreviousBlock && onDeleteBlock) {
@@ -120,7 +119,13 @@ export const useBlockCreation = ({
       console.log('🔍 Normal backspace - not handling');
       return false;
     },
-    [hasPreviousBlock, onDeleteBlock, isCursorAtStart, mergeWithPreviousBlock, isInSlashMode],
+    [
+      hasPreviousBlock,
+      onDeleteBlock,
+      isCursorAtStart,
+      mergeWithPreviousBlock,
+      isInSlashMode,
+    ],
   );
 
   return {

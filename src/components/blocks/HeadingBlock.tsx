@@ -15,7 +15,7 @@ import type { BlockComponentProps } from '@/types';
 
 interface HeadingBlockProps extends BlockComponentProps {
   value: string;
-  onChange: (value: string) => void;
+  onFieldChange: (fieldId: string, value: string) => void;
   placeholder?: string;
   className?: string;
   autoFocus?: boolean;
@@ -36,7 +36,7 @@ const metaModifier: Modifier[] = ['meta'];
 
 export const HeadingBlock: FC<HeadingBlockProps> = ({
   value,
-  onChange,
+  onFieldChange,
   placeholder = 'Heading',
   className,
   blockId,
@@ -53,7 +53,7 @@ export const HeadingBlock: FC<HeadingBlockProps> = ({
     currentValue,
   } = useContentEditable({
     value,
-    onChange,
+    onChange: (newValue) => onFieldChange('title', newValue),
     blockId,
   });
 
@@ -83,14 +83,17 @@ export const HeadingBlock: FC<HeadingBlockProps> = ({
   } = useSlashCommands({
     elementRef,
     currentValue,
-    onChange,
+    onChange: (newValue) => onFieldChange('title', newValue),
     blockType: 'heading',
-    onCreateBlockAfter: (options: { blockType: string; replaceCurrentBlock?: boolean }) => {
+    onCreateBlockAfter: (options: {
+      blockType: string;
+      replaceCurrentBlock?: boolean;
+    }) => {
       if (onCreateBlockAfter) {
         // For heading blocks, override the replace logic from useSlashCommands
         // Text and heading blocks should always create after (never replace heading)
         const shouldReplace = !['text', 'heading'].includes(options.blockType);
-        onCreateBlockAfter({ 
+        onCreateBlockAfter({
           blockType: options.blockType,
           replaceCurrentBlock: shouldReplace,
         });
@@ -102,32 +105,39 @@ export const HeadingBlock: FC<HeadingBlockProps> = ({
   const handleInput = useCallback(
     (event: React.FormEvent<HTMLDivElement>) => {
       const target = event.target as HTMLDivElement;
-      
+
       // Check for and clean up any leftover background spans (from slash commands)
       // Only clean up when NOT in slash mode to avoid interfering with active slash commands
       if (!isSlashInputMode) {
-        const backgroundSpans = target.querySelectorAll('span[style*="background"]');
+        const backgroundSpans = target.querySelectorAll(
+          'span[style*="background"]',
+        );
         if (backgroundSpans.length > 0) {
-          console.log('🧹 HeadingBlock: Detected leftover background spans, cleaning up (not in slash mode)');
+          console.log(
+            '🧹 HeadingBlock: Detected leftover background spans, cleaning up (not in slash mode)',
+          );
           // Get the text content before cleaning
           const textContent = target.textContent || '';
           // Clear all HTML and set plain text
           target.innerHTML = '';
           target.textContent = textContent;
-          console.log('🧹 HeadingBlock: Cleaned up spans, content now:', textContent);
+          console.log(
+            '🧹 HeadingBlock: Cleaned up spans, content now:',
+            textContent,
+          );
         }
       }
-      
+
       // Call the base handler
       baseHandleInput(event);
     },
-    [baseHandleInput, isSlashInputMode]
+    [baseHandleInput, isSlashInputMode],
   );
 
   const { splitAndCreateBlock, isCursorAtStart, handleBackspace } =
     useBlockCreation({
       onCreateBlockAfter,
-      onChange,
+      onChange: (newValue) => onFieldChange('title', newValue),
       onMergeWithPrevious,
       onDeleteBlock,
       hasPreviousBlock,
@@ -220,7 +230,7 @@ export const HeadingBlock: FC<HeadingBlockProps> = ({
           ref={elementRef as React.RefObject<HTMLHeadingElement>}
           contentEditable
           suppressContentEditableWarning
-          role="textbox"
+          role='textbox'
           onInput={handleInput}
           onCompositionStart={handleCompositionStart}
           onCompositionEnd={handleCompositionEnd}

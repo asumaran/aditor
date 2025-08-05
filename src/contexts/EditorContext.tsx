@@ -70,6 +70,21 @@ const editorReducer = (
       });
     }
 
+    case 'UPDATE_BLOCK_DESCRIPTION': {
+      const block = getBlockById(state, action.payload.id);
+      if (!block) return state;
+
+      if (
+        !['short_answer', 'multiple_choice', 'multiselect'].includes(block.type)
+      ) {
+        return state;
+      }
+
+      return updateBlockPropertiesInState(state, action.payload.id, {
+        showDescription: action.payload.showDescription,
+      });
+    }
+
     case 'UPDATE_BLOCK_OPTIONS': {
       const block = getBlockById(state, action.payload.id);
       if (

@@ -13,6 +13,10 @@ interface BlockRendererProps {
   onOptionsChange?: (id: Block['id'], options: readonly Option[]) => void;
   onBlockClick?: (blockId: Block['id']) => void;
   onRequiredChange?: (blockId: Block['id'], required: boolean) => void;
+  onDescriptionChange?: (
+    blockId: Block['id'],
+    showDescription: boolean,
+  ) => void;
   onCreateBlockAfter?: (
     afterBlockId: Block['id'],
     options?: {
@@ -81,6 +85,32 @@ const getBlockSortOrder = (block: Block): 'manual' | 'asc' | 'desc' => {
   }
 };
 
+const getBlockShowDescription = (block: Block): boolean => {
+  switch (block.type) {
+    case 'short_answer':
+      return block.properties.showDescription || false;
+    case 'multiple_choice':
+      return block.properties.showDescription || false;
+    case 'multiselect':
+      return block.properties.showDescription || false;
+    default:
+      return false;
+  }
+};
+
+const getBlockDescription = (block: Block): string => {
+  switch (block.type) {
+    case 'short_answer':
+      return block.properties.description || '';
+    case 'multiple_choice':
+      return block.properties.description || '';
+    case 'multiselect':
+      return block.properties.description || '';
+    default:
+      return '';
+  }
+};
+
 export const BlockRenderer: FC<BlockRendererProps> = ({
   block,
   onChange,
@@ -88,6 +118,7 @@ export const BlockRenderer: FC<BlockRendererProps> = ({
   onOptionsChange,
   onBlockClick,
   onRequiredChange,
+  onDescriptionChange,
   onCreateBlockAfter,
   onChangeBlockType,
   onDeleteBlock,
@@ -99,20 +130,11 @@ export const BlockRenderer: FC<BlockRendererProps> = ({
 }) => {
   const Component = getBlockComponent(block.type);
 
-  const handleChange = (value: string) => {
-    onChange(block.id, value);
-  };
-
   const handleFieldChange: FieldChangeHandler = (
     fieldId: string,
     value: string,
   ) => {
-    if (onFieldChange) {
-      onFieldChange(block.id, fieldId, value);
-    } else {
-      // Fallback to legacy onChange for primary field
-      onChange(block.id, value);
-    }
+    onFieldChange?.(block.id, fieldId, value);
   };
 
   const handleOptionsChange = (options: readonly Option[]) => {
@@ -133,9 +155,14 @@ export const BlockRenderer: FC<BlockRendererProps> = ({
     }
   };
 
+  const handleDescriptionChange = (showDescription: boolean) => {
+    if (onDescriptionChange) {
+      onDescriptionChange(block.id, showDescription);
+    }
+  };
+
   const commonProps = {
     value: getBlockValue(block),
-    onChange: handleChange,
     onFieldChange: handleFieldChange,
     required: getBlockRequired(block),
     onCreateBlockAfter: onCreateBlockAfter
@@ -164,20 +191,30 @@ export const BlockRenderer: FC<BlockRendererProps> = ({
   };
 
   const specificProps =
-    block.type === 'multiple_choice'
+    block.type === 'short_answer'
       ? {
           ...commonProps,
-          options: block.properties.options,
-          onOptionsChange: handleOptionsChange,
-          blockId: block.id,
-          sortOrder: block.properties.sortOrder,
+          showDescription: getBlockShowDescription(block),
+          description: getBlockDescription(block),
         }
-      : block.type === 'multiselect'
+      : block.type === 'multiple_choice'
         ? {
             ...commonProps,
             options: block.properties.options,
+            onOptionsChange: handleOptionsChange,
+            blockId: block.id,
+            sortOrder: block.properties.sortOrder,
+            showDescription: getBlockShowDescription(block),
+            description: getBlockDescription(block),
           }
-        : commonProps;
+        : block.type === 'multiselect'
+          ? {
+              ...commonProps,
+              options: block.properties.options,
+              showDescription: getBlockShowDescription(block),
+              description: getBlockDescription(block),
+            }
+          : commonProps;
 
   const isFormBlock = [
     'short_answer',
@@ -203,9 +240,11 @@ export const BlockRenderer: FC<BlockRendererProps> = ({
       blockType={block.type}
       blockId={block.id}
       required={getBlockRequired(block)}
+      description={getBlockShowDescription(block)}
       options={getBlockOptions(block)}
       sortOrder={getBlockSortOrder(block)}
       onRequiredChange={handleRequiredChange}
+      onDescriptionChange={handleDescriptionChange}
       onDeleteBlock={onDeleteBlock ? () => onDeleteBlock(block.id) : undefined}
       className={className}
     >
@@ -216,7 +255,10 @@ export const BlockRenderer: FC<BlockRendererProps> = ({
   );
 
   return (
-    <SortableBlockWrapper blockId={block.id} dragHandlesVisible={dragHandlesVisible}>
+    <SortableBlockWrapper
+      blockId={block.id}
+      dragHandlesVisible={dragHandlesVisible}
+    >
       {wrappedContent}
     </SortableBlockWrapper>
   );

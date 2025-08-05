@@ -1,4 +1,4 @@
-import { forwardRef, useImperativeHandle, useMemo } from 'react';
+import { forwardRef, useImperativeHandle, useMemo, useRef } from 'react';
 import {
   useContentEditable,
   useStopPropagation,
@@ -6,14 +6,21 @@ import {
   useBlockNavigation,
 } from '@/hooks';
 import { cn } from '@/lib/utils';
+import {
+  createDownNavigationCommand,
+  createUpNavigationCommand,
+} from '@/lib/fieldNavigation';
+import { DescriptionField } from '@/components/DescriptionField';
+import { LabelField } from '@/components/LabelField';
 import type { BlockComponentProps, BlockHandle } from '@/types';
 import type { FieldChangeHandler } from '@/types/editables';
 
 interface ShortAnswerBlockProps extends BlockComponentProps {
   value: string;
-  onChange: (value: string) => void;
-  onFieldChange?: FieldChangeHandler;
+  onFieldChange: FieldChangeHandler;
   required?: boolean;
+  showDescription?: boolean;
+  description?: string;
   className?: string;
   blockId?: number;
   autoFocus?: boolean;
@@ -25,49 +32,60 @@ export const ShortAnswerBlock = forwardRef<BlockHandle, ShortAnswerBlockProps>(
   (
     {
       value,
-      onChange,
       onFieldChange,
       required = false,
+      showDescription = false,
+      description = '',
       className,
       blockId,
     },
     ref,
   ) => {
-    const {
-      elementRef,
-      handleInput,
-      handleCompositionStart,
-      handleCompositionEnd,
-      handleBlur,
-      currentValue,
-    } = useContentEditable({
-      value,
-      onChange: (newValue) => {
-        if (onFieldChange) {
-          onFieldChange('label', newValue);
-        } else {
-          onChange(newValue);
-        }
-      },
-    });
-
-    const handleClickWithStopPropagation = useStopPropagation();
+    const elementRef = useRef<HTMLDivElement>(null);
+    const descriptionRef = useRef<HTMLDivElement>(null);
     const handleInputClickWithStopPropagation = useStopPropagation();
 
-    // Navigation commands
+    // Navigation commands for label field
     const { navigationCommands } = useBlockNavigation({
       blockId,
       elementRef,
       isSlashInputMode: false,
     });
 
-    // Command configuration
+    // Navigation commands for description field
+    const { navigationCommands: descriptionNavigationCommands } =
+      useBlockNavigation({
+        blockId,
+        elementRef: descriptionRef,
+        isSlashInputMode: false,
+      });
+
+    // Enhanced commands for label field with internal navigation
     const commands = useMemo(
-      () => [...navigationCommands],
-      [navigationCommands],
+      () => [
+        // Add downward navigation from label to description when showDescription is true
+        ...(showDescription
+          ? [createDownNavigationCommand(elementRef, descriptionRef)]
+          : []),
+        ...navigationCommands,
+      ],
+      [navigationCommands, showDescription, descriptionRef, elementRef],
+    );
+
+    // Enhanced commands for description field with internal navigation
+    const descriptionCommands = useMemo(
+      () => [
+        // Add upward navigation from description to label
+        createUpNavigationCommand(descriptionRef, elementRef),
+        ...descriptionNavigationCommands,
+      ],
+      [descriptionNavigationCommands, elementRef, descriptionRef],
     );
 
     const { handleKeyDown } = useBlockCommands({ commands });
+    const { handleKeyDown: handleDescriptionKeyDown } = useBlockCommands({
+      commands: descriptionCommands,
+    });
 
     // Expose focus method to parent
     useImperativeHandle(
@@ -86,37 +104,21 @@ export const ShortAnswerBlock = forwardRef<BlockHandle, ShortAnswerBlockProps>(
         className={cn('w-full space-y-2', className)}
         data-block-id={blockId}
       >
-        <div
-          ref={elementRef as React.RefObject<HTMLDivElement>}
-          contentEditable
-          suppressContentEditableWarning
-          onInput={handleInput}
-          onCompositionStart={handleCompositionStart}
-          onCompositionEnd={handleCompositionEnd}
-          onBlur={handleBlur}
-          onClick={handleClickWithStopPropagation}
+        <LabelField
+          ref={elementRef}
+          value={value}
+          onChange={(newValue) => onFieldChange?.('label', newValue)}
           onKeyDown={handleKeyDown}
-          className={cn(
-            // CRITICAL FOR ARROW NAVIGATION: These CSS classes ensure consistent line detection
-            // Consistent layout for precise line detection
-            'block w-fit max-w-full cursor-text text-[24px] font-bold break-words text-[rgb(50,48,44)] caret-[rgb(50,48,44)] focus:outline-none',
-            // IMPORTANT: leading-[30px] is hardcoded in utils.ts for form block detection
-            // DO NOT CHANGE without updating isCursorAtLastLine() form block detection
-            'mb-[10px] p-0 leading-[30px]',
-            // Border and background for visual consistency
-            'rounded-md border-0 bg-transparent',
-            // Empty state - use before for placeholder with webkit-text-fill-color
-            !currentValue &&
-              'empty:[-webkit-text-fill-color:rgba(70,68,64,0.45)] empty:before:content-[attr(data-placeholder)]',
-            // After pseudo-element for required asterisk
-            required &&
-              'after:font-normal after:text-[rgba(70,68,64,0.45)] after:content-["*"]',
-          )}
-          data-placeholder='Question name'
-          role='textbox'
-          aria-label='Start typing to edit text'
-          tabIndex={0}
+          required={required}
         />
+        {showDescription && (
+          <DescriptionField
+            ref={descriptionRef}
+            value={description}
+            onChange={(newValue) => onFieldChange?.('description', newValue)}
+            onKeyDown={handleDescriptionKeyDown}
+          />
+        )}
         <input
           type='text'
           placeholder='Short answer text'

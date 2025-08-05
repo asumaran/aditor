@@ -7,9 +7,10 @@ interface UseClickToFocusOptions {
 
 export const useClickToFocus = (options: UseClickToFocusOptions | string) => {
   // Support both old and new API
-  const { containerId, onEmptyAreaClick } = typeof options === 'string' 
-    ? { containerId: options, onEmptyAreaClick: undefined }
-    : options;
+  const { containerId, onEmptyAreaClick } =
+    typeof options === 'string'
+      ? { containerId: options, onEmptyAreaClick: undefined }
+      : options;
   useEffect(() => {
     const container = document.getElementById(containerId);
     if (!container) return;
@@ -61,14 +62,16 @@ export const useClickToFocus = (options: UseClickToFocusOptions | string) => {
         if (onEmptyAreaClick) {
           blockWasCreated = onEmptyAreaClick(clickY);
         }
-        
+
         // Only focus the closest block if no new block was created
         if (!blockWasCreated) {
           const block = closestBlock;
           // The block itself should be contenteditable
-          const primaryEditable = block.hasAttribute('contenteditable') 
-            ? block as HTMLElement
-            : block.querySelector('[contenteditable="true"]') as HTMLElement | null;
+          const primaryEditable = block.hasAttribute('contenteditable')
+            ? (block as HTMLElement)
+            : (block.querySelector(
+                '[contenteditable="true"]',
+              ) as HTMLElement | null);
           const focusTarget = primaryEditable || block;
 
           focusTarget.focus();

@@ -41,11 +41,11 @@ const INITIAL_BLOCKS: readonly Block[] = [createTextBlock()] as const;
 const EditorContent: FC = () => {
   const { state, dispatch } = useEditor();
   const focusManager = useGlobalFocusManager();
-  
+
   const [lastFocusedBlockId, setLastFocusedBlockId] = useState<number | null>(
     null,
   );
-  
+
   const [activeBlockId, setActiveBlockId] = useState<number | null>(null);
   const [dragHandlesVisible, setDragHandlesVisible] = useState(true);
 
@@ -79,7 +79,7 @@ const EditorContent: FC = () => {
   // Use a ref to always have access to the latest state
   const stateRef = useRef(state);
   stateRef.current = state;
-  
+
   useClickToFocus({
     containerId: 'mouse-listener',
     onEmptyAreaClick: (clickY: number) => {
@@ -88,56 +88,59 @@ const EditorContent: FC = () => {
       const currentState = stateRef.current;
       const blocks = getOrderedBlocks(currentState);
       console.log('🖱️ Total blocks:', blocks.length);
-      
+
       if (blocks.length > 0) {
         const lastBlock = blocks[blocks.length - 1];
-        
+
         // Get the DOM element for the last block to check its position
-        const lastBlockElement = document.querySelector(`[data-block-id="${lastBlock.id}"]`) as HTMLElement;
+        const lastBlockElement = document.querySelector(
+          `[data-block-id="${lastBlock.id}"]`,
+        ) as HTMLElement;
         if (!lastBlockElement) {
           console.log('🖱️ Could not find DOM element for last block');
           return false;
         }
-        
+
         const lastBlockRect = lastBlockElement.getBoundingClientRect();
         const lastBlockBottom = lastBlockRect.bottom;
-        
+
         console.log('🖱️ Click position check:', {
           clickY,
           lastBlockBottom,
-          isBelowLastBlock: clickY > lastBlockBottom
+          isBelowLastBlock: clickY > lastBlockBottom,
         });
-        
+
         // Check if click is below the last block
         if (clickY <= lastBlockBottom) {
           console.log('🖱️ Click is not below last block, ignoring');
           return false;
         }
-        
+
         console.log('🖱️ Last block:', {
           id: lastBlock.id,
           type: lastBlock.type,
           properties: lastBlock.properties,
-          title: (lastBlock.properties as any).title
+          title: (lastBlock.properties as any).title,
         });
-        
-        const lastBlockTitle = (lastBlock.type === 'text' || lastBlock.type === 'heading') 
-          ? lastBlock.properties.title 
-          : '';
-        
+
+        const lastBlockTitle =
+          lastBlock.type === 'text' || lastBlock.type === 'heading'
+            ? lastBlock.properties.title
+            : '';
+
         // Conditions to create new text block:
         // a) last block is not a text block
         // b) last block is a text block that is not empty
-        const shouldCreateNewBlock = 
-          lastBlock.type !== 'text' || 
+        const shouldCreateNewBlock =
+          lastBlock.type !== 'text' ||
           (lastBlock.type === 'text' && lastBlockTitle.trim() !== '');
-        
+
         console.log('🖱️ Should create new block:', shouldCreateNewBlock, {
           isTextBlock: lastBlock.type === 'text',
           content: lastBlockTitle,
-          isEmpty: lastBlockTitle.trim() === ''
+          isEmpty: lastBlockTitle.trim() === '',
         });
-        
+
         if (shouldCreateNewBlock) {
           console.log('🖱️ Creating new text block on empty area click');
           const newBlock = createTextBlock('');
@@ -145,18 +148,18 @@ const EditorContent: FC = () => {
             type: 'INSERT_BLOCK_AFTER',
             payload: { afterBlockId: lastBlock.id, newBlock },
           });
-          
+
           // Focus the new block
           focusManager.onBlockCreated(newBlock.id, {
             autoFocus: true,
             deferred: true,
           });
-          
+
           return true; // Block was created
         }
       }
       return false; // No block was created
-    }
+    },
   });
 
   // Track last focused block and hide drag handles when user starts typing
@@ -180,7 +183,10 @@ const EditorContent: FC = () => {
       // Only hide drag handles when user starts typing if there's a focused contenteditable
       if (!e.metaKey && !e.ctrlKey && !e.altKey && e.key.length === 1) {
         const activeElement = document.activeElement;
-        if (activeElement && activeElement.matches('[contenteditable="true"], input, textarea')) {
+        if (
+          activeElement &&
+          activeElement.matches('[contenteditable="true"], input, textarea')
+        ) {
           console.log('🔴 HIDING handles - typing in contenteditable');
           setDragHandlesVisible(false);
         }
@@ -190,7 +196,7 @@ const EditorContent: FC = () => {
     const handleMouseMove = () => {
       // Show drag handles when user moves mouse (not typing)
       // Only update if currently hidden to avoid unnecessary re-renders
-      setDragHandlesVisible(prev => {
+      setDragHandlesVisible((prev) => {
         if (!prev) {
           console.log('🟢 SHOWING handles - mouse move');
           return true;
@@ -202,7 +208,7 @@ const EditorContent: FC = () => {
     document.addEventListener('focusin', handleFocusIn);
     document.addEventListener('keydown', handleKeyDown);
     document.addEventListener('mousemove', handleMouseMove);
-    
+
     return () => {
       document.removeEventListener('focusin', handleFocusIn);
       document.removeEventListener('keydown', handleKeyDown);
@@ -238,6 +244,16 @@ const EditorContent: FC = () => {
     [dispatch],
   );
 
+  const handleDescriptionChange = useCallback(
+    (id: Block['id'], showDescription: boolean) => {
+      dispatch({
+        type: 'UPDATE_BLOCK_DESCRIPTION',
+        payload: { id, showDescription },
+      });
+    },
+    [dispatch],
+  );
+
   const handleBlockClick = useCallback((blockId: Block['id']) => {
     console.log('Block clicked:', blockId);
   }, []);
@@ -261,11 +277,12 @@ const EditorContent: FC = () => {
         onFocusTransferred,
         replaceCurrentBlock = false,
       } = options || {};
-      
+
       // For text/heading blocks created via slash commands with no content,
       // we want cursor at start
-      const shouldCursorBeAtStart = cursorAtStart || 
-        (blockType === 'text' || blockType === 'heading') && !initialContent;
+      const shouldCursorBeAtStart =
+        cursorAtStart ||
+        ((blockType === 'text' || blockType === 'heading') && !initialContent);
 
       let newBlock: Block;
       switch (blockType) {
@@ -287,22 +304,30 @@ const EditorContent: FC = () => {
 
       // If this is replacing the current block (slash command case), hide the original BEFORE creating new block
       if (replaceCurrentBlock) {
-        console.log('🎯 App: Hiding original block before creating replacement:', afterBlockId);
-        
+        console.log(
+          '🎯 App: Hiding original block before creating replacement:',
+          afterBlockId,
+        );
+
         // Hide the original block immediately to prevent visual jump
-        const originalBlockElement = document.querySelector(`[data-block-id="${afterBlockId}"]`) as HTMLElement;
+        const originalBlockElement = document.querySelector(
+          `[data-block-id="${afterBlockId}"]`,
+        ) as HTMLElement;
         if (originalBlockElement) {
           originalBlockElement.style.display = 'none';
         }
       } else {
-        console.log('🎯 App: Creating new block after current block (no replacement):', afterBlockId);
+        console.log(
+          '🎯 App: Creating new block after current block (no replacement):',
+          afterBlockId,
+        );
       }
 
       dispatch({
         type: 'INSERT_BLOCK_AFTER',
         payload: { afterBlockId, newBlock },
       });
-      
+
       // If there's a callback to execute after focus, set up a one-time listener
       if (onFocusTransferred) {
         // Use multiple requestAnimationFrame to wait for focus to complete
@@ -315,26 +340,36 @@ const EditorContent: FC = () => {
           });
         });
       }
-      
+
       // Use FocusManager for new block focus
-      console.log('🎯 App: Calling focusManager.onBlockCreated for slash command block:', {
-        blockId: newBlock.id,
-        blockType,
-        cursorAtStart: shouldCursorBeAtStart,
-        initialContent,
-      });
-      
+      console.log(
+        '🎯 App: Calling focusManager.onBlockCreated for slash command block:',
+        {
+          blockId: newBlock.id,
+          blockType,
+          cursorAtStart: shouldCursorBeAtStart,
+          initialContent,
+        },
+      );
+
       focusManager.onBlockCreated(newBlock.id, {
         cursorAtStart: shouldCursorBeAtStart,
         autoFocus: true,
         deferred: true, // Wait for React render
-        ...(blockType === 'short_answer' || blockType === 'multiple_choice' || blockType === 'multiselect' ? { cursorAtEnd: true } : {}),
+        ...(blockType === 'short_answer' ||
+        blockType === 'multiple_choice' ||
+        blockType === 'multiselect'
+          ? { cursorAtEnd: true }
+          : {}),
       });
-      
+
       // Delete the original block from state after the new block is created and focused
       if (replaceCurrentBlock) {
-        console.log('🎯 App: Deleting original block from state:', afterBlockId);
-        
+        console.log(
+          '🎯 App: Deleting original block from state:',
+          afterBlockId,
+        );
+
         // Delete it from the state after a small delay to allow focus to complete
         setTimeout(() => {
           dispatch({ type: 'REMOVE_BLOCK', payload: { id: afterBlockId } });
@@ -372,7 +407,7 @@ const EditorContent: FC = () => {
   const handleChangeBlockType = useCallback(
     (blockId: Block['id'], newType: string) => {
       console.log('🎯 App.handleChangeBlockType called:', { blockId, newType });
-      
+
       // Use the existing CHANGE_BLOCK_TYPE action which handles this properly
       dispatch({
         type: 'CHANGE_BLOCK_TYPE',
@@ -423,8 +458,11 @@ const EditorContent: FC = () => {
         payload: { id: previousBlockId, value: mergedContent },
       });
 
-      console.log('handleMergeWithPrevious: using FocusManager to position cursor at junction', junctionPoint);
-      
+      console.log(
+        'handleMergeWithPrevious: using FocusManager to position cursor at junction',
+        junctionPoint,
+      );
+
       // Use FocusManager for merge focus
       focusManager.onBlockMerged(previousBlockId, junctionPoint, {
         autoFocus: true,
@@ -620,9 +658,9 @@ const EditorContent: FC = () => {
             payload: { afterBlockId: lastBlock.id, newBlock },
           });
           focusManager.onBlockCreated(newBlock.id, {
-          autoFocus: true,
-          deferred: true,
-        });
+            autoFocus: true,
+            deferred: true,
+          });
         }
       }
     }
@@ -734,7 +772,7 @@ const EditorContent: FC = () => {
             type: 'REORDER_BLOCKS',
             payload: { blockIds: reorderedBlockIds },
           });
-          
+
           // Restore focus to the dragged block after drag operation
           const draggedBlockId = Number(active.id);
           focusManager.focusBlock(draggedBlockId, {
@@ -792,6 +830,7 @@ const EditorContent: FC = () => {
                     onFieldChange={handleFieldChange}
                     onOptionsChange={handleOptionsChange}
                     onRequiredChange={handleRequiredChange}
+                    onDescriptionChange={handleDescriptionChange}
                     onBlockClick={handleBlockClick}
                     onCreateBlockAfter={handleCreateBlockAfter}
                     onChangeBlockType={handleChangeBlockType}

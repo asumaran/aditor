@@ -34,13 +34,21 @@ import {
   useBlockNavigation,
 } from '@/hooks';
 import { cn } from '@/lib/utils';
+import {
+  createDownNavigationCommand,
+  createUpNavigationCommand,
+} from '@/lib/fieldNavigation';
+import { DescriptionField } from '@/components/DescriptionField';
+import { LabelField } from '@/components/LabelField';
 import type { BlockComponentProps, Option, BlockHandle } from '@/types';
 
 interface MultipleChoiceBlockProps extends BlockComponentProps {
   value: string;
-  onChange: (value: string) => void;
+  onFieldChange: (fieldId: string, value: string) => void;
   options: readonly Option[];
   required?: boolean;
+  showDescription?: boolean;
+  description?: string;
   blockId: number;
   className?: string;
   autoFocus?: boolean;
@@ -167,9 +175,11 @@ export const MultipleChoiceBlock = forwardRef<
   (
     {
       value,
-      onChange,
+      onFieldChange,
       options,
       required = false,
+      showDescription = false,
+      description = '',
       blockId,
       className,
       sortOrder = 'manual',
@@ -190,19 +200,8 @@ export const MultipleChoiceBlock = forwardRef<
         coordinateGetter: sortableKeyboardCoordinates,
       }),
     );
-    const {
-      elementRef,
-      handleInput,
-      handleCompositionStart,
-      handleCompositionEnd,
-      handleBlur,
-      currentValue,
-    } = useContentEditable({
-      value,
-      onChange,
-    });
-
-    const handleClickWithStopPropagation = useStopPropagation();
+    const elementRef = useRef<HTMLDivElement>(null);
+    const descriptionRef = useRef<HTMLDivElement>(null);
 
     const blockOptions = useBlockOptions(blockId);
 
@@ -292,20 +291,47 @@ export const MultipleChoiceBlock = forwardRef<
       addOption();
     }, [addOption]);
 
-    // Navigation commands
+    // Navigation commands for label field
     const { navigationCommands } = useBlockNavigation({
       blockId,
       elementRef,
       isSlashInputMode: false,
     });
 
-    // Command configuration
+    // Navigation commands for description field
+    const { navigationCommands: descriptionNavigationCommands } =
+      useBlockNavigation({
+        blockId,
+        elementRef: descriptionRef,
+        isSlashInputMode: false,
+      });
+
+    // Enhanced commands for label field with internal navigation
     const commands = useMemo(
-      () => [...navigationCommands],
-      [navigationCommands],
+      () => [
+        // Add downward navigation from label to description when showDescription is true
+        ...(showDescription
+          ? [createDownNavigationCommand(elementRef, descriptionRef)]
+          : []),
+        ...navigationCommands,
+      ],
+      [navigationCommands, showDescription, descriptionRef, elementRef],
+    );
+
+    // Enhanced commands for description field with internal navigation
+    const descriptionCommands = useMemo(
+      () => [
+        // Add upward navigation from description to label
+        createUpNavigationCommand(descriptionRef, elementRef),
+        ...descriptionNavigationCommands,
+      ],
+      [descriptionNavigationCommands, elementRef, descriptionRef],
     );
 
     const { handleKeyDown } = useBlockCommands({ commands });
+    const { handleKeyDown: handleDescriptionKeyDown } = useBlockCommands({
+      commands: descriptionCommands,
+    });
 
     // Expose focus method to parent
     useImperativeHandle(
@@ -321,30 +347,21 @@ export const MultipleChoiceBlock = forwardRef<
 
     return (
       <div className={cn('space-y-3', className)} data-block-id={blockId}>
-        <div
-          ref={elementRef as React.RefObject<HTMLDivElement>}
-          contentEditable
-          suppressContentEditableWarning
-          onInput={handleInput}
-          onCompositionStart={handleCompositionStart}
-          onCompositionEnd={handleCompositionEnd}
-          onBlur={handleBlur}
-          onClick={handleClickWithStopPropagation}
+        <LabelField
+          ref={elementRef}
+          value={value}
+          onChange={(newValue) => onFieldChange('label', newValue)}
           onKeyDown={handleKeyDown}
-          className={cn(
-            'mb-[10px] min-h-[1em] w-fit max-w-full cursor-text rounded-md text-[24px] leading-[30px] font-bold break-words whitespace-break-spaces text-[rgb(50,48,44)] caret-[rgb(50,48,44)] focus:outline-none',
-            // Empty state - use before for placeholder with webkit-text-fill-color
-            !currentValue &&
-              'empty:[-webkit-text-fill-color:rgba(70,68,64,0.45)] empty:before:content-[attr(data-placeholder)]',
-            // After pseudo-element for required asterisk
-            required &&
-              'after:font-normal after:text-[rgba(70,68,64,0.45)] after:content-["*"]',
-          )}
-          data-placeholder='Question name'
-          role='textbox'
-          aria-label='Start typing to edit text'
-          tabIndex={0}
+          required={required}
         />
+        {showDescription && (
+          <DescriptionField
+            ref={descriptionRef}
+            value={description}
+            onChange={(newValue) => onFieldChange?.('description', newValue)}
+            onKeyDown={handleDescriptionKeyDown}
+          />
+        )}
 
         <DndContext
           sensors={sensors}

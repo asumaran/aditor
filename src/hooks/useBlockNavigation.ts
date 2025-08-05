@@ -95,34 +95,34 @@ export const useBlockNavigation = ({
   // Simplified cursor position checks for more natural navigation
   const isAtTopOfBlock = useCallback(() => {
     if (!elementRef.current) return false;
-    
+
     const selection = window.getSelection();
     if (!selection?.rangeCount) return false;
-    
+
     const range = selection.getRangeAt(0);
     const preRange = document.createRange();
     preRange.selectNodeContents(elementRef.current);
     preRange.setEnd(range.startContainer, range.startOffset);
     const cursorPosition = preRange.toString().length;
-    
+
     // Consider top if cursor is at start OR if there's no newline before cursor
     const content = elementRef.current.textContent || '';
     const textBeforeCursor = content.substring(0, cursorPosition);
     return cursorPosition === 0 || !textBeforeCursor.includes('\n');
   }, [elementRef]);
-  
+
   const isAtBottomOfBlock = useCallback(() => {
     if (!elementRef.current) return false;
-    
+
     const selection = window.getSelection();
     if (!selection?.rangeCount) return false;
-    
+
     const range = selection.getRangeAt(0);
     const preRange = document.createRange();
     preRange.selectNodeContents(elementRef.current);
     preRange.setEnd(range.startContainer, range.startOffset);
     const cursorPosition = preRange.toString().length;
-    
+
     // Consider bottom if cursor is at end OR if there's no newline after cursor
     const content = elementRef.current.textContent || '';
     const textAfterCursor = content.substring(cursorPosition);
@@ -166,7 +166,13 @@ export const useBlockNavigation = ({
         handler: handleArrowDown,
       },
     ],
-    [handleArrowUp, handleArrowDown, isSlashInputMode, isAtTopOfBlock, isAtBottomOfBlock],
+    [
+      handleArrowUp,
+      handleArrowDown,
+      isSlashInputMode,
+      isAtTopOfBlock,
+      isAtBottomOfBlock,
+    ],
   );
 
   return { navigationCommands };

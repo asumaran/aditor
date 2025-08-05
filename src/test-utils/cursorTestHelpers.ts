@@ -1,6 +1,6 @@
 /**
  * Cursor Position Test Helpers
- * 
+ *
  * Utilities for testing cursor positioning and selection behavior
  * in contenteditable elements during focus management tests.
  */
@@ -24,7 +24,7 @@ export interface MockSelectionAPI {
  */
 export const createMockContentEditable = (
   content: string = '',
-  tag: string = 'div'
+  tag: string = 'div',
 ): HTMLElement => {
   const element = document.createElement(tag);
   element.textContent = content;
@@ -38,7 +38,7 @@ export const createMockContentEditable = (
  */
 export const createMockInput = (
   type: string = 'text',
-  placeholder: string = ''
+  placeholder: string = '',
 ): HTMLInputElement => {
   const input = document.createElement('input');
   input.type = type;
@@ -50,7 +50,7 @@ export const createMockInput = (
  * Creates a mock textarea element
  */
 export const createMockTextarea = (
-  placeholder: string = ''
+  placeholder: string = '',
 ): HTMLTextAreaElement => {
   const textarea = document.createElement('textarea');
   textarea.placeholder = placeholder;
@@ -63,10 +63,10 @@ export const createMockTextarea = (
 export const createMockRange = (
   element: HTMLElement,
   startOffset: number,
-  endOffset?: number
+  endOffset?: number,
 ): Range => {
   const range = document.createRange();
-  
+
   if (element.firstChild && element.firstChild.nodeType === Node.TEXT_NODE) {
     range.setStart(element.firstChild, startOffset);
     range.setEnd(element.firstChild, endOffset ?? startOffset);
@@ -83,7 +83,7 @@ export const createMockRange = (
       range.collapse(true);
     }
   }
-  
+
   return range;
 };
 
@@ -92,7 +92,7 @@ export const createMockRange = (
  */
 export const createMockSelection = (): MockSelectionAPI => {
   let currentRange: Range | undefined;
-  
+
   const mockSelection: MockSelectionAPI = {
     removeAllRanges: jest.fn(() => {
       currentRange = undefined;
@@ -110,7 +110,7 @@ export const createMockSelection = (): MockSelectionAPI => {
     }),
     rangeCount: 0,
   };
-  
+
   return mockSelection;
 };
 
@@ -119,23 +119,25 @@ export const createMockSelection = (): MockSelectionAPI => {
  */
 export const setupSelectionMock = (): MockSelectionAPI => {
   const mockSelection = createMockSelection();
-  
+
   Object.defineProperty(window, 'getSelection', {
     writable: true,
     value: jest.fn(() => mockSelection),
   });
-  
+
   return mockSelection;
 };
 
 /**
  * Gets the current cursor position from a mock selection
  */
-export const getCursorPosition = (mockSelection: MockSelectionAPI): CursorPosition | null => {
+export const getCursorPosition = (
+  mockSelection: MockSelectionAPI,
+): CursorPosition | null => {
   if (mockSelection.rangeCount === 0) {
     return null;
   }
-  
+
   const range = mockSelection.getRangeAt(0);
   return {
     startOffset: range.startOffset,
@@ -149,7 +151,7 @@ export const getCursorPosition = (mockSelection: MockSelectionAPI): CursorPositi
  */
 export const simulateCursorAtStart = (
   element: HTMLElement,
-  mockSelection: MockSelectionAPI
+  mockSelection: MockSelectionAPI,
 ): void => {
   const range = createMockRange(element, 0);
   mockSelection.removeAllRanges();
@@ -161,7 +163,7 @@ export const simulateCursorAtStart = (
  */
 export const simulateCursorAtEnd = (
   element: HTMLElement,
-  mockSelection: MockSelectionAPI
+  mockSelection: MockSelectionAPI,
 ): void => {
   const content = element.textContent || '';
   const range = createMockRange(element, content.length);
@@ -175,7 +177,7 @@ export const simulateCursorAtEnd = (
 export const simulateCursorAtOffset = (
   element: HTMLElement,
   offset: number,
-  mockSelection: MockSelectionAPI
+  mockSelection: MockSelectionAPI,
 ): void => {
   const range = createMockRange(element, offset);
   mockSelection.removeAllRanges();
@@ -191,25 +193,26 @@ export const createMockBlock = (config: {
   id?: number;
 }): HTMLElement => {
   const { type, content, id = Math.floor(Math.random() * 1000) } = config;
-  
+
   const container = document.createElement('div');
   container.setAttribute('data-block-id', id.toString());
   container.setAttribute('data-sortable-id', id.toString());
-  
+
   if (type === 'text' || type === 'heading') {
     const contentDiv = createMockContentEditable(content);
     container.appendChild(contentDiv);
   } else {
     // Form blocks
     const label = createMockContentEditable('Question label');
-    const input = type === 'short_answer' 
-      ? createMockInput('text', 'Short answer text')
-      : createMockTextarea('Your answer here');
-    
+    const input =
+      type === 'short_answer'
+        ? createMockInput('text', 'Short answer text')
+        : createMockTextarea('Your answer here');
+
     container.appendChild(label);
     container.appendChild(input);
   }
-  
+
   return container;
 };
 
@@ -218,12 +221,12 @@ export const createMockBlock = (config: {
  */
 export const simulateBlockSplit = (
   element: HTMLElement,
-  cursorOffset: number
+  cursorOffset: number,
 ): { beforeContent: string; afterContent: string } => {
   const content = element.textContent || '';
   const beforeContent = content.slice(0, cursorOffset);
   const afterContent = content.slice(cursorOffset);
-  
+
   return { beforeContent, afterContent };
 };
 
@@ -232,7 +235,7 @@ export const simulateBlockSplit = (
  */
 export const verifyCursorPosition = (
   mockSelection: MockSelectionAPI,
-  expectedOffset: number
+  expectedOffset: number,
 ): boolean => {
   const position = getCursorPosition(mockSelection);
   return position !== null && position.startOffset === expectedOffset;
@@ -242,6 +245,7 @@ export const verifyCursorPosition = (
  * Gets all focusable elements within a container
  */
 export const getFocusableElements = (container: HTMLElement): HTMLElement[] => {
-  const selector = 'input, textarea, [contenteditable="true"], button, select, [tabindex]:not([tabindex="-1"])';
+  const selector =
+    'input, textarea, [contenteditable="true"], button, select, [tabindex]:not([tabindex="-1"])';
   return Array.from(container.querySelectorAll(selector)) as HTMLElement[];
 };

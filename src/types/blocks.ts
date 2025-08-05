@@ -21,6 +21,8 @@ export interface HeadingBlockProperties {
 export interface ShortAnswerBlockProperties {
   label: string;
   required: boolean;
+  description?: string;
+  showDescription?: boolean;
 }
 
 export interface MultipleChoiceBlockProperties {
@@ -28,6 +30,8 @@ export interface MultipleChoiceBlockProperties {
   options: readonly Option[];
   required: boolean;
   sortOrder: 'manual' | 'asc' | 'desc';
+  description?: string;
+  showDescription?: boolean;
 }
 
 export interface MultiselectBlockProperties {
@@ -35,6 +39,8 @@ export interface MultiselectBlockProperties {
   options: readonly Option[];
   required: boolean;
   sortOrder: 'manual' | 'asc' | 'desc';
+  description?: string;
+  showDescription?: boolean;
 }
 
 export type BlockProperties =

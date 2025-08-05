@@ -150,7 +150,7 @@ const EditorContent: FC = () => {
 
   return (
     <main>
-      <div className='flex min-h-[calc(100vh-200px)] shadow-xl shadow-gray-900'>
+      <div className='flex min-h-dvh shadow-xl shadow-gray-900'>
         <EditorSidebar lastFocusedBlockId={lastFocusedBlockId} />
         <EditorCanvas
           activeBlockId={activeBlockId}
@@ -171,9 +171,9 @@ const EditorContent: FC = () => {
           onNavigateToNext={blockEventHandlers.handleNavigateToNext}
         />
       </div>
-      <div className='m-10 text-[12px] text-gray-100'>
+      {/* <div className='m-10 text-[12px] text-gray-100'>
         <pre>{JSON.stringify(getOrderedBlocks(state), null, 2)}</pre>
-      </div>
+      </div> */}
     </main>
   );
 };

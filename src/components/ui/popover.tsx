@@ -28,9 +28,44 @@ function PopoverContent({
         align={align}
         sideOffset={sideOffset}
         className={cn(
-          'bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-top-2 data-[side=right]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2 z-50 w-72 origin-center translate-x-[5px] rounded-md border p-4 shadow-lg outline-hidden',
+          // Background & Text
+          'bg-popover text-popover-foreground',
+
+          // Layout
+          'z-50 w-72 origin-center translate-x-[5px]',
+
+          // Spacing
+          'p-4',
+
+          // Border & Radius
+          'rounded-[10px]',
+
+          // Outline
+          'outline-hidden',
+
+          // Animations
+          'data-[state=open]:animate-in data-[state=closed]:animate-out',
+          'data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0',
+          'data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95',
+          'data-[side=bottom]:slide-in-from-top-2',
+          'data-[side=left]:slide-in-from-top-2',
+          'data-[side=right]:slide-in-from-top-2',
+          'data-[side=top]:slide-in-from-bottom-2',
+
+          // External override
           className,
         )}
+        style={{
+          // borderRadius: '10px',
+          // background: 'white',
+          // backdropFilter: 'none',
+          // position: 'relative',
+          // maxWidth: 'calc(-24px + 100vw)',
+          boxShadow:
+            'rgba(0, 0, 0, 0.1) 0px 14px 28px -6px, rgba(0, 0, 0, 0.06) 0px 2px 4px -1px, rgba(84, 72, 49, 0.08) 0px 0px 0px 1px',
+          // overflow: 'hidden',
+          // marginTop: '-1px',
+        }}
         {...props}
       />
     </PopoverPrimitive.Portal>

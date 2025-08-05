@@ -1,6 +1,7 @@
 import { type FC } from 'react';
-import { Database, Trash2, Asterisk, Text } from 'lucide-react';
+import { Database, Trash2, Asterisk, Text, ChevronRight } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
 import { MenuItem } from './MenuItem';
 import { MenuHeader } from './MenuHeader';
 import type { BlockType } from '@/types';
@@ -43,9 +44,9 @@ export const BlockMenuView: FC<BlockMenuViewProps> = ({
     <div>
       <MenuHeader title='Question options' onClose={onClose} />
 
-      <div className='p-2'>
+      <div className='flex flex-col gap-[1px] p-1'>
         <MenuItem
-          icon={<Asterisk className='h-4 w-4' />}
+          icon={<Asterisk className='h-4.5 w-4.5' />}
           label='Required'
           onClick={handleRequiredToggle}
           rightElement={
@@ -58,7 +59,7 @@ export const BlockMenuView: FC<BlockMenuViewProps> = ({
         />
 
         <MenuItem
-          icon={<Text className='h-4 w-4' />}
+          icon={<Text className='h-4.5 w-4.5' />}
           label='Description'
           onClick={handleDescriptionToggle}
           rightElement={
@@ -76,7 +77,12 @@ export const BlockMenuView: FC<BlockMenuViewProps> = ({
             label='Edit options'
             onClick={onOptionsClick}
             rightElement={
-              <span className='text-xs text-gray-500'>{optionsCount}</span>
+              <div className='flex items-center gap-2'>
+                <Badge variant='secondary' className='h-5 px-1.5'>
+                  {optionsCount}
+                </Badge>
+                <ChevronRight className='h-4 w-4 text-gray-400' />
+              </div>
             }
           />
         )}

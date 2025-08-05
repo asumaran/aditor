@@ -1,15 +1,26 @@
 import { type FC } from 'react';
-import { X } from 'lucide-react';
+import { X, ArrowLeft } from 'lucide-react';
 
 interface MenuHeaderProps {
   title: string;
   onClose?: () => void;
+  onBack?: () => void;
 }
 
-export const MenuHeader: FC<MenuHeaderProps> = ({ title, onClose }) => {
+export const MenuHeader: FC<MenuHeaderProps> = ({ title, onClose, onBack }) => {
   return (
-    <div className='flex items-center justify-between px-4 py-2 pt-3 pb-1'>
-      <h3 className='text-sm font-semibold text-gray-900'>{title}</h3>
+    <div className='flex h-[42px] items-center px-4 pt-[14px] pb-[6px]'>
+      {onBack && (
+        <button
+          onClick={onBack}
+          className='mr-2 cursor-pointer rounded-sm transition-colors'
+        >
+          <ArrowLeft className='h-4 w-4 text-gray-600' />
+        </button>
+      )}
+      <h3 className='flex-grow overflow-hidden text-[14px] font-semibold text-ellipsis whitespace-nowrap'>
+        {title}
+      </h3>
       {onClose && (
         <button
           onClick={onClose}

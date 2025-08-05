@@ -1,12 +1,5 @@
 import { useState, useRef, useEffect, type FC } from 'react';
-import {
-  ArrowLeft,
-  X,
-  Trash2,
-  GripVertical,
-  ArrowDownUp,
-  Plus,
-} from 'lucide-react';
+import { Trash2, GripVertical, ArrowDownUp, Plus } from 'lucide-react';
 import {
   DndContext,
   closestCenter,
@@ -35,6 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { MenuHeader } from '@/components/menu/MenuHeader';
 import type { Option } from '@/types';
 
 interface OptionsViewProps {
@@ -135,24 +129,7 @@ export const OptionsView: FC<OptionsViewProps> = ({
 
   return (
     <div className='flex h-full w-full flex-col p-0'>
-      {/* Header */}
-      <div className='flex items-center justify-between px-4 py-2 pt-3 pb-1'>
-        <div className='flex items-center gap-2'>
-          <button
-            onClick={onBack}
-            className='cursor-pointer rounded-sm transition-colors'
-          >
-            <ArrowLeft className='h-4 w-4 text-gray-600' />
-          </button>
-          <h3 className='text-sm font-semibold text-gray-900'>Edit options</h3>
-        </div>
-        <button
-          onClick={onClose}
-          className='flex h-[18px] w-[18px] flex-shrink-0 cursor-pointer items-center justify-center rounded-full bg-[rgba(55,53,47,0.06)] transition-[background] duration-[20ms] ease-in select-none hover:bg-[rgba(55,53,47,0.16)]'
-        >
-          <X className='h-3 w-3 text-gray-500' />
-        </button>
-      </div>
+      <MenuHeader title='Edit options' onBack={onBack} onClose={onClose} />
 
       {/* Content */}
       <div className='flex min-h-0 flex-col'>
@@ -171,7 +148,11 @@ export const OptionsView: FC<OptionsViewProps> = ({
                 changeSortOrder(value as 'manual' | 'asc' | 'desc');
               }}
             >
-              <SelectTrigger id='sort-select' size='sm'>
+              <SelectTrigger
+                id='sort-select'
+                size='sm'
+                className='h-[28px]! pr-1 pl-2'
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -192,7 +173,7 @@ export const OptionsView: FC<OptionsViewProps> = ({
             {!isAddingOption && (
               <button
                 onClick={handleShowInput}
-                className='flex h-6 w-6 items-center justify-center rounded hover:bg-gray-100'
+                className='flex h-6 w-6 cursor-pointer items-center justify-center rounded hover:bg-gray-100'
               >
                 <Plus className='h-4 w-4 text-gray-600' />
               </button>
@@ -318,7 +299,7 @@ const OptionItem: FC<
   };
 
   return (
-    <div className='group flex items-center rounded px-1 py-0.5 hover:bg-gray-100'>
+    <div className='group flex min-h-[28px] items-center gap-2 rounded px-1 py-0.5 hover:bg-gray-100'>
       <div className='cursor-grab touch-none' {...dragHandleProps}>
         <GripVertical className='h-4 w-4 text-gray-400' />
       </div>
@@ -331,13 +312,13 @@ const OptionItem: FC<
             onChange={(e) => setText(e.target.value)}
             onKeyDown={handleKeyDown}
             onBlur={handleSave}
-            className='h-7 rounded-sm px-2 py-1 text-sm'
+            className='h-6 rounded-sm px-2 py-1 text-sm'
           />
         ) : (
           <span
             onClick={() => setIsEditing(true)}
             className={cn(
-              'block cursor-pointer rounded px-2 py-1 text-sm hover:bg-gray-50',
+              'block cursor-pointer rounded text-sm hover:bg-gray-50',
               !option.text && 'text-gray-400 italic',
             )}
           >

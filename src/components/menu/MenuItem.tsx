@@ -21,14 +21,14 @@ export const MenuItem: FC<MenuItemProps> = ({
   return (
     <div
       className={cn(
-        'flex cursor-pointer items-center justify-between rounded-sm px-2 py-0.5 transition-colors',
+        'flex min-h-[28px] cursor-pointer items-center justify-between rounded-sm px-2 transition-colors',
         variant === 'default' && 'hover:bg-gray-100',
         variant === 'danger' && 'hover:bg-red-50',
         className,
       )}
       onClick={onClick}
     >
-      <div className='flex items-center gap-3'>
+      <div className='flex items-center gap-2'>
         <div
           className={cn(
             variant === 'default' && 'text-gray-600',

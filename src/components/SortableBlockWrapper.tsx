@@ -42,9 +42,11 @@ export const SortableBlockWrapper: FC<SortableBlockWrapperProps> = ({
       data-sortable-id={blockId}
     >
       {/* Drop indicator - top */}
-      {showAbove && (
-        <div className='absolute -top-0.5 right-0 left-0 z-50 h-0.5 bg-blue-500' />
-      )}
+      <div
+        className={`absolute -top-0.5 right-0 left-0 z-50 h-1 bg-blue-300 transition-opacity duration-200 ${
+          showAbove ? 'opacity-100' : 'pointer-events-none opacity-0'
+        }`}
+      />
 
       {/* Drag Handle - positioned absolutely to not affect layout */}
       {dragHandlesVisible && (
@@ -61,9 +63,11 @@ export const SortableBlockWrapper: FC<SortableBlockWrapperProps> = ({
       <div>{children}</div>
 
       {/* Drop indicator - bottom */}
-      {showBelow && (
-        <div className='absolute right-0 -bottom-0.5 left-0 z-50 h-0.5 bg-blue-500' />
-      )}
+      <div
+        className={`absolute right-0 -bottom-0.5 left-0 z-50 h-1 bg-blue-300 transition-opacity duration-200 ${
+          showBelow ? 'opacity-100' : 'pointer-events-none opacity-0'
+        }`}
+      />
     </div>
   );
 };

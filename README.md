@@ -1,3 +1,7 @@
+
+<img width="1670" height="1303" alt="Screenshot 2025-08-06 at 12 12 40" src="https://github.com/user-attachments/assets/b4e8c8d3-d08c-4b65-a65f-d0c26a83e3f6" />
+
+
 # Aditor.
 
 Aditor is an interactive, user-friendly block-based editor built with React and TypeScript. It enables users to create rich, dynamic documents using a variety of content blocks and form elements.
@@ -52,3 +56,11 @@ The project follows a modular architecture with:
 - **Context-based state management** for editor state
 - **Custom hooks** for business logic and reusable functionality
 - **Component composition** for flexible UI building
+
+## Main TODOs
+
+- [ ] Selection state for blocks
+- [ ] Rectangule selection support
+- [ ] <kbd>Delete</kbd>, <kbd>cmd + a</kbd>, etc support. Improve <kbd>cmd+z</kbd> support.
+- [ ] Form preview.
+- [ ] Persist form data (locally in the browser for now).

@@ -21,7 +21,7 @@ export const EditorSidebar: FC<EditorSidebarProps> = ({
             <button
               key={block.id}
               onClick={() => addBlock(block.id)}
-              className='flex h-20 flex-col items-center justify-center gap-2 rounded-md bg-white p-3 text-gray-700 shadow-sm transition-all hover:bg-gray-50 hover:shadow-md active:scale-95'
+              className='flex h-20 cursor-pointer flex-col items-center justify-center gap-2 rounded-md bg-white p-3 text-gray-700 shadow-sm transition-all hover:bg-gray-50 hover:shadow-md active:scale-95'
               title={block.description}
             >
               <Icon className='h-5 w-5' />

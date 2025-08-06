@@ -4,7 +4,11 @@
 
 # Aditor.
 
-Aditor is an interactive, user-friendly block-based editor built with React and TypeScript. It enables users to create rich, dynamic documents using a variety of content blocks and form elements.
+This is a small project where I want to explore form development using a Notion-like editor. Unlike Notion (which has a single form block that contains all form blocks inside it), I'm making the entire document a form with form-type blocks added as top-level blocks.
+
+It's worth noting that implementing keyboard navigation similar to Notion's is very complex (kudos to Notion's developers) and requires extensive testing to avoid breaking navigation every time a behavior is added or refined. I think adding Playwright tests would be the best approach for this.
+
+I believe I've ultimately achieved something that can serve as a foundation to continue improving and implementing more blocks in the editor.
 
 ## Main Features
 

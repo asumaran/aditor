@@ -205,6 +205,37 @@ export const useBlockEventHandlers = () => {
     [state, dispatch, focusManager],
   );
 
+  /**
+   * Delete a form block and auto-add empty text block if it's the last block
+   * Used specifically for form blocks deleted via "Delete question" menu
+   */
+  const handleDeleteFormBlock = useCallback(
+    (blockId: Block['id']) => {
+      const blocks = getOrderedBlocks(state);
+      const isLastBlock = blocks.length === 1;
+
+      if (isLastBlock) {
+        // If it's the last block, replace it with an empty text block
+        const newTextBlock = createTextBlock('');
+        dispatch({
+          type: 'REPLACE_BLOCK',
+          payload: { id: blockId, newBlock: newTextBlock },
+        });
+
+        // Focus the new text block
+        focusManager.onBlockCreated(blockId, {
+          autoFocus: true,
+          deferred: true,
+          cursorAtStart: true,
+        });
+      } else {
+        // If not the last block, use normal deletion
+        handleDeleteBlockAndFocusPrevious(blockId);
+      }
+    },
+    [state, dispatch, focusManager, handleDeleteBlockAndFocusPrevious],
+  );
+
   const handleChangeBlockType = useCallback(
     (blockId: Block['id'], newType: string) => {
       // Use the existing CHANGE_BLOCK_TYPE action which handles this properly
@@ -400,6 +431,7 @@ export const useBlockEventHandlers = () => {
     handleCreateBlockAfter,
     handleSmartBlockCreation,
     handleDeleteBlockAndFocusPrevious,
+    handleDeleteFormBlock,
     handleChangeBlockType,
     handleMergeWithPrevious,
     handleNavigateToPrevious,

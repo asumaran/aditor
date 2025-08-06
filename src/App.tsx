@@ -1,4 +1,4 @@
-import { type FC, useState, useEffect, useRef } from 'react';
+import { type FC, useState, useEffect, useRef, useCallback } from 'react';
 import { EditorProvider } from '@/contexts';
 import {
   useEditor,
@@ -25,6 +25,27 @@ const EditorContent: FC = () => {
 
   // Custom hooks for organized functionality
   const blockEventHandlers = useBlockEventHandlers();
+
+  // Smart delete handler that uses appropriate deletion method based on block type
+  const handleSmartDeleteBlock = useCallback(
+    (blockId: Block['id']) => {
+      const block = state.blockMap[blockId];
+      if (!block) return;
+
+      const isFormBlock = [
+        'short_answer',
+        'multiple_choice',
+        'multiselect',
+      ].includes(block.type);
+
+      if (isFormBlock) {
+        blockEventHandlers.handleDeleteFormBlock(blockId);
+      } else {
+        blockEventHandlers.handleDeleteBlockAndFocusPrevious(blockId);
+      }
+    },
+    [state.blockMap, blockEventHandlers],
+  );
   const { activeBlockId, handleDragStart, handleDragEnd } = useDragAndDrop();
 
   // Focus the last block on initial mount if there are blocks
@@ -165,7 +186,7 @@ const EditorContent: FC = () => {
           onBlockClick={blockEventHandlers.handleBlockClick}
           onCreateBlockAfter={blockEventHandlers.handleCreateBlockAfter}
           onChangeBlockType={blockEventHandlers.handleChangeBlockType}
-          onDeleteBlock={blockEventHandlers.handleDeleteBlockAndFocusPrevious}
+          onDeleteBlock={handleSmartDeleteBlock}
           onMergeWithPrevious={blockEventHandlers.handleMergeWithPrevious}
           onNavigateToPrevious={blockEventHandlers.handleNavigateToPrevious}
           onNavigateToNext={blockEventHandlers.handleNavigateToNext}

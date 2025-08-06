@@ -109,10 +109,22 @@ const EditorContent: FC = () => {
           (lastBlock.type === 'text' && lastBlockTitle.trim() !== '');
 
         if (shouldCreateNewBlock) {
-          // Can't use hooks conditionally, so we'll handle this differently
-          // The EditorSidebar will handle block creation
-          return false; // Let the sidebar handle it
+          // Create a new text block after the last block
+          blockEventHandlers.handleCreateBlockAfter(lastBlock.id, {
+            blockType: 'text',
+            initialContent: '',
+            cursorAtStart: true,
+          });
+          return true; // Block was created
         }
+      } else {
+        // No blocks exist, create the first text block
+        blockEventHandlers.handleCreateBlockAfter(0, {
+          blockType: 'text',
+          initialContent: '',
+          cursorAtStart: true,
+        });
+        return true; // Block was created
       }
       return false; // No block was created
     },
